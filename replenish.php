@@ -232,9 +232,9 @@ foreach($l as &$row) {
 		$rowp['stock'] = $rowp['qty'] - $rowp['cmd_qty'] + $rowp['cmd_expe_qty'] - $rowp['fcmd_qty'] + $rowp['fcmd_recpt_qty'];
 		if ($rowp['stock'] <= 0)
 			$row['alert_nb']++;
-		elseif (empty($row['seuil_stock_alerte']) || $rowp['stock'] <= $row['seuil_stock_alerte'])
+		elseif (empty($rowp['seuil_stock_alerte']) || $rowp['stock'] <= $rowp['seuil_stock_alerte'])
 			$row['warn_nb']++;
-		elseif (empty($row['seuil_stock_alerte']) || empty($row['desiredstock']) || $rowp['stock'] <= ($row['seuil_stock_alerte']+$row['desiredstock'])/2)
+		elseif (empty($rowp['seuil_stock_alerte']) || empty($rowp['desiredstock']) || $rowp['stock'] <= ($rowp['seuil_stock_alerte']+$rowp['desiredstock'])/2)
 			$row['info_nb']++;
 	}
 }
