@@ -290,7 +290,7 @@ if (false) {
 }
 
 foreach($l as $id=>$row) {
-	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'">';
+	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'">';
 	echo '<h3>'.$row['nom'].'</h3>';
 	if ($row['info_nb']>0)
 		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['info_nb'].'</a></p>';
