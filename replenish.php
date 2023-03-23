@@ -50,6 +50,9 @@ $langs->loadLangs(array("errors", "admin", $modulecontext));
 $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 
+$product_info_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_INFO_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_INFO_SEUIL/100 :0.5;
+$product_warn_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_WARN_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_WARN_SEUIL/100 :0.5;
+$product_alert_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_ALERT_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_ALERT_SEUIL/100 :0.5;
 
 /*
  * Actions
@@ -183,7 +186,7 @@ while($row=$q->fetch_assoc()) {
 }
 
 foreach($l as $id=>$row) {
-	echo '<div class="fourn'.($row['product_alert_nb']>0 ?' nb_alert' : '').($row['product_warn_nb']>0 ?' nb_warn' : '').($row['product_info_nb']>0 ?' nb_info' : '').'">';
+	echo '<div class="fourn'.($row['product_alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['product_alert_nb']+$row['product_warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['product_alert_nb']+$row['product_warn_nb']+$row['product_info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'">';
 	echo '<h3>'.$row['nom'].'</h3>';
 	if ($row['product_info_nb']>0)
 		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['product_alert_nb'].'</a></p>';

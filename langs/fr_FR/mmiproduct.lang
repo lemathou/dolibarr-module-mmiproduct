@@ -34,6 +34,9 @@ MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY = Champ : Livraison direct fournisseur
 MMIPRODUCT_FIELD_CUSTOM = Champ : Produit sur mesure
 MMIPRODUCT_PRICEMARGIN = Gestion avancée de la marge produit (onglet sur page produit)
 MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
+MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
+MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
+MMI_PRODUCT_REPLENISH_ALERT_SEUIL = Seuil/ratio (pourcentage de produits) de notification ALERT (rupture de stock)
 
 #
 # About page

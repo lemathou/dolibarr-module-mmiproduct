@@ -36,6 +36,9 @@ $arrayofparameters = array(
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_FIELD_SEASON_DATE'=>array('type'=>'yesno','enabled'=>1),
+	'MMI_PRODUCT_REPLENISH_INFO_SEUIL'=>array('type'=>'int','enabled'=>1),
+	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
+	'MMI_PRODUCT_REPLENISH_ALERT_SEUIL'=>array('type'=>'int','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');
