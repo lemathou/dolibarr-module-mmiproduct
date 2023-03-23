@@ -144,7 +144,7 @@ while($row=$q->fetch_assoc()) {
 }
 
 // Produits
-$sql = 'SELECT DISTINCT ps.fk_soc, p.rowid, p.stock qty
+$sql = 'SELECT DISTINCT ps.fk_soc, p.rowid, p.seuil_stock_alerte, p.desiredstock, p.stock qty
 	FROM '.MAIN_DB_PREFIX.'societe s
 	LEFT JOIN '.MAIN_DB_PREFIX.'societe_extrafields s2 ON s2.fk_object=s.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
