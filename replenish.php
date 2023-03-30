@@ -238,6 +238,8 @@ foreach($l as &$row) {
 			$row['info_nb']++;
 	}
 }
+if (!empty($row))
+	unset($row);
 
 if (false) {
 	// ALERT : rupture de stock
@@ -289,7 +291,7 @@ if (false) {
 	}
 }
 
-foreach($l as $id=>$row) {
+foreach($l as $id=>&$row) {
 	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'">';
 	echo '<h3>'.$row['nom'].'</h3>';
 	if ($row['info_nb']>0)
@@ -301,5 +303,7 @@ foreach($l as $id=>$row) {
 	echo '<p><a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].' produits</a></p>';
 	echo '</div>';
 }
+if (!empty($row))
+	unset($row);
 ?>
 </div>
