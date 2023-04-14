@@ -74,6 +74,8 @@ llxHeader('', $langs->trans($page_name), $help_url);
 
 print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
+echo '<p id="refresh"><a href="?refresh">Actualiser</a></p>';
+
 // Configuration header
 //$linkback = '<a href="'.($backtopage ? $backtopage : DOL_URL_ROOT.'/admin/modules.php?restore_lastsearch_values=1').'">'.$langs->trans("BackToModuleList").'</a>';
 //$head = mmiPrepareHead();
@@ -87,7 +89,7 @@ print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 		margin: 5px;
 		border: 1px solid gray;
 		padding: 4px;
-		height: 70px;
+		height: 100px;
 	}
 	.fourn h3 {
 		margin: 0;
@@ -120,7 +122,31 @@ print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 	.fourn p {
 		margin: 0;
 	}
+	.fourn textarea {
+		width: 240px;
+	}
+
+	#refresh {
+		float: right;
+		margin-top: -50px;
+		margin-bottom: 0;
+	}
 </style>
+
+<script>
+$(document).ready(function(){
+	$('#fournisseurs .fourn').each(function(){
+		var id = $(this).data('id');
+		$('textarea', this).change(function(){
+			var note = $(this).val();
+			$.post('replenish_note_ajax.php', {id: id, note: note}, function(r){
+				if (r=="1")
+					alert("Mis à jour OK")
+			});
+		});
+	})
+});
+</script>
 
 <div id="fournisseurs">
 <?php
@@ -290,7 +316,7 @@ if (false) {
 }
 
 foreach($l as $id=>$row) {
-	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'">';
+	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
 	echo '<h3>'.$row['nom'].'</h3>';
 	if ($row['info_nb']>0)
 		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['info_nb'].'</a></p>';
@@ -299,6 +325,7 @@ foreach($l as $id=>$row) {
 	if ($row['alert_nb']>0)
 		echo '<p class="nb nb_alert"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['alert_nb'].'</a></p>';
 	echo '<p><a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].' produits</a></p>';
+	echo '<div><textarea>'.$row['replenish_note'].'</textarea></div>';
 	echo '</div>';
 }
 ?>
