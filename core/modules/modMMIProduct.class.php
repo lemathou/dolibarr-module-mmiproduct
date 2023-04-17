@@ -319,6 +319,9 @@ class modMMIProduct extends DolibarrModules
 		// Create extrafields during init
 		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
+
+		// Products
+
 		// Public price
 		$extrafields->addExtraField('public_price', $langs->trans('Extrafield_public_price'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_public_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_PUBLIC_PRICE');
 		// Composed product
@@ -331,6 +334,10 @@ class modMMIProduct extends DolibarrModules
 		$extrafields->addExtraField('season_date_begin', $langs->trans('Extrafield_season_date_begin'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_begin'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		// Season date end
 		$extrafields->addExtraField('season_date_end', $langs->trans('Extrafield_season_date_end'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_end'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
+
+		// Suppliers / Replenish		
+		// Replenish note
+		$extrafields->addExtraField('replenish_note', $langs->trans('Extrafield_replenish_note'), 'varchar', 1, 255, 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Permissions
 		$this->remove($options);

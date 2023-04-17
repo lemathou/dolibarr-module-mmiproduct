@@ -67,6 +67,7 @@ Extrafield_product_custom = Produit sur mesure
 ExtrafieldToolTip_product_custom = 
 Extrafield_supplier_direct_delivery = Livraison directe par fournisseur
 ExtrafieldToolTip_supplier_direct_delivery = 
+Extrafield_replenish_note = Information complémentaire concernant les commandes fournisseur, ou celle en cours
 
 #
 # Global
