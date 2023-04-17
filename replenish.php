@@ -89,7 +89,7 @@ echo '<p id="refresh"><a href="?refresh">Actualiser</a></p>';
 		margin: 5px;
 		border: 1px solid gray;
 		padding: 4px;
-		height: 100px;
+		height: 135px;
 	}
 	.fourn h3 {
 		margin: 0;
@@ -184,7 +184,7 @@ while($row=$q->fetch_assoc()) {
 	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($row, ['cmd_qty'=>0, 'cmd_expe_qty'=>0, 'fcmd_qty'=>0, 'fcmd_recpt_qty'=>0]);
 }
 
-// Commandes client en cours
+// Commandes client en cours (pour calcul stock)
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cd.qty > 0, cd.qty, 0)) cmd_qty
 	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
@@ -198,6 +198,23 @@ $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
 	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+}
+// Commandes client en cours (pour info)
+$sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
+	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
+	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
+	INNER JOIN '.MAIN_DB_PREFIX.'commande c
+	INNER JOIN '.MAIN_DB_PREFIX.'commande_extrafields c2 ON c2.fk_object=c.rowid
+	INNER JOIN '.MAIN_DB_PREFIX.'commandedet cd ON cd.fk_commande=c.rowid AND cd.fk_product=p.rowid
+	WHERE p2.p_active=1
+		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
+		AND (c2.rowid IS NULL OR c2.expe_ok=1)
+	GROUP BY ps.fk_soc';
+$q = $db->query($sql);
+//var_dump($db);
+while($row=$q->fetch_assoc()) {
+	$l[$row['fk_soc']]['cmd_encours_nb'] = $row['cmd_encours_nb'];
 }
 
 // Expé Commandes client en cours
@@ -217,7 +234,7 @@ while($row=$q->fetch_assoc()) {
 	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
 }
 
-// Commandes fournisseur en cours
+// Commandes fournisseur en cours (pour calcul stock produi)
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scd.qty > 0, scd.qty, 0)) fcmd_qty
 	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
@@ -231,6 +248,21 @@ $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
 	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+}
+// Commandes fournisseur en cours (pour affichage infoirmatif)
+$sql = 'SELECT sc.fk_soc,
+		SUM(IF(sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).'),1,0)) as cmd_f_encours_nb,
+		SUM(IF(sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_VALIDATED, CommandeFournisseur::STATUS_ACCEPTED]).'),1,0)) as cmd_f_valid_nb,
+		SUM(IF(sc.fk_statut="0",1,0)) as cmd_f_draft_nb
+	FROM '.MAIN_DB_PREFIX.'commande_fournisseur sc
+	WHERE sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_DRAFT, CommandeFournisseur::STATUS_VALIDATED, CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
+	GROUP BY sc.fk_soc';
+$q = $db->query($sql);
+//var_dump($db);
+while($row=$q->fetch_assoc()) {
+	$l[$row['fk_soc']]['cmd_f_encours_nb'] = $row['cmd_f_encours_nb'];
+	$l[$row['fk_soc']]['cmd_f_valid_nb'] = $row['cmd_f_valid_nb'];
+	$l[$row['fk_soc']]['cmd_f_draft_nb'] = $row['cmd_f_draft_nb'];
 }
 
 // Réceptions commandes fournisseur en cours
@@ -318,8 +350,8 @@ if (false) {
 }
 
 foreach($l as $id=>$row) {
-	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
-	echo '<h3>'.$row['nom'].'</h3>';
+	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
+	echo '<h3>'.(strlen($row['nom'])>20 ?substr($row['nom'], 0, 18).'...' :$row['nom']).'</h3>';
 	if ($row['info_nb']>0)
 		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['info_nb'].'</a></p>';
 	if ($row['warn_nb']>0)
@@ -327,6 +359,8 @@ foreach($l as $id=>$row) {
 	if ($row['alert_nb']>0)
 		echo '<p class="nb nb_alert"><a href="/product/stock/replenish.php?fk_supplier='.$id.'">'.$row['alert_nb'].'</a></p>';
 	echo '<p><a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].' produits</a></p>';
+	echo '<p><a href="/fourn/commande/list.php?socid='.$id.'">'.($row['cmd_f_encours_nb'] ?$row['cmd_f_encours_nb'] :0).' cmd'.(!empty($row['cmd_f_valid_nb']) ?' +'.$row['cmd_f_valid_nb'].' à valider' :'').(!empty($row['cmd_f_draft_nb']) ?' +'.$row['cmd_f_draft_nb'].' brouillon' :'').'</a></p>';
+	//echo '<p>'.($row['cmd_encours_nb'] ?$row['cmd_encours_nb'] :0).' cmd. cli. en cours</p>';
 	echo '<div><textarea>'.$row['replenish_note'].'</textarea></div>';
 	echo '</div>';
 }
