@@ -40,17 +40,21 @@ if (!($row=$q->fetch_assoc())) {
 		(fk_object, replenish_note)
 		VALUES
 		('.$id.', "'.$db->escape($note).'")';
-	//echo $sql;
 	$q = $db->query($sql);
+	//echo $sql;
 	if ($q)
 		echo 1;
+	else
+		echo $sql;
 }
 else {
 	$sql = 'UPDATE '.MAIN_DB_PREFIX.'societe_extrafields
 		SET replenish_note="'.$db->escape($note).'"
-		WHERE fk_object='.$row['rowid'];
-	//	echo $sql;
+		WHERE fk_object='.$id;
+	//echo $sql;
 	$q = $db->query($sql);
 	if ($q)
 		echo 1;
+	else
+		echo $sql;
 }

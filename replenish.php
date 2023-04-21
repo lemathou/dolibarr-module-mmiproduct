@@ -142,6 +142,8 @@ $(document).ready(function(){
 			$.post('replenish_note_ajax.php', {id: id, note: note}, function(r){
 				if (r=="1")
 					alert("Mis à jour OK")
+				else
+					alert("Message : "+r)
 			});
 		});
 	})
