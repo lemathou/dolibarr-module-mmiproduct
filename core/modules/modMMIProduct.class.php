@@ -320,6 +320,10 @@ class modMMIProduct extends DolibarrModules
 		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
 
+		// Societe
+		
+		$extrafields->addExtraField('competitor', $langs->trans('Extrafield_competitor'), 'boolean', 10, '', 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		
 		// Products
 
 		// Public price
@@ -330,6 +334,12 @@ class modMMIProduct extends DolibarrModules
         $extrafields->addExtraField('custom', $langs->trans('Extrafield_product_custom'), 'boolean', 10, '', 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_product_custom'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_CUSTOM');
 		// Product direct delivery by supplier
         $extrafields->addExtraField('supplier_direct_delivery', $langs->trans('Extrafield_supplier_direct_delivery'), 'boolean', 10, '', 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_supplier_direct_delivery'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY');
+		// Product competitor average price
+		$extrafields->addExtraField('competitor_avg_price', $langs->trans('Extrafield_competitor_avg_price'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor_avg_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		// Marge effective taux
+		$extrafields->addExtraField('margin_effective_tx', $langs->trans('Extrafield_margin_effective_tx'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_tx'), '($object->cost_price > 0 && $object->price > 0) ?100*($object->price-$object->cost_price)/$object->price :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('margin_effective_coeff', $langs->trans('Extrafield_margin_effective_coeff'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_coeff'), '($object->cost_price > 0 && $object->price > 0) ?$object->price/$object->cost_price  :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('margin_desired_coeff', $langs->trans('Extrafield_margin_desired_coeff'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_desired_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		// Season date begin
 		$extrafields->addExtraField('season_date_begin', $langs->trans('Extrafield_season_date_begin'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_begin'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		// Season date end

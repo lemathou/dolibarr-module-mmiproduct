@@ -32,7 +32,7 @@ MMIPRODUCT_FIELD_COMPOSED = Champ : produit composé (kit)
 MMIPRODUCT_FIELD_PUBLIC_PRICE = Champ : Prix public
 MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY = Champ : Livraison direct fournisseur
 MMIPRODUCT_FIELD_CUSTOM = Champ : Produit sur mesure
-MMIPRODUCT_PRICEMARGIN = Gestion avancée de la marge produit (onglet sur page produit)
+MMIPRODUCT_PRICEMARGIN = Gestion avancée de la marge produit (onglet sur page produit) avec prix concurrents
 MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
 MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
 MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
@@ -69,6 +69,11 @@ ExtrafieldToolTip_product_custom =
 Extrafield_supplier_direct_delivery = Livraison directe par fournisseur
 ExtrafieldToolTip_supplier_direct_delivery = 
 Extrafield_replenish_note = Information complémentaire concernant les commandes fournisseur, ou celle en cours
+Extrafield_competitor = Comcurrent (pour comparatif prix)
+Extrafield_competitor_avg_price = Prix concurrent moyen
+Extrafield_margin_effective_tx = Taux de marge effectif
+Extrafield_margin_effective_coeff = Coeff de marge effectif
+Extrafield_margin_desired_coeff = Coeff de marge désiré
 
 #
 # Global

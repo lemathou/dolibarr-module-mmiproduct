@@ -24,5 +24,6 @@ require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $tab_name = 'pricemargin';
+$tab_ref = 'pricemargin';
 
 require_once '../mmicommon/producttab_1.inc.php';
