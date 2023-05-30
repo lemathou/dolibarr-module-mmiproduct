@@ -112,6 +112,13 @@
 <hr />
 <?php } ?>
 
+<?php
+$pachat = NULL;
+foreach($pfp_list as $pfp) {
+	$pachat = $pfp['unitprice'];
+}
+?>
+
 <table border="1" cellpadding="4">
 	<thead>
 	<tr>
@@ -121,10 +128,18 @@
 		<th><?php echo $langs->trans('Date'); ?></th>
 		<th><?php echo $langs->trans('Quantity'); ?></th>
 		<th><?php echo $langs->trans('Price'); ?></th>
+		<th><?php echo $langs->trans('SupplierPrice'); ?></th>
+		<th><?php echo $langs->trans('Margin'); ?> Coeff</th>
+		<th><?php echo $langs->trans('Margin'); ?> Taux</th>
 	</tr>
 	</thead>
 	<tbody>
-	<?php foreach($pcp_list as $row) {
+	<?php
+	$competitor_price_list = [];
+	foreach($pcp_list as $row) {
+		$competitor_price_list[] = $row['price'];
+		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
+		$margin_taux = $pachat ?round(100*($row['price']-$pachat)/$row['price'], 2).'%' :'-';
 		echo '<tr>';
 		echo '<td><a href="?id='.$id.'&action=pcp_edit&pcp_edit='.$row['rowid'].'">'.$row['rowid'].'</a></td>';
 		echo '<td>'.$row['nom'].'</td>';
@@ -132,14 +147,61 @@
 		echo '<td>'.$row['date'].'</td>';
 		echo '<td align="right">'.$row['qte'].'</td>';
 		echo '<td align="right">'.$row['price'].'</td>';
+		echo '<td align="right">'.round($pachat, 2).'</td>';
+		echo '<td align="right">'.$margin_coeff.'</td>';
+		echo '<td align="right">'.$margin_taux.'</td>';
 		echo '</tr>';
-	} ?>
+	}
+	//$a = array_filter($competitor_price_list);
+	$a = $competitor_price_list;
+	$competitor_price_avg = count($a)>0 ?round(array_sum($a)/count($a), 2) :'-';
+	?>
 	</tbody>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">Prix médian :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php  ?></th>
+	</tr>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">1er quartile :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php  ?></th>
+	</tr>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">3ème quartile :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php  ?></th>
+	</tr>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">Prix moyen :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php echo $competitor_price_avg; ?></th>
+		<th align="right"><?php echo round($pachat, 2); ?></th>
+	</tr>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">Prix actuel :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php echo round($object->price, 2); ?></th>
+		<th align="right"><?php echo round($pachat, 2); ?></th>
+		<th align="right"><?php echo $pachat>0 ?round($object->price/$pachat, 2) :''; ?></th>
+		<th align="right"><?php echo $pachat>0 ?round(100*($object->price-$pachat)/$object->price, 2).'%' :''; ?></th>
+	</tr>
 </table>
+
+<p>Voir comment calculer les prix concurrent mini, maxi, moyen en fct des prix par quantité et de l'historique des prix concurrents.</p>
+<p>Dans un premier temps, prend-on le dernier prix de chaque concurrent quelle que soit la quantité ?</p>
+<p>On peut aussi reagrder les marges des produits similaires, c'est-à-dire dont les prix sont proches (+- X % à définir) et dans la même catégorie.</p>
+<p>On peut aller très loin dans le détail et la précision mais de fait vite s'y perdre en ayant trop d'indiacateurs inexploitables...</p>
 </div>
 
 <hr />
 
+<h3>Utilisation du bon prix d'achat</h3>
 <p>Les fournisseurs ont des politiques de prix selon plusieurs critères :</p>
 <ul>
 	<li>Volume acheté => remise produit ou port (voir franco)</li>
@@ -152,15 +214,19 @@
 <h3>Marge minimum souhaitée</h3>
 <p>On peut dissocier la marge sur le produit et sur le transport.</p>
 
-<h3>Prix concurrence</h3>
-<p>Prix mini, maxi, moyen.</p>
-
 <h3>Coût de transport moyen pour l'approvisionnement (historique de commande fournisseur)</h3>
 <p>Facile à calculer si le produit est toujours stockés chez nous sur un même dépôt.</p>
 <p>Sinon il faut bien dissocier les situations pour le calcul.</p>
 
-<h3>Méthode de calcul</h3>
-<p></p>
+<h3>Méthode de calcul de la marge</h3>
+<p>On peut se donner plusieurs familles de produits, et selon les familles ET les prix, des indications de marge à respecter.</p>
+<p>On se basera aussi sur les prix concurrent ! on regardera notre marge en considérant qu'on vend à un certain prix.</p>
+<p>Par exemple :</p>
+<ul>
+	<li>Quincaillerie : < 10€ => coeff > 2, <100€ => coeff > 1.7</li>
+	<li>Machines : 1000€ => coeff > 1.35, < 5000€ => coeff > 1.25</li>
+	<li>Materiaux : ...</li>
+</ul>
 
 <h3></h3>
 <?php

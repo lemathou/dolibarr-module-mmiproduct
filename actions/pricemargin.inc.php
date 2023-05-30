@@ -96,11 +96,23 @@ while($r=$q->fetch_assoc())
 $pcp_list = [];
 $sql = 'SELECT pcp.*, s.nom, pc.url
 	FROM `'.MAIN_DB_PREFIX.'product_competitor_price` AS pcp
-	INNER JOIN `'.MAIN_DB_PREFIX.'product_competitor` AS pc ON pc.fk_soc=pcp.fk_soc
+	INNER JOIN `'.MAIN_DB_PREFIX.'product_competitor` AS pc ON pc.fk_soc=pcp.fk_soc AND pc.fk_product=pcp.fk_product
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pcp.fk_soc
 	WHERE pc.fk_product='.$object->id.'
 	ORDER BY pcp.date DESC';
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$pcp_list[$r['rowid']] = $r;
+//var_dump($pcp_list);
+
+
+// Prix fournisseur
+$pfp_list = [];
+$sql = 'SELECT pfp.*, s.nom
+	FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
+	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pfp.fk_soc
+	WHERE pfp.fk_product='.$object->id;
+$q = $db->query($sql);
+while($r=$q->fetch_assoc())
+	$pfp_list[$r['rowid']] = $r;
 //var_dump($pcp_list);

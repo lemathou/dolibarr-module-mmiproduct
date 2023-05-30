@@ -74,6 +74,8 @@ Extrafield_competitor_avg_price = Prix concurrent moyen
 Extrafield_margin_effective_tx = Taux de marge effectif
 Extrafield_margin_effective_coeff = Coeff de marge effectif
 Extrafield_margin_desired_coeff = Coeff de marge désiré
+Extrafiel_competitor_note = Commenaire concurrents
+ExtrafieldToolTip_competitor_note = Informations complémentaire sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
 
 #
 # Global
