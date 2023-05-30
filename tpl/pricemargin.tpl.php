@@ -2,11 +2,11 @@
 <h3>Historique des prix de la concurrence</h3>
 
 <div style="float: right;margin: 0 10px;">
-	<p><a href="?id=<?php echo $id; ?>&pc_add">Ajouter une url concurrent</a></p>
-	<p><a href="?id=<?php echo $id; ?>&pcp_add">Ajouter un prix</a></p>
+	<p><a href="?id=<?php echo $id; ?>&action=pc_add">Ajouter une url concurrent</a></p>
+	<p><a href="?id=<?php echo $id; ?>&action=pcp_add">Ajouter un prix</a></p>
 </div>
 
-<?php if (isset($_GET['pcp_add'])) { ?>
+<?php if ($action=='pcp_add') { ?>
 <form method="POST" action="?id=<?php echo $id; ?>&action=pcp_add">
 <table>
 	<tr>
@@ -14,6 +14,14 @@
 		<td><select name="fk_soc"><option value="">--</option><?php foreach ($pc_list as $r) {
 			echo '<option value="'.$r['fk_soc'].'">'.$r['nom'].' - '.$r['url'].'</option>';
 		} ?></select></td>
+	</tr>
+	<tr>
+		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
+		<td><input name="date" type="date" value="<?php echo $datenow; ?>" /></td>
+	</tr>
+	<tr>
+		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
+		<td><input name="qte" value="1" /></td>
 	</tr>
 	<tr>
 		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
@@ -25,12 +33,22 @@
 	</tr>
 </table></form>
 <hr />
-<?php } elseif (!empty($pcp_edit)) { ?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pcp_edit&link_id=<?php echo $_GET['pcp_edit']; ?>">
+<?php } elseif ($action=='pcp_edit' && !empty($pcp_edit) && isset($pcp_list[$pcp_edit])) {
+	$pcp = $pcp_list[$pcp_edit];
+?>
+<form method="POST" action="?id=<?php echo $id; ?>&action=pcp_edit&pcp_edit=<?php echo $pcp_edit; ?>">
 <table>
 	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('ResCompetitorource'); ?></label></td>
-		<td><?php echo $pcp['soc_nom']; ?></td>
+		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
+		<td><?php echo $pcp['nom']; ?></td>
+	</tr>
+	<tr>
+		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
+		<td><input name="date" type="date" value="<?php echo $pcp['date']; ?>" /></td>
+	</tr>
+	<tr>
+		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
+		<td><input name="qte" value="<?php echo $pcp['qte']; ?>" /></td>
 	</tr>
 	<tr>
 		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
@@ -42,7 +60,7 @@
 	</tr>
 </table></form>
 <hr />
-<?php } elseif (isset($_GET['pc_add'])) { ?>
+<?php } elseif ($action=='pc_add') { ?>
 <form method="POST" action="?id=<?php echo $id; ?>&action=pc_add">
 <table>
 	<tr>
@@ -53,28 +71,38 @@
 	</tr>
 	<tr>
 		<td><label for="url"><?php echo $langs->trans('URL'); ?></label></td>
-		<td><input name="url" value="" /></td>
+		<td><input name="url" value="" size="64" /></td>
+	</tr>
+	<tr>
+		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
+		<td><input name="date" type="date" value="<?php echo $datenow; ?>" /></td>
+	</tr>
+	<tr>
+		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
+		<td><input name="qte" value="1" /></td>
 	</tr>
 	<tr>
 		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
-		<td><input name="price" value="<?php echo $pcp['price']; ?>" /></td>
+		<td><input name="price" value="" /></td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><input type="submit" name="" value="Ajouter l'URL du concurrent" /></td>
+		<td><input type="submit" name="" value="Ajouter l'URL du concurrent (et prix si renseigné)" /></td>
 	</tr>
 </table></form>
 <hr />
-<?php } elseif (!empty($pc_edit)) { ?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pc_edit&link_id=<?php echo $_GET['pc_edit']; ?>">
+<?php } elseif ($action=='pc_edit' && !empty($pc_edit) && isset($pc_list[$pc_edit])) {
+	$pc = $pc_list[$pc_edit];
+?>
+<form method="POST" action="?id=<?php echo $id; ?>&action=pc_edit&pc_edit=<?php echo $pc_edit; ?>">
 <table>
 	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('ResCompetitorource'); ?></label></td>
-		<td><?php echo $pcp['soc_nom']; ?></td>
+		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
+		<td><?php echo $pc['nom']; ?></td>
 	</tr>
 	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
-		<td><input name="price" value="<?php echo $pcp['price']; ?>" /></td>
+		<td><label for="url"><?php echo $langs->trans('URL'); ?></label></td>
+		<td><input name="url" value="<?php echo $pc['url']; ?>" size="64" /></td>
 	</tr>
 	<tr>
 		<td></td>
@@ -87,21 +115,23 @@
 <table border="1" cellpadding="4">
 	<thead>
 	<tr>
-			<th></th>
-			<th>Concurrent</th>
-			<th>URL</th>
-			<th>Date</th>
-			<th>Prix</th>
+		<th></th>
+		<th><?php echo $langs->trans('Competitor'); ?></th>
+		<th><?php echo $langs->trans('URL'); ?></th>
+		<th><?php echo $langs->trans('Date'); ?></th>
+		<th><?php echo $langs->trans('Quantity'); ?></th>
+		<th><?php echo $langs->trans('Price'); ?></th>
 	</tr>
 	</thead>
 	<tbody>
 	<?php foreach($pcp_list as $row) {
 		echo '<tr>';
-		echo '<td><a href="?id='.$id.'&pcp_edit='.$row['rowid'].'">'.$row['rowid'].'</a></td>';
+		echo '<td><a href="?id='.$id.'&action=pcp_edit&pcp_edit='.$row['rowid'].'">'.$row['rowid'].'</a></td>';
 		echo '<td>'.$row['nom'].'</td>';
 		echo '<td>'.$row['url'].'</td>';
-		echo '<td>'.$row['datec'].'</td>';
-		echo '<td>'.$row['price'].'</td>';
+		echo '<td>'.$row['date'].'</td>';
+		echo '<td align="right">'.$row['qte'].'</td>';
+		echo '<td align="right">'.$row['price'].'</td>';
 		echo '</tr>';
 	} ?>
 	</tbody>
