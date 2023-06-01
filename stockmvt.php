@@ -23,11 +23,13 @@
 require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
-$sql = 'SELECT p.rowid fk_product, p.label, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
-FROM llxsq_product p
-INNER JOIN llxsq_entrepot e
-LEFT JOIN llxsq_product_stock s ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
-LEFT JOIN llxsq_stock_mouvement m ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
+$confirm = GETPOST('confirm');
+
+$sql = 'SELECT p.rowid fk_product, p.datec, p.label, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
+FROM '.MAIN_DB_PREFIX.'product p
+INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
+LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
+LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
 GROUP BY p.rowid, e.rowid
 HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL)
   OR (s.reel IS NOT NULL AND SUM(m.value) IS NULL)
@@ -37,7 +39,6 @@ echo '<pre>'.$sql.'</pre>';
 //var_dump($db);
 
 $ts = date('YmdHis');
-$date = '2023-04-29 00:00:00';
 
 $q = $db->query($sql);
 var_dump($q);
@@ -49,23 +50,24 @@ while($row=$q->fetch_assoc()) {
 		continue;
 	//echo '<br />'.$nb.'<hr />';
 	$rec = [
-		'datem'=>$date,
+		'datem'=>$row['datec'],
 		'fk_product'=>$row['fk_product'],
 		'fk_entrepot'=>$row['fk_entrepot'],
 		'value' => $nb,
 		'type_mouvement' => ($nb>0 ?'0' :'1'),
 		'fk_user_author' => 1,
-		'label'=>'Correctif pour inventaire 2023-04-30',
+		'label'=>'Correctif pour inventaire',
 		'inventorycode'=>$ts,
 	];
 	$l[] = '("'.implode('", "', $rec).'")';
 }
 
 $sql = 'INSERT INTO
-	llxsq_stock_mouvement
+	'.MAIN_DB_PREFIX.'stock_mouvement
 	(`datem`, `fk_product`, `fk_entrepot`, `value`, `type_mouvement`, `fk_user_author`, `label`, `inventorycode`)
 	VALUES
 	'.implode(', ', $l);
 echo $sql;
-//$db->query($sql);
+if ($confirm)
+	$db->query($sql);
 
