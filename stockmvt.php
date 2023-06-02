@@ -24,23 +24,35 @@ require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $confirm = GETPOST('confirm');
+$type = GETPOST('type');
+
+echo '<p><a href="?type=all">Tous les produits</a></p>';
+echo '<p><a href="?type=simple">Produits simples (sans lots)</a></p>';
+echo '<p><a href="?type=batch">Produits avec lots</a></p>';
+if (empty($type)) {
+	die();
+}
+
+$ts = date('YmdHis');
 
 // Produits sans lots !! Sinon il faut gérer différemment...
 $sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
-FROM '.MAIN_DB_PREFIX.'product p
-INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
-LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
-LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
-WHERE p.tobatch=0
-GROUP BY p.rowid, e.rowid
-HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
-  OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
-  OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
+	FROM '.MAIN_DB_PREFIX.'product p
+	INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
+	LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s
+		ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
+	LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m
+		ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
+	WHERE 1
+	'.($type=='simple' ?'AND p.tobatch=0' :'').'
+	'.($type=='batch' ?'AND p.tobatch=1' :'').'
+	GROUP BY p.rowid, e.rowid
+	HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
+		OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
+		OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
 
 echo '<pre>'.$sql.'</pre>';
 //var_dump($db);
-
-$ts = date('YmdHis');
 
 $q = $db->query($sql);
 var_dump($q);
@@ -60,10 +72,17 @@ while($row=$q->fetch_assoc()) {
 		'label'=>'Correctif pour inventaire',
 		'inventorycode'=>$ts,
 	];
-	$l[] = '("'.implode('", "', $rec).'")';
+	foreach($rec as &$value) {
+		if (is_null($value))
+			$value = 'NULLL';
+		elseif (!is_numeric($value))
+			$value = '"'.$value.'"';
+	}
+	$l[] = '('.implode(', ', $rec).')';
 }
 
 if (!empty($l)) {
+	echo '<p><a href="?type='.$type.'&confirm">Appliquer les modifications (bien vérifier avant !)</a></p>';
 	echo '<hr />';
 	$sql = 'INSERT INTO
 		'.MAIN_DB_PREFIX.'stock_mouvement
