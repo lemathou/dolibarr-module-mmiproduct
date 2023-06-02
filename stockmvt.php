@@ -35,24 +35,70 @@ if (empty($type)) {
 
 $ts = date('YmdHis');
 
-// Produits sans lots !! Sinon il faut gérer différemment...
-$sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
-	FROM '.MAIN_DB_PREFIX.'product p
-	INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
-	LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s
-		ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
-	LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m
-		ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
-	WHERE 1
-	'.($type=='simple' ?'AND p.tobatch=0' :'').'
-	'.($type=='batch' ?'AND p.tobatch=1' :'').'
-	GROUP BY p.rowid, e.rowid
-	HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
-		OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
-		OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
+if ($type=="all") {
+	// Produits sans lots !! Sinon il faut gérer différemment...
+	$sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, COUNT(m.rowid) mvt_nb, SUM(m.value) mvt_reel,
+			NULL as batch, NULL as eatby, NULL as sellby
+		FROM '.MAIN_DB_PREFIX.'product p
+		INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
+		LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s
+			ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
+		LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m
+			ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
+		WHERE 1
+		GROUP BY p.rowid, e.rowid
+		HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
+			OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
+			OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
 
-echo '<pre>'.$sql.'</pre>';
-//var_dump($db);
+	echo '<pre>'.$sql.'</pre>';
+	//var_dump($db);
+}
+elseif ($type=="simple") {
+	// Produits sans lots !! Sinon il faut gérer différemment...
+	$sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, COUNT(m.rowid) mvt_nb, SUM(m.value) mvt_reel,
+			NULL as batch, NULL as eatby, NULL as sellby
+		FROM '.MAIN_DB_PREFIX.'product p
+		INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
+		LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s
+			ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
+		LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m
+			ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
+		WHERE p.tobatch=0
+		GROUP BY p.rowid, e.rowid
+		HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
+			OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
+			OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
+
+	echo '<pre>'.$sql.'</pre>';
+	//var_dump($db);
+}
+elseif ($type=="batch") {
+	// Produits sans lots !! Sinon il faut gérer différemment...
+	$sql = 'SELECT p.rowid fk_product, l.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, ls.qty reel, COUNT(m.rowid) mvt_nb, SUM(m.value) mvt_reel,
+			l.batch, l.eatby, l.sellby
+		FROM '.MAIN_DB_PREFIX.'product p
+		INNER JOIN '.MAIN_DB_PREFIX.'product_lot l
+			ON l.fk_product=p.rowid
+		INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
+		LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s
+			ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
+		LEFT JOIN '.MAIN_DB_PREFIX.'product_batch ls
+			ON ls.fk_product_stock=s.rowid AND ls.batch=l.batch
+		LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m
+			ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid AND m.batch=l.batch
+		WHERE p.tobatch=1
+		GROUP BY p.rowid, l.batch, e.rowid
+		HAVING (ls.qty IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
+			OR (ls.qty IS NOT NULL AND ls.qty != 0 AND SUM(m.value) IS NULL)
+			OR (ls.qty IS NOT NULL AND SUM(m.value) IS NOT NULL AND ls.qty != SUM(m.value));';
+
+	echo '<pre>'.$sql.'</pre>';
+	//var_dump($db);
+}
+else {
+	die();
+}
 
 $q = $db->query($sql);
 var_dump($q);
@@ -71,11 +117,14 @@ while($row=$q->fetch_assoc()) {
 		'fk_user_author' => 1,
 		'label'=>'Correctif pour inventaire',
 		'inventorycode'=>$ts,
+		'batch'=>$row['batch'],
+		'eatby'=>$row['eatby'],
+		'sellby'=>$row['sellby'],
 	];
 	foreach($rec as &$value) {
 		if (is_null($value))
-			$value = 'NULLL';
-		elseif (!is_numeric($value))
+			$value = 'NULL';
+		else
 			$value = '"'.$value.'"';
 	}
 	$l[] = '('.implode(', ', $rec).')';
@@ -86,7 +135,7 @@ if (!empty($l)) {
 	echo '<hr />';
 	$sql = 'INSERT INTO
 		'.MAIN_DB_PREFIX.'stock_mouvement
-		(`datem`, `fk_product`, `fk_entrepot`, `value`, `type_mouvement`, `fk_user_author`, `label`, `inventorycode`)
+		(`datem`, `fk_product`, `fk_entrepot`, `value`, `type_mouvement`, `fk_user_author`, `label`, `inventorycode`, `batch`, `eatby`, `sellby`)
 		VALUES
 		'.implode(', ', $l);
 	echo $sql;
