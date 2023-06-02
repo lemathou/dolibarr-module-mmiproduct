@@ -25,15 +25,17 @@ require_once 'main_load.inc.php';
 
 $confirm = GETPOST('confirm');
 
-$sql = 'SELECT p.rowid fk_product, p.datec, p.label, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
+// Produits sans lots !! Sinon il faut gérer différemment...
+$sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, SUM(m.value) mvt_reel
 FROM '.MAIN_DB_PREFIX.'product p
 INNER JOIN '.MAIN_DB_PREFIX.'entrepot e
 LEFT JOIN '.MAIN_DB_PREFIX.'product_stock s ON s.fk_entrepot=e.rowid AND s.fk_product=p.rowid
 LEFT JOIN '.MAIN_DB_PREFIX.'stock_mouvement m ON m.fk_entrepot=e.rowid AND m.fk_product=p.rowid
+WHERE p.tobatch=0
 GROUP BY p.rowid, e.rowid
-HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL)
-  OR (s.reel IS NOT NULL AND SUM(m.value) IS NULL)
-  OR (s.reel != SUM(m.value));';
+HAVING (s.reel IS NULL AND SUM(m.value) IS NOT NULL AND SUM(m.value) != 0)
+  OR (s.reel IS NOT NULL AND s.reel != 0 AND SUM(m.value) IS NULL)
+  OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
 
 echo '<pre>'.$sql.'</pre>';
 //var_dump($db);
@@ -44,11 +46,10 @@ $q = $db->query($sql);
 var_dump($q);
 $rec = $l = [];
 while($row=$q->fetch_assoc()) {
-	var_dump($row); echo '<br />';
+	echo '<hr />'; var_dump($row);
 	$nb = (($row['reel'] ?$row['reel'] :0)-($row['mvt_reel'] ?$row['mvt_reel'] :0));
 	if ($nb==0)
 		continue;
-	//echo '<br />'.$nb.'<hr />';
 	$rec = [
 		'datem'=>$row['datec'],
 		'fk_product'=>$row['fk_product'],
@@ -62,12 +63,14 @@ while($row=$q->fetch_assoc()) {
 	$l[] = '("'.implode('", "', $rec).'")';
 }
 
-$sql = 'INSERT INTO
-	'.MAIN_DB_PREFIX.'stock_mouvement
-	(`datem`, `fk_product`, `fk_entrepot`, `value`, `type_mouvement`, `fk_user_author`, `label`, `inventorycode`)
-	VALUES
-	'.implode(', ', $l);
-echo $sql;
-if ($confirm)
-	$db->query($sql);
-
+if (!empty($l)) {
+	echo '<hr />';
+	$sql = 'INSERT INTO
+		'.MAIN_DB_PREFIX.'stock_mouvement
+		(`datem`, `fk_product`, `fk_entrepot`, `value`, `type_mouvement`, `fk_user_author`, `label`, `inventorycode`)
+		VALUES
+		'.implode(', ', $l);
+	echo $sql;
+	if ($confirm)
+		$db->query($sql);
+}
