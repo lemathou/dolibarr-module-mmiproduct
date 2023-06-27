@@ -1,9 +1,12 @@
+<?php
+$url_len_disp_limit = 50;
+?>
 <div>
 <h3>Historique des prix de la concurrence</h3>
 
 <div style="float: right;margin: 0 10px;">
-	<p><a href="?id=<?php echo $id; ?>&action=pc_add">Ajouter une url concurrent</a></p>
-	<p><a href="?id=<?php echo $id; ?>&action=pcp_add">Ajouter un prix</a></p>
+	<p><a href="?id=<?php echo $id; ?>&action=pc_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter une url concurrent</a></p>
+	<p><a href="?id=<?php echo $id; ?>&action=pcp_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter un prix</a></p>
 </div>
 
 <?php if ($action=='pcp_add') { ?>
@@ -12,7 +15,7 @@
 	<tr>
 		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
 		<td><select name="fk_soc"><option value="">--</option><?php foreach ($pc_list as $r) {
-			echo '<option value="'.$r['fk_soc'].'">'.$r['nom'].' - '.$r['url'].'</option>';
+			echo '<option value="'.$r['fk_soc'].'"'.(!empty($fk_soc) && $fk_soc==$r['fk_soc'] ?' selected' :'').'>'.$r['nom'].' - '.$r['url'].'</option>';
 		} ?></select></td>
 	</tr>
 	<tr>
@@ -137,19 +140,27 @@ foreach($pfp_list as $pfp) {
 	<?php
 	$competitor_price_list = [];
 	foreach($pcp_list as $row) {
+		//var_dump($s_list[$row['fk_soc']]);
 		$competitor_price_list[] = $row['price'];
 		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
 		$margin_taux = $pachat ?round(100*($row['price']-$pachat)/$row['price'], 2).'%' :'-';
 		echo '<tr>';
-		echo '<td><a href="?id='.$id.'&action=pcp_edit&pcp_edit='.$row['rowid'].'">'.$row['rowid'].'</a></td>';
-		echo '<td>'.$row['nom'].'</td>';
-		echo '<td>'.$row['url'].'</td>';
-		echo '<td>'.$row['date'].'</td>';
+		echo '<td><a href="?id='.$id.'&action=pcp_edit&pcp_edit='.$row['rowid'].'"><span class="fas fa-pencil-alt"></span>&nbsp;'.$row['rowid'].'</a></td>';
+		echo '<td>'.$row['nom'].'<br /><a href="'.$s_list[$row['fk_soc']]['url'].'" target="_blank">'.$s_list[$row['fk_soc']]['url'].'</a></td>';
+		echo '<td>';
+		foreach ($pc_list_soc_url[$row['fk_soc']] as $url) {
+			$len = strlen($url);
+			$cut = $len>$url_len_disp_limit;
+			echo '<a href="'.$url.'" target="_blank"'.($cut ?' title="'.$url.'"' :'').'>'.($cut ?substr($url, 0, $url_len_disp_limit).'...' :$url).'</a><br />';
+		}
+		echo '</td>';
+		echo '<td>'.implode('/', array_reverse(explode('-', $row['date']))).'</td>';
 		echo '<td align="right">'.$row['qte'].'</td>';
 		echo '<td align="right">'.$row['price'].'</td>';
 		echo '<td align="right">'.round($pachat, 2).'</td>';
 		echo '<td align="right">'.$margin_coeff.'</td>';
 		echo '<td align="right">'.$margin_taux.'</td>';
+		echo '<td><a href="?id='.$id.'&action=pcp_add&fk_soc='.$row['fk_soc'].'"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span></a></td>';
 		echo '</tr>';
 	}
 	//$a = array_filter($competitor_price_list);
