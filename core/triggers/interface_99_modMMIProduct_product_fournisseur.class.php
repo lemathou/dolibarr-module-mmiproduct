@@ -90,8 +90,14 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				}
 				if (!empty($object->product_id) && !empty($object->fourn_id)) {
 					$product->fetch($object->product_id);
+					// Manque une info => on modifie tout
 					if (empty($product->array_options['options_supplier_ref']) || empty($product->array_options['options_fk_soc_fournisseur'])) {
 						$product->array_options['options_fk_soc_fournisseur'] = $object->fourn_id;
+						$product->array_options['options_supplier_ref'] = $object->ref_supplier;
+						$product->update($product->id, $user);
+					}
+					// Modif uniquement réf fourn
+					elseif ($product->array_options['options_fk_soc_fournisseur'] == $object->fourn_id && $product->array_options['options_supplier_ref'] != $object->ref_supplier) {
 						$product->array_options['options_supplier_ref'] = $object->ref_supplier;
 						$product->update($product->id, $user);
 					}
