@@ -41,6 +41,8 @@ MMI_PROPAL_CLONE_USE_NEW_COST_PRICE = Lors d'un clonage de devis avec préservat
 MAIN_SEARCH_PRODUCT_BY_FOURN_SHOW_MULTIPLE = Afficher une ligne produit par prix fournisseur lors de la recherche de produit à ajouter à un document
 MMIPRODUCT_STOCK_COMPOSED_AUTO = Recalculer automatiquement le stock d'un produit composé à partir du stock de ses composant à chaque mouvement de stock d'un composant
 MMIPRODUCT_STOCK_COMPOSED_USE_RESERVED = Prendre en compte le stock réservé des composants pour le calcul du stock réservé du kit, et vice versa (et donc pour le calcul du stock théorique)
+MMIPRODUCT_ALERT_EMAIL_TO = Email destinataire pour les alertes produit (stock, etc.)
+MMIPRODUCT_ALERT_EMAIL_FROM = Email expéditeur pour les alertes produit (stock, etc.)
 
 #
 # About page

@@ -179,6 +179,42 @@ public function reserved_qty($fk_product)
 	return $qty;
 }
 
+public function stock_empty_alert($type='daily')
+{
+	global $conf;
+
+	$ts = time();
+
+	$email_from = !empty($conf->global->MMIPRODUCT_ALERT_EMAIL_FROM) ?$conf->global->MMIPRODUCT_ALERT_EMAIL_FROM :$conf->global->MAIN_MAIL_EMAIL_FROM;
+	$email_to = !empty($conf->global->MMIPRODUCT_ALERT_EMAIL_TO) ?$conf->global->MMIPRODUCT_ALERT_EMAIL_TO :'';
+	if (empty($email_to))
+		return;
+
+	// Produits à 0 avec un mouvement de stock de moins de 24h.
+	$sql = 'SELECT DISTINCT p.ref, p.label
+		FROM '.MAIN_DB_PREFIX.'product p
+		INNER JOIN '.MAIN_DB_PREFIX.'stock_mouvement sm ON sm.fk_product=p.rowid
+		WHERE p.stock<=0 AND DATE(sm.datem)>="'.date("Y-m-d", $ts-86400).'"';
+	//echo $sql;
+	$list = [];
+	$q = $this->db->query($sql);
+	foreach($q as $row) {
+		//trigger_error($row);
+		$list[] = $row['ref'].' - '.$row['label'];
+	}
+	if (!empty($list)) {
+		$email_subject = "Produits en rupture du jour";
+		$email_message = 'Les produits suivant sont en rupture :'."\r\n";
+		foreach($list as $i)
+			$email_message .= '- '.$i."\r\n";
+		
+		mail($email_to,
+			mb_detect_encoding($email_subject, 'ASCII', true) ?'=?utf-8?B?'.base64_encode($email_subject).'?=' :$email_subject,
+			$email_message,
+			'From: '.$email_from."\n".'Content-Type: text/plain; charset=UTF-8'."\n");
+	}
+}
+
 }
 
 MMIProduct_Stock::__init();
