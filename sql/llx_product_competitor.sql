@@ -8,11 +8,11 @@ CREATE TABLE `llxsq_product_competitor` (
   `tms` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `fk_product` int(11) NOT NULL,
   `fk_soc` int(11) NOT NULL,
-  `url` varchar(256) NOT NULL
+  `url` varchar(512) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ALTER TABLE `llxsq_product_competitor`
   ADD PRIMARY KEY (`rowid`),
-  ADD UNIQUE KEY `fk_product` (`fk_product`,`fk_soc`) USING BTREE,
+  ADD INDEX `fk_product` (`fk_product`,`fk_soc`) USING BTREE,
   ADD KEY `fk_soc` (`fk_soc`) USING BTREE;
 ALTER TABLE `llxsq_product_competitor`
   MODIFY `rowid` int(11) NOT NULL AUTO_INCREMENT;

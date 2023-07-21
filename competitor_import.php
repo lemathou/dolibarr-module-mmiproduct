@@ -4,14 +4,11 @@
 require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
-$sql = 'UPDATE `'.MAIN_DB_PREFIX.'societe`
-	SET `url`=NULL
-	WHERE`url`="www.dema.be"';
-$db->query($sql);
+$keywords_bl = ['www', 'en', 'et', 'services', 'materiaux', 'sarl', 'pour', 'de'];
 
 $s_list = [];
 $s_list_url = [];
-$sql = 'SELECT s.`rowid`, s.`nom`, s.`url`, s2.`competitor`
+$sql = 'SELECT s.`rowid`, s.`nom`, s.`url`, s2.rowid as extra_rowid, s2.`competitor`
 	FROM `'.MAIN_DB_PREFIX.'societe` s
 	LEFT JOIN `'.MAIN_DB_PREFIX.'societe_extrafields` s2
 		ON s2.fk_object=s.rowid
@@ -25,7 +22,7 @@ while($r=$q->fetch_assoc()) {
 	}
 	$se = preg_split('/[\.\/\- ]+/', $r['nom']);
 	foreach($se as $j=>$k) {
-		if (in_array($k, ['www', 'en', 'et', 'services', 'materiaux', 'sarl', 'pour', 'de']))
+		if (in_array($k, $keywords_bl))
 			unset($se[$j]);
 	}
 	$r['namee'] = $se;
@@ -38,6 +35,7 @@ $domains = [];
 $l = [];
 
 $n = 0;
+// @todo gérer l'upload
 $handle = fopen('../../../documents/competitor/competitor.csv','r');
 while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 	//process
@@ -51,6 +49,7 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 	$id = $data[0];
 	$ref = $data[1];
 
+	// @todo boucler tous les 3 à partir de data[2] : 2, 5, 8, etc.
 	$d1 = [
 		$data[2], // date
 		$data[3], // URL
@@ -80,10 +79,10 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 		$r[0] = !empty($r[0]) ?implode('-', array_reverse(explode('/', $r[0]))) :date('Y-m-d');
 		$r[3] = parse_url($r[1]);
 		$r[2] = preg_replace('/[^0-9\.]/', '', str_replace(',', '.', $r[2]));
+
 		if (!empty($r[3]['host'])) {
 			$domain = $r[3]['host'];
-			$s_id = NULL;
-			if(!in_array($domain, $domains)) {
+			if(empty($s_id = array_search($domain, $domains))) {
 				var_dump($domain);
 				if (isset($s_list_url[$domain])) {
 					var_dump($s_list_url[$domain]);
@@ -93,7 +92,7 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 					$de = preg_split('/[\.\-]/', $domain);
 					unset($de[count($de)-1]);
 					foreach($de as $j=>$k) {
-						if (in_array($k, ['www', 'en', 'et', 'services', 'materiaux', 'sarl', 'pour', 'de']))
+						if (in_array($k, $keywords_bl))
 							unset($de[$j]);
 					}
 					var_dump($de);
@@ -145,12 +144,24 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 						$s_id = $db->last_insert_id(MAIN_DB_PREFIX.'societe');
 						//var_dump($s_id); die();
 					}
+					// Extrafield to create
+					if (empty($ok) || empty($s_list[$s_id]['extra_rowid'])) {
+						$sql = 'INSERT INTO `'.MAIN_DB_PREFIX.'societe_extrafields`
+							(`fk_object`, `competitor`)
+							VALUES ("'.$s_id.'", 1)';
+						echo '<pre>'.$sql.'</pre>';
+						$db->query($sql);
+					}
+					elseif (empty($s_list[$s_id]['competitor'])) {
+						$sql = 'UPDATE `'.MAIN_DB_PREFIX.'societe_extrafields`
+							SET `competitor`=1
+							WHERE fk_object='.$s_id;
+						echo '<pre>'.$sql.'</pre>';
+						$db->query($sql);
+					}
 					//var_dump($de);
 				}
 				$domains[$s_id] = $domain;
-			}
-			else {
-				$s_id = array_search($domain, $domains);
 			}
 			
 			$sql = 'SELECT 1
@@ -158,12 +169,15 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 				WHERE url="'.$r[1].'"';
 			echo '<pre>'.$sql.'</pre>';
 			$q = $db->query($sql);
+			var_dump($q);
 			if (empty($q->fetch_row())) {
 				$sql = 'INSERT INTO `'.MAIN_DB_PREFIX.'product_competitor`
 					(`fk_product`, `fk_soc`, `url`)
 					VALUES ('.$id.', '.$s_id.', "'.$r[1].'")';
 				echo '<pre>'.$sql.'</pre>';
-				$db->query($sql);
+				$q = $db->query($sql);
+				//var_dump($db);
+				var_dump($q);
 				$url_id = $db->last_insert_id(MAIN_DB_PREFIX.'product_competitor');
 				var_dump($url_id);
 			}

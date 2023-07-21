@@ -73,9 +73,10 @@ if (!empty($del = GETPOST('pcp_delete', 'int'))) {
 // Concurrent
 $s_list = [];
 $sql = 'SELECT s2.*, s.*
-	FROM `'.MAIN_DB_PREFIX.'societe_extrafields` s2
-	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=s2.fk_object
-	WHERE s2.competitor=1';
+	FROM `'.MAIN_DB_PREFIX.'societe` AS s
+	LEFT JOIN `'.MAIN_DB_PREFIX.'societe_extrafields` s2
+		ON s2.fk_object=s.rowid
+	WHERE s.fournisseur=1 OR s2.competitor=1';
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$s_list[$r['rowid']] = $r;
@@ -83,22 +84,26 @@ while($r=$q->fetch_assoc())
 
 // URL Concurrent
 $pc_list = [];
+$pc_list_soc_url = [];
 $sql = 'SELECT pc.*, s.nom
 	FROM `'.MAIN_DB_PREFIX.'product_competitor` AS pc
-	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pc.fk_soc
-	WHERE pc.fk_product='.$object->id;
+	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s
+		ON s.rowid=pc.fk_soc
+	WHERE pc.fk_product='.$id.'
+	ORDER BY pc.rowid';
 $q = $db->query($sql);
-while($r=$q->fetch_assoc())
+while($r=$q->fetch_assoc()) {
 	$pc_list[$r['rowid']] = $r;
+	$pc_list_soc_url[$r['fk_soc']][] = $r['url'];
+}
 //var_dump($pc_list);
 
 // Prix concurrent
 $pcp_list = [];
-$sql = 'SELECT pcp.*, s.nom, pc.url
+$sql = 'SELECT pcp.*, s.nom, s.url s_url
 	FROM `'.MAIN_DB_PREFIX.'product_competitor_price` AS pcp
-	INNER JOIN `'.MAIN_DB_PREFIX.'product_competitor` AS pc ON pc.fk_soc=pcp.fk_soc AND pc.fk_product=pcp.fk_product
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pcp.fk_soc
-	WHERE pc.fk_product='.$object->id.'
+	WHERE pcp.fk_product='.$id.'
 	ORDER BY pcp.date DESC';
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
@@ -111,7 +116,7 @@ $pfp_list = [];
 $sql = 'SELECT pfp.*, s.nom
 	FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pfp.fk_soc
-	WHERE pfp.fk_product='.$object->id;
+	WHERE pfp.fk_product='.$id;
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$pfp_list[$r['rowid']] = $r;

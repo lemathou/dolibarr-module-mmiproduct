@@ -65,6 +65,10 @@ MyWidgetDescription = My widget description
 #
 # Champs supplémentaires
 #
+Extrafield_fk_soc_fournisseur = Fournisseur
+ExtrafieldToolTip_fk_soc_fournisseur = Fournisseur par défaut
+Extrafield_supplier_ref = Réf. Fourn.
+ExtrafieldToolTip_supplier_ref = Référence du Fournisseur par défaut
 Extrafield_compose = Composé (Box/Kit)
 ExtrafieldToolTip_compose = Champ calculé pour simplifier certaines requêtes
 Extrafield_public_price = Prix public conseillé

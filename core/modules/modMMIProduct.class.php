@@ -326,6 +326,9 @@ class modMMIProduct extends DolibarrModules
 		
 		// Products
 
+		// Default supplier and supplier ref
+		$extrafields->addExtraField('supplier_ref', $langs->trans('Extrafield_supplier_ref'), 'varchar', 10, 32, 'product', 0, 0, '', "", 1, '', 5, $langs->trans('ExtrafieldToolTip_supplier_ref'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('fk_soc_fournisseur', $langs->trans('Extrafield_fk_soc_fournisseur'), 'sellist', 10, '', 'product', 0, 0, '', "a:1:{s:7:\"options\";a:1:{s:32:\"societe:nom:rowid::fournisseur=1\";N;}}", 1, '', 5, $langs->trans('ExtrafieldToolTip_fk_soc_fournisseur'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Public price
 		$extrafields->addExtraField('public_price', $langs->trans('Extrafield_public_price'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_public_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_PUBLIC_PRICE');
 		// Composed product
