@@ -83,6 +83,17 @@ if (!empty($del = GETPOST('pcp_delete', 'int'))) {
 
 // DONNEES
 
+// Prix fournisseur
+$pfp_list = [];
+$sql = 'SELECT pfp.*, s.nom
+	FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
+	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pfp.fk_soc
+	WHERE pfp.fk_product='.$id;
+$q = $db->query($sql);
+while($r=$q->fetch_assoc())
+	$pfp_list[$r['rowid']] = $r;
+//var_dump($pcp_list);
+
 // Concurrent
 $s_list = [];
 $sql = 'SELECT s2.*, s.*

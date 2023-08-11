@@ -237,32 +237,46 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
-		<td>Prix concurrent :</td>
-		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_avg; ?>"><?php echo price_format($pcp_avg); ?></td>
+		<td>Prix concurrent médian :</td>
+		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_median; ?>"><?php echo price_format($pcp_median); ?></td>
 		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
 	</tr>
 	<tr>
 		<td>Marge concurrent (Coeff / Tx Marque) :</td>
-		<td class="price"><?php echo num_format($pcp_avg/$revient).' / '.percent_format(100*($pcp_avg-$revient)/$pcp_avg); ?></td>
+		<td class="price"><?php echo num_format($pcp_median/$revient).' / '.percent_format(100*($pcp_median-$revient)/$pcp_median); ?></td>
 	</tr>
 	<tr>
 		<td colspan="2">
 		<table colspan="2" border="1">
 		<tr>
-			<td colspan="3">Prix médian :</td>
-			<td align="right"><?php echo price_format($pcp_median); ?></td>
+			<th></th>
+			<th>Px vente</th>
+			<th>Coeff marge</th>
+			<th>Tx marque</th>
 		</tr>
 		<tr>
-			<td colspan="3">1er quartile :</td>
+			<td>1er quartile (25% du bas) :</td>
 			<td align="right"><?php echo price_format($pcp_quartile_25); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_quartile_25/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_25-$revient)/$pcp_quartile_25, 2).'%' :'-'; ?></td>
 		</tr>
 		<tr>
-			<td colspan="3">3ème quartile :</td>
+			<td>Prix médian (50% du bas) :</td>
+			<td align="right"><?php echo price_format($pcp_median); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_median/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_median-$revient)/$pcp_median, 2).'%' :'-'; ?></td>
+		</tr>
+		<tr>
+			<td>3ème quartile (75% du bas) :</td>
 			<td align="right"><?php echo price_format($pcp_quartile_75); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_quartile_75/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_75-$revient)/$pcp_quartile_75, 2).'%' :'-'; ?></td>
 		</tr>
 		<tr>
-			<td colspan="3">Prix moyen :</td>
+			<td>Prix moyen :</td>
 			<td align="right"><?php echo price_format($pcp_avg); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_avg/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_avg-$revient)/$pcp_avg, 2).'%' :'-'; ?></td>
 		</tr>
 	</table>
 	</td>
@@ -295,8 +309,8 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 				<tr>
 					<th>Type/Méthode</th>
 					<th>Px vente</th>
-					<th>Coeff Marge</th>
-					<th>Tx Marque</th>
+					<th>Coeff marge</th>
+					<th>Tx marque</th>
 				</tr>
 				</thead>
 				<tbody>

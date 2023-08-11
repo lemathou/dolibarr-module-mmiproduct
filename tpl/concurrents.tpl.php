@@ -165,7 +165,6 @@ foreach($pfp_list as $pfp) {
 	</thead>
 	<tbody>
 	<?php
-	var_dump($pcp_values_f);
 	foreach($pcp_list as $row) {
 		//var_dump($s_list[$row['fk_soc']]);
 		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
@@ -197,28 +196,39 @@ foreach($pfp_list as $pfp) {
 	<tfoot>
 	<tr>
 		<th style="visibility:hidden;"></th>
-		<th colspan="3">Prix médian :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php echo price_format($pcp_median); ?></th>
-	</tr>
-	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">1er quartile :</th>
+		<th colspan="3">1er quartile (25% du bas) :</th>
 		<th align="right">(1)</th>
 		<th align="right"><?php echo price_format($pcp_quartile_25); ?></th>
+		<th align="right"><?php echo $pachat ?round($pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round($pcp_quartile_25/$pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round(100*($pcp_quartile_25-$pachat)/$pcp_quartile_25, 2).'%' :'-'; ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
-		<th colspan="3">3ème quartile :</th>
+		<th colspan="3">Prix médian (50% du bas => au milieu) :</th>
+		<th align="right">(1)</th>
+		<th align="right"><?php echo price_format($pcp_median); ?></th>
+		<th align="right"><?php echo $pachat ?round($pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round($pcp_median/$pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round(100*($pcp_median-$pachat)/$pcp_median, 2).'%' :'-'; ?></th>
+	</tr>
+	<tr>
+		<th style="visibility:hidden;"></th>
+		<th colspan="3">3ème quartile (75% du bas) :</th>
 		<th align="right">(1)</th>
 		<th align="right"><?php echo price_format($pcp_quartile_75); ?></th>
+		<th align="right"><?php echo $pachat ?round($pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round($pcp_quartile_75/$pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round(100*($pcp_quartile_75-$pachat)/$pcp_quartile_75, 2).'%' :'-'; ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
 		<th colspan="3">Prix moyen :</th>
 		<th align="right">(1)</th>
 		<th align="right"><?php echo price_format($pcp_avg); ?></th>
-		<th align="right"><?php echo round($pachat, 2); ?></th>
+		<th align="right"><?php echo $pachat ?round($pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round($pcp_avg/$pachat, 2) :'-'; ?></th>
+		<th align="right"><?php echo $pachat ?round(100*($pcp_avg-$pachat)/$pcp_avg, 2).'%' :'-'; ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
