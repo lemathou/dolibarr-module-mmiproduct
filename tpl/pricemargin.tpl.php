@@ -110,11 +110,14 @@ function calc_price()
 	}
 
 	$('#calc_public_price .calc_price').text(num_round(public_price));
-	$('#calc_public_price .calc_margin').text(num_round(public_price/revient_price));
+	$('#calc_public_price .calc_margin_coeff').text(num_round(public_price/revient_price));
+	$('#calc_public_price .calc_margin_tx').text(num_round(100*(public_price-revient_price)/public_price)+' %');
 	$('#calc_concurrent .calc_price').text(num_round(concurrent_price));
-	$('#calc_concurrent .calc_margin').text(num_round(concurrent_price/revient_price));
+	$('#calc_concurrent .calc_margin_coeff').text(num_round(concurrent_price/revient_price));
+	$('#calc_concurrent .calc_margin_tx').text(num_round(100*(concurrent_price-revient_price)/concurrent_price)+' %');
 	$('#calc_category_margin .calc_price').text(num_round(revient_price*categ_margin_coeff));
-	$('#calc_category_margin .calc_margin').text(num_round(revient_price*categ_margin_coeff/revient_price));
+	$('#calc_category_margin .calc_margin_coeff').text(num_round(categ_margin_coeff));
+	$('#calc_category_margin .calc_margin_tx').text(num_round(100*(categ_margin_coeff-1)/categ_margin_coeff)+' %');
 
 	$('#sell_price input').val(num_round(sell_price)).change();
 }
@@ -284,6 +287,38 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
+		<td colspan="2">
+			<table border="1">
+				<thead>
+				<tr>
+					<th>Type/Méthode</th>
+					<th>Prix de vente</th>
+					<th>Coeff de Marge</th>
+					<th>Taux de Marque</th>
+				</tr>
+				</thead>
+				<tbody>
+				<?php foreach($calc_type_list as $i=>$j) {
+					echo '<tr id="calc_'.$i.'">';
+					echo '<td>'.$j['label'].'</td>';
+					echo '<td class="calc_price price"></td>';
+					echo '<td class="calc_margin_coeff price"></td>';
+					echo '<td class="calc_margin_tx price"></td>';
+					echo '</tr>';
+				} ?>
+				</tbody>
+			</table>
+		</td>
+		<td>
+			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
+		</td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
+	</tr>
+	<tr>
 		<td>Règle de calcul de marge :</td>
 		<td class="price"><select id="calc_type" name="margin_calc_type">
 			<option value="">---</option>
@@ -299,32 +334,6 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<tr>
 		<td>Marge effective :</td>
 		<td class="price" id="sell_margin" data-value=""></td>
-	</tr>
-	</tbody>
-	<tfoot>
-	<tr>
-		<td>Synthèse :</td>
-		<td colspan="2">
-			<table border="1">
-				<thead>
-				<tr>
-					<td>Type/Méthode</td>
-					<td>Prix de vente</td>
-					<td>Coeff de Marge</td>
-				</tr>
-				</thead>
-				<tbody>
-				<?php foreach($calc_type_list as $i=>$j) {
-					echo '<tr id="calc_'.$i.'">';
-					echo '<td>'.$j['label'].'</td>';
-					echo '<td class="calc_price price"></td>';
-					echo '<td class="calc_margin price"></td>';
-					echo '</tr>';
-				} ?>
-				</tbody>
-			</table>
-			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
-		</td>
 	</tr>
 	</tbody>
 	<tfoot>
