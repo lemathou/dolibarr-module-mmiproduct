@@ -14,7 +14,7 @@ $date = GETPOST('date', 'date');
 if (!preg_match('/[0-9-\/]*/', $date))
 	$date = $datenow;
 $qte = GETPOST('qte', 'int');
-$price = GETPOST('price', 'int');
+$price = str_replace(',', '.', GETPOST('price', 'float'));
 
 $pc_edit = GETPOST('pc_edit', 'int');
 $pcp_edit = GETPOST('pcp_edit', 'int');
@@ -89,7 +89,8 @@ $sql = 'SELECT s2.*, s.*
 	FROM `'.MAIN_DB_PREFIX.'societe` AS s
 	LEFT JOIN `'.MAIN_DB_PREFIX.'societe_extrafields` s2
 		ON s2.fk_object=s.rowid
-	WHERE s.fournisseur=1 OR s2.competitor=1';
+	WHERE s.fournisseur=1 OR s2.competitor=1
+	ORDER BY s.nom';
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$s_list[$r['rowid']] = $r;

@@ -2,9 +2,19 @@
 $url_len_disp_limit = 50;
 ?>
 <div>
+<script>
+$(document).ready(function() {
+	$('form table tbody input[name=price]').change(function(){
+		$('input[name=price_ttc]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())*1.2);
+	});
+	$('form table tbody input[name=price_ttc]').change(function(){
+		$('input[name=price]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())/1.2);
+	});
+});
+</script>
 <h3>Historique des prix de la concurrence</h3>
 
-<p>Tous les prix sont HT.</p>
+<p>Tous les prix sont enregistrés en HT. Un taux de TVA de 20% utilisé pour la conversion des prix TTC.</p>
 
 <div style="float: right;margin: 0 10px;">
 	<p><a href="?id=<?php echo $id; ?>&action=pc_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter une url concurrent</a></p>
@@ -31,6 +41,10 @@ $url_len_disp_limit = 50;
 	<tr>
 		<td><label for="price"><?php echo $langs->trans('Price'); ?> HT</label></td>
 		<td><input name="price" value="" /></td>
+	</tr>
+	<tr>
+		<td><label for="price_ttc"><?php echo $langs->trans('Price'); ?> TTC</label></td>
+		<td><input name="price_ttc" value="" /></td>
 	</tr>
 	<tr>
 		<td></td>
@@ -60,6 +74,10 @@ $url_len_disp_limit = 50;
 		<td><input name="price" value="<?php echo $pcp['price']; ?>" /></td>
 	</tr>
 	<tr>
+		<td><label for="price_ttc"><?php echo $langs->trans('Price'); ?> TTC</label></td>
+		<td><input name="price_ttc" value="<?php echo $pcp['price']*1.2; ?>" /></td>
+	</tr>
+	<tr>
 		<td></td>
 		<td><input type="submit" class="button button-save" name="" value="Modifier le prix concurrent" /></td>
 	</tr>
@@ -74,7 +92,7 @@ $url_len_disp_limit = 50;
 			<select name="fk_soc"><option value="">--</option><?php foreach ($s_list as $r) {
 				echo '<option value="'.$r['rowid'].'">'.$r['nom'].'</option>';
 			} ?></select>
-			<label for="create_soc">Nouveau compétiteur (créer)</label> <input type="checkbox" name="create_soc" id="create_soc" value="1" />
+			<label for="create_soc">Nouveau compétiteur (créé avec le nom de domaine)</label> <input type="checkbox" name="create_soc" id="create_soc" value="1" />
 		</td>
 	</tr>
 	<tr>
@@ -92,6 +110,10 @@ $url_len_disp_limit = 50;
 	<tr>
 		<td><label for="price"><?php echo $langs->trans('Price'); ?> HT</label></td>
 		<td><input name="price" value="" /></td>
+	</tr>
+	<tr>
+		<td><label for="price_ttc"><?php echo $langs->trans('Price'); ?> TTC</label></td>
+		<td><input name="price_ttc" value="" /></td>
 	</tr>
 	<tr>
 		<td></td>

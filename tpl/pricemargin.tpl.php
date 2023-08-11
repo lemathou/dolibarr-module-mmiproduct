@@ -76,6 +76,18 @@ $(document).ready(function() {
 	$('#categ select').change();
 });
 
+/**
+ * To avoid problems with MacOS...
+ */
+function num_parse(number_string)
+{
+	if (typeof number_string === 'string')
+		return parseFloat(number_string.replace(',', '.'))
+	if (isNaN(number_string))
+		return 0;
+	return number_string;
+}
+
 function num_round(number)
 {
 	console.log(number);
@@ -279,17 +291,30 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 			echo '<option value="'.$i.'"'.($margin_calc_type==$i ?' selected' :'').'>'.$j['label'].'</option>';
 			?>
 		</select></td>
-		<td rowspan="3">'
+	</tr>
+	<tr>
+		<td>Prix de vente :</td>
+		<td class="price" id="sell_price" data-value=""><input type="text" name="sell_price" value="" size="10" /></td>
+	</tr>
+	<tr>
+		<td>Marge effective :</td>
+		<td class="price" id="sell_margin" data-value=""></td>
+	</tr>
+	</tbody>
+	<tfoot>
+	<tr>
+		<td>Synthèse :</td>
+		<td colspan="2">
 			<table border="1">
 				<thead>
 				<tr>
 					<td>Type/Méthode</td>
 					<td>Prix de vente</td>
-					<td>Marge</td>
+					<td>Coeff de Marge</td>
 				</tr>
 				</thead>
 				<tbody>
-				<?php foreach($calc_type_list as $i=>$j) if ($i != 'sell_price') {
+				<?php foreach($calc_type_list as $i=>$j) {
 					echo '<tr id="calc_'.$i.'">';
 					echo '<td>'.$j['label'].'</td>';
 					echo '<td class="calc_price price"></td>';
@@ -300,14 +325,6 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 			</table>
 			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
 		</td>
-	</tr>
-	<tr>
-		<td>Prix de vente :</td>
-		<td class="price" id="sell_price" data-value=""><input type="text" name="sell_price" value="" size="10" /></td>
-	</tr>
-	<tr>
-		<td>Marge effective :</td>
-		<td class="price" id="sell_margin" data-value=""></td>
 	</tr>
 	</tbody>
 	<tfoot>
