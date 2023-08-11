@@ -4,6 +4,8 @@ $url_len_disp_limit = 50;
 <div>
 <h3>Historique des prix de la concurrence</h3>
 
+<p>Tous les prix sont HT.</p>
+
 <div style="float: right;margin: 0 10px;">
 	<p><a href="?id=<?php echo $id; ?>&action=pc_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter une url concurrent</a></p>
 	<p><a href="?id=<?php echo $id; ?>&action=pcp_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter un prix</a></p>
@@ -27,12 +29,12 @@ $url_len_disp_limit = 50;
 		<td><input name="qte" value="1" /></td>
 	</tr>
 	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
+		<td><label for="price"><?php echo $langs->trans('Price'); ?> HT</label></td>
 		<td><input name="price" value="" /></td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><input type="submit" name="" value="Ajouter un prix concurrent" /></td>
+		<td><input type="submit" class="button button-save" name="" value="Ajouter un prix concurrent" /></td>
 	</tr>
 </table></form>
 <hr />
@@ -54,12 +56,12 @@ $url_len_disp_limit = 50;
 		<td><input name="qte" value="<?php echo $pcp['qte']; ?>" /></td>
 	</tr>
 	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
+		<td><label for="price"><?php echo $langs->trans('Price'); ?> HT</label></td>
 		<td><input name="price" value="<?php echo $pcp['price']; ?>" /></td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><input type="submit" name="" value="Modifier le prix concurrent" /></td>
+		<td><input type="submit" class="button button-save" name="" value="Modifier le prix concurrent" /></td>
 	</tr>
 </table></form>
 <hr />
@@ -68,9 +70,12 @@ $url_len_disp_limit = 50;
 <table>
 	<tr>
 		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
-		<td><select name="fk_soc"><option value="">--</option><?php foreach ($s_list as $r) {
-			echo '<option value="'.$r['rowid'].'">'.$r['nom'].'</option>';
-		} ?></select></td>
+		<td>
+			<select name="fk_soc"><option value="">--</option><?php foreach ($s_list as $r) {
+				echo '<option value="'.$r['rowid'].'">'.$r['nom'].'</option>';
+			} ?></select>
+			<label for="create_soc">Nouveau compétiteur (créer)</label> <input type="checkbox" name="create_soc" id="create_soc" value="1" />
+		</td>
 	</tr>
 	<tr>
 		<td><label for="url"><?php echo $langs->trans('URL'); ?></label></td>
@@ -85,12 +90,12 @@ $url_len_disp_limit = 50;
 		<td><input name="qte" value="1" /></td>
 	</tr>
 	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
+		<td><label for="price"><?php echo $langs->trans('Price'); ?> HT</label></td>
 		<td><input name="price" value="" /></td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><input type="submit" name="" value="Ajouter l'URL du concurrent (et prix si renseigné)" /></td>
+		<td><input type="submit" class="button button-save" name="" value="Ajouter l'URL du concurrent (et prix si renseigné)" /></td>
 	</tr>
 </table></form>
 <hr />
@@ -109,7 +114,7 @@ $url_len_disp_limit = 50;
 	</tr>
 	<tr>
 		<td></td>
-		<td><input type="submit" name="" value="Modifier le concurrent" /></td>
+		<td><input type="submit" class="button button-save" name="" value="Modifier le concurrent" /></td>
 	</tr>
 </table></form>
 <hr />

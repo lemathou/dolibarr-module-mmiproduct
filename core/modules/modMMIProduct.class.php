@@ -179,6 +179,7 @@ class modMMIProduct extends DolibarrModules
 		// Array to add new pages in new tabs
 		$this->tabs = array();
 		$this->tabs[] = array('data'=>'product:+pricemargin:Calcul Prix et Marge:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/pricemargin.php?id=__ID__');
+		$this->tabs[] = array('data'=>'product:+concurrents:Prix concurrents:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/concurrents.php?id=__ID__');
 		// Example:
 		// $this->tabs[] = array('data'=>'objecttype:+tabname1:Title1:mylangfile@mmiproduct:$user->rights->mmiproduct->read:/mmiproduct/mynewtab1.php?id=__ID__');  					// To add a new tab identified by code tabname1
 		// $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@mmiproduct:$user->rights->othermodule->read:/mmiproduct/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.

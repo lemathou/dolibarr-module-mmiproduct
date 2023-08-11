@@ -8,6 +8,7 @@
 }
 </style>
 <script>
+var fk_product = <?php echo $object->id; ?>;
 var calc_type;
 var revient_price;
 var public_price;
@@ -36,6 +37,10 @@ $(document).ready(function() {
 	$('#categ select').change(function() {
 		categ_margin_coeff = parseFloat($('option:selected', this).data('value'));
 		$('#categ_margin_coeff').text(num_round(categ_margin_coeff));
+
+		// Lien
+		$('#categ_update_link').attr('href', '/categories/viewcat.php?id='+$(this).val()+'&type=0');
+
 		if (calc_type=='category_margin')
 			calc_price();
 	});
@@ -61,11 +66,15 @@ $(document).ready(function() {
 		revient_price = fourn_unitprice_remise + fourn_shipping_price;
 		$('#revient_price').data('value', revient_price).text(num_round(revient_price));
 
+		// Lien
+		$('#fourn_price_update_link').attr('href', '/product/fournisseurs.php?id='+fk_product+'&socid='+$('option:selected', this).data('fk_soc')+'&action=update_price&rowid='+$(this).val());
+
 		calc_price();
 	});
 
 	// Actions
 	$('#fourn select').change();
+	$('#categ select').change();
 });
 
 function num_round(number)
@@ -162,10 +171,11 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</thead>
 	<tbody>
 	<tr>
-		<td>Prix d'achat fournisseur utilisé :<br />(le plus bas par défaut)</td>
+		<td>Prix d'achat fournisseur utilisé :</td>
 		<td class="price" id="fourn"><select name="product_fourn_price_id"><?php foreach($product_fourn_list as $pf)
-			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'">'.($pf->fourn_name.' - '.price_format($pf->fourn_unitprice)).'</option>';
+			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.price_format($pf->fourn_unitprice)).'</option>';
 		?></select></td>
+		<td><a href="javascript:;" id="fourn_price_update_link">Modifier le prix</a></td>
 	</tr>
 	<tr>
 		<td>Prix public fournisseur :</td>
@@ -196,7 +206,7 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<tr>
 		<td>Prix concurrent :</td>
 		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_avg; ?>"><?php echo price_format($pcp_avg); ?></td>
-		<td id="is_concurrent" style="display: none;">On a un prix concurrent</td>
+		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
 	</tr>
 	<tr>
 		<td>Marge concurrent (Coeff / Tx Marque) :</td>
@@ -221,21 +231,21 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		foreach($categ_list as $cat)
 			echo '<option value="'.$cat['rowid'].'" data-value="'.$cat['margin_coeff'].'"'.($categ && $categ['rowid']==$cat['rowid'] ?' selected' :'').'>'.$cat['label'].'</option>';
 		?></select></td>
-		<td>Faire un tableau récap pour mieux comparer ?</td>
+		<td><a href="javascript:;" id="categ_update_link">Modifier le taux de marge de la catégorie</a></td>
 	</tr>
-	<?php if(!empty($categ['margin_coeff'])) { ?>
 	<tr>
 		<td>Taux de marge catégorie :</td>
-		<td class="price" id="categ_margin_coeff"><?php echo num_format($categ['margin_coeff']); ?></td>
+		<td class="price" id="categ_margin_coeff"></td>
 		<td id="is_categ_margin_coeff" style="display: none;">=> On a un taux de marge catégorie</td>
 	</tr>
 	<tr>
 		<td></td>
 		<td></td>
-		<td>Si on supprime une catégorie ou modifie le taux d'une catégorie ou modifie les carégories du produit,<br />
+		<td><a href="/product/card.php?action=edit&id=<?php echo $object->id; ?>">Modifier les catégories du produit</a><br />
+		Faire un tableau récap pour mieux comparer ?<br />
+		Si on supprime une catégorie ou modifie le taux d'une catégorie ou modifie les carégories du produit,<br />
 		il faut répercuter immédiatement sur le prix de vente des produits concernés.</td>
 	</tr>
-	<?php } ?>
 	</tbody>
 	<tbody>
 	<tr>
@@ -276,16 +286,13 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<tfoot>
 	<tr>
 		<td></td>
-		<td><input type="submit" value="Mettre à jour choix et valeur" /></td>
+		<td class="price"><input type="submit" class="button button-save" value="Mettre à jour" /></td>
 	</tr>
 	</tfoot>
 </table>
 </form>
 </div>
 
-<hr />
-
-<?php require_once 'concurrents.tpl.php'; ?>
 <hr />
 
 <h3>Utilisation du bon prix d'achat</h3>
