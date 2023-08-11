@@ -165,6 +165,7 @@ foreach($pfp_list as $pfp) {
 	</thead>
 	<tbody>
 	<?php
+	var_dump($pcp_values_f);
 	foreach($pcp_list as $row) {
 		//var_dump($s_list[$row['fk_soc']]);
 		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
@@ -189,6 +190,8 @@ foreach($pfp_list as $pfp) {
 		echo '</tr>';
 	}
 	//$a = array_filter($competitor_price_list);
+
+
 	?>
 	</tbody>
 	<tfoot>
@@ -196,25 +199,25 @@ foreach($pfp_list as $pfp) {
 		<th style="visibility:hidden;"></th>
 		<th colspan="3">Prix médian :</th>
 		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<th align="right"><?php echo price_format($pcp_median); ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
 		<th colspan="3">1er quartile :</th>
 		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<th align="right"><?php echo price_format($pcp_quartile_25); ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
 		<th colspan="3">3ème quartile :</th>
 		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<th align="right"><?php echo price_format($pcp_quartile_75); ?></th>
 	</tr>
 	<tr>
 		<th style="visibility:hidden;"></th>
 		<th colspan="3">Prix moyen :</th>
 		<th align="right">(1)</th>
-		<th align="right"><?php echo $pcp_avg; ?></th>
+		<th align="right"><?php echo price_format($pcp_avg); ?></th>
 		<th align="right"><?php echo round($pachat, 2); ?></th>
 	</tr>
 	<tr>

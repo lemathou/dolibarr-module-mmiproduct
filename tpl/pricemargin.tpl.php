@@ -140,21 +140,6 @@ $calc_type_list = [
 ];
 $margin_calc_type = $object->array_options['options_margin_calc_type'];
 
-if (!function_exists('price_format')) {
-	function num_format($number, $round=2)
-	{
-		return number_format(round($number, $round), $round, ',', ' ');
-	}
-	function price_format($price, $round=2)
-	{
-		return num_format($price, $round).' €';
-	}
-	function percent_format($percent, $round=2)
-	{
-		return num_format($percent, $round).' %';
-	}
-}
-
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
 $product_fourn_static = new ProductFournisseur($db);
 $product_fourn_list = $product_fourn_static->list_product_fournisseur_price($object->id, '', '');
@@ -226,28 +211,6 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
-		<td>Prix concurrent :</td>
-		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_avg; ?>"><?php echo price_format($pcp_avg); ?></td>
-		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
-	</tr>
-	<tr>
-		<td>Marge concurrent (Coeff / Tx Marque) :</td>
-		<td class="price"><?php echo num_format($pcp_avg/$revient).' / '.percent_format(100*($pcp_avg-$revient)/$pcp_avg); ?></td>
-		<td>Afficher plus de détails au survol ? dans un panneau sur la droite ?<br />Proposer le choix de la méthode de calcul ? Médian le plus à jour ? Moyen ? etc.</td>
-	</tr>
-	<tr>
-		<td></td>
-		<td></td>
-		<td>Si on ajoute, supprime, modifie un prix concurrent,<br />
-		ou même si un jour passe et qu'un ancien prix n'est plus à prendre en compte dans le calcul du prix concurrent,<br />
-		il faut répercuter immédiatement sur le prix de vente des produits concernés.</td>
-	</tr>
-	</tbody>
-	<tbody>
-	<tr>
-		<td colspan="3"><hr /></td>
-	</tr>
-	<tr>
 		<td>Catégorie :</td>
 		<td class="price" id="categ"><select name="fk_categorie_default"><?php
 		foreach($categ_list as $cat)
@@ -274,6 +237,45 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
+		<td>Prix concurrent :</td>
+		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_avg; ?>"><?php echo price_format($pcp_avg); ?></td>
+		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
+	</tr>
+	<tr>
+		<td>Marge concurrent (Coeff / Tx Marque) :</td>
+		<td class="price"><?php echo num_format($pcp_avg/$revient).' / '.percent_format(100*($pcp_avg-$revient)/$pcp_avg); ?></td>
+	</tr>
+	<tr>
+		<td colspan="2">
+		<table colspan="2" border="1">
+		<tr>
+			<td colspan="3">Prix médian :</td>
+			<td align="right"><?php echo price_format($pcp_median); ?></td>
+		</tr>
+		<tr>
+			<td colspan="3">1er quartile :</td>
+			<td align="right"><?php echo price_format($pcp_quartile_25); ?></td>
+		</tr>
+		<tr>
+			<td colspan="3">3ème quartile :</td>
+			<td align="right"><?php echo price_format($pcp_quartile_75); ?></td>
+		</tr>
+		<tr>
+			<td colspan="3">Prix moyen :</td>
+			<td align="right"><?php echo price_format($pcp_avg); ?></td>
+		</tr>
+	</table>
+	</td>
+		<td>Si on ajoute, supprime, modifie un prix concurrent,<br />
+		ou même si un jour passe et qu'un ancien prix n'est plus à prendre en compte dans le calcul du prix concurrent,<br />
+		il faut répercuter immédiatement sur le prix de vente des produits concernés.</td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
+	</tr>
+	<tr>
 		<td>Prix de vente actuel :</td>
 		<td class="price"><?php echo price_format($object->price); ?></td>
 	</tr>
@@ -292,9 +294,9 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 				<thead>
 				<tr>
 					<th>Type/Méthode</th>
-					<th>Prix de vente</th>
-					<th>Coeff de Marge</th>
-					<th>Taux de Marque</th>
+					<th>Px vente</th>
+					<th>Coeff Marge</th>
+					<th>Tx Marque</th>
 				</tr>
 				</thead>
 				<tbody>

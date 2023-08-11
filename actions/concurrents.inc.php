@@ -115,6 +115,9 @@ while($r=$q->fetch_assoc()) {
 // Prix concurrent
 $pcp_list = [];
 $pcp_values = [];
+$pcp_values_f = [];
+$pcp_value_recent = 0;
+$date_min = date('Y-m-d', time()-86400*365);
 $sql = 'SELECT pcp.*, s.nom, s.url s_url
 	FROM `'.MAIN_DB_PREFIX.'product_competitor_price` AS pcp
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pcp.fk_soc
@@ -124,7 +127,17 @@ $q = $db->query($sql);
 while($r=$q->fetch_assoc()) {
 	$pcp_list[$r['rowid']] = $r;
 	$pcp_values[] = $r['price'];
+	if (empty($pcp_value_recent))
+		$pcp_value_recent = $r['price'];
+	if(!isset($pcp_values_f[$r['fk_soc']]) && $r['date']>=$date_min)
+		$pcp_values_f[$r['fk_soc']] = $r['price'];
 }
 //var_dump($pcp_list);
 
-$pcp_avg = count($pcp_values)>0 ?round(array_sum($pcp_values)/count($pcp_values), 2) :'-';
+$pcp_f_nb = count($pcp_values_f);
+$pcp_values_ok = $pcp_values_f;
+sort($pcp_values_ok);
+$pcp_avg = $pcp_f_nb>0 ?round(array_sum($pcp_values_f)/$pcp_f_nb, 2) :'-';
+$pcp_median = Median($pcp_values_ok);
+$pcp_quartile_25 = Quartile_25($pcp_values_ok);
+$pcp_quartile_75 = Quartile_75($pcp_values_ok);
