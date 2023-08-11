@@ -41,8 +41,7 @@ $(document).ready(function() {
 		// Lien
 		$('#categ_update_link').attr('href', '/categories/viewcat.php?id='+$(this).val()+'&type=0');
 
-		if (calc_type=='category_margin')
-			calc_price();
+		calc_price();
 	});
 	$('#fourn select').change(function() {
 		// public
@@ -97,6 +96,14 @@ function calc_price()
 	else {
 		//sell_price = 0;
 	}
+
+	$('#calc_public_price .calc_price').text(num_round(public_price));
+	$('#calc_public_price .calc_margin').text(num_round(public_price/revient_price));
+	$('#calc_concurrent .calc_price').text(num_round(concurrent_price));
+	$('#calc_concurrent .calc_margin').text(num_round(concurrent_price/revient_price));
+	$('#calc_category_margin .calc_price').text(num_round(revient_price*categ_margin_coeff));
+	$('#calc_category_margin .calc_margin').text(num_round(revient_price*categ_margin_coeff/revient_price));
+
 	$('#sell_price input').val(num_round(sell_price)).change();
 }
 
@@ -272,7 +279,27 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 			echo '<option value="'.$i.'"'.($margin_calc_type==$i ?' selected' :'').'>'.$j['label'].'</option>';
 			?>
 		</select></td>
-		<td>Faire un tableau récap pour mieux comparer ?</td>
+		<td rowspan="3">'
+			<table border="1">
+				<thead>
+				<tr>
+					<td>Type/Méthode</td>
+					<td>Prix de vente</td>
+					<td>Marge</td>
+				</tr>
+				</thead>
+				<tbody>
+				<?php foreach($calc_type_list as $i=>$j) if ($i != 'sell_price') {
+					echo '<tr id="calc_'.$i.'">';
+					echo '<td>'.$j['label'].'</td>';
+					echo '<td class="calc_price price"></td>';
+					echo '<td class="calc_margin price"></td>';
+					echo '</tr>';
+				} ?>
+				</tbody>
+			</table>
+			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
+		</td>
 	</tr>
 	<tr>
 		<td>Prix de vente :</td>
