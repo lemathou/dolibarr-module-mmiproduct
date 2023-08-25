@@ -165,7 +165,7 @@ $sql = 'SELECT s2.*, s.*, COUNT(DISTINCT p.rowid) product_nb
 	LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	WHERE s.fournisseur=1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND  p2.p_decli_disabled IS NULL))' :'').'
 	GROUP BY s.rowid
 	ORDER BY s.nom';
 $q = $db->query($sql);
@@ -181,7 +181,7 @@ $sql = 'SELECT DISTINCT ps.fk_soc, p.rowid, p.seuil_stock_alerte, p.desiredstock
 	LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	WHERE s.fournisseur=1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND  p2.p_decli_disabled IS NULL))' :'').'
 	GROUP BY p.rowid';
 $q = $db->query($sql);
 while($row=$q->fetch_assoc()) {
@@ -196,7 +196,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cd.qty > 0, cd.qty, 0)) cmd_qty
 	INNER JOIN '.MAIN_DB_PREFIX.'commande c
 	INNER JOIN '.MAIN_DB_PREFIX.'commandedet cd ON cd.fk_commande=c.rowid AND cd.fk_product=p.rowid
 	WHERE 1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
@@ -213,7 +213,7 @@ $sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
 	INNER JOIN '.MAIN_DB_PREFIX.'commande_extrafields c2 ON c2.fk_object=c.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commandedet cd ON cd.fk_commande=c.rowid AND cd.fk_product=p.rowid
 	WHERE 1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
 		AND (c2.rowid IS NULL OR c2.expe_ok=1)
 	GROUP BY ps.fk_soc';
@@ -232,7 +232,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cdd.qty > 0, IF(cdd.qty>=cd.qty, cd.qt
 	INNER JOIN '.MAIN_DB_PREFIX.'commandedet cd ON cd.fk_commande=c.rowid AND cd.fk_product=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'expeditiondet cdd ON cdd.fk_origin_line=cd.rowid
 	WHERE 1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
@@ -249,7 +249,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scd.qty > 0, scd.qty, 0)) fcmd_qty
 	INNER JOIN '.MAIN_DB_PREFIX.'commande_fournisseur sc ON sc.fk_soc=ps.fk_soc
 	INNER JOIN '.MAIN_DB_PREFIX.'commande_fournisseurdet scd ON scd.fk_commande=sc.rowid AND scd.fk_product=p.rowid
 	WHERE 1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
@@ -282,7 +282,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scdd.qty > 0, IF(scdd.qty>=scd.qty, sc
 	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseurdet scd ON scd.fk_commande=sc.rowid AND scd.fk_product=p.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseur_dispatch scdd ON scdd.fk_commandefourndet=scd.rowid
 	WHERE 1
-		'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
@@ -316,7 +316,7 @@ if (false) {
 		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 			AND (p.seuil_stock_alerte IS NOT NULL AND p.stock <= 0)
 			AND (p.desiredstock=0 OR p.desiredstock>0)
 		GROUP BY s.rowid';
@@ -332,7 +332,7 @@ if (false) {
 		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 			AND (p.seuil_stock_alerte IS NOT NULL AND p.stock > 0 AND p.stock <= p.seuil_stock_alerte)
 			AND (p.desiredstock=0 OR p.desiredstock>0)
 		GROUP BY s.rowid';
@@ -348,7 +348,7 @@ if (false) {
 		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR p2.p_active=1)' :'').'
+			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 			AND (p.seuil_stock_alerte IS NOT NULL AND p.desiredstock>0)
 			AND (p.stock > p.seuil_stock_alerte AND p.stock < (p.desiredstock+p.seuil_stock_alerte)/2)
 		GROUP BY s.rowid';
