@@ -118,6 +118,7 @@ class modMMIProduct extends DolibarrModules
 			),
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			'hooks' => array(
+				'ordercard',
 				'productcard',
 				'stockreplenishlist',
 				//   'data' => array(
@@ -207,30 +208,27 @@ class modMMIProduct extends DolibarrModules
 		// 'user'             to add a tab in user view
 
 		// Dictionaries
-		$this->dictionaries = array();
-		/* Example:
 		$this->dictionaries=array(
 			'langs'=>'mmiproduct@mmiproduct',
 			// List of tables we want to see into dictonnary editor
-			'tabname'=>array(MAIN_DB_PREFIX."table1", MAIN_DB_PREFIX."table2", MAIN_DB_PREFIX."table3"),
+			'tabname'=>array(MAIN_DB_PREFIX."c_cat_universe"),
 			// Label of tables
-			'tablib'=>array("Table1", "Table2", "Table3"),
+			'tablib'=>array('Universe catregory'),
 			// Request to select fields
-			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),
+			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active, f.pos FROM '.MAIN_DB_PREFIX.'c_cat_universe as f'),
 			// Sort order
-			'tabsqlsort'=>array("label ASC", "label ASC", "label ASC"),
+			'tabsqlsort'=>array('pos ASC'),
 			// List of fields (result of select to show dictionary)
-			'tabfield'=>array("code,label", "code,label", "code,label"),
+			'tabfield'=>array("code,label,pos"),
 			// List of fields (list of fields to edit a record)
-			'tabfieldvalue'=>array("code,label", "code,label", "code,label"),
+			'tabfieldvalue'=>array("code,label,pos"),
 			// List of fields (list of fields for insert)
-			'tabfieldinsert'=>array("code,label", "code,label", "code,label"),
+			'tabfieldinsert'=>array("code,label,pos"),
 			// Name of columns with primary key (try to always name it 'rowid')
-			'tabrowid'=>array("rowid", "rowid", "rowid"),
+			'tabrowid'=>array('rowid'),
 			// Condition to show each dictionary
-			'tabcond'=>array($conf->mmiproduct->enabled, $conf->mmiproduct->enabled, $conf->mmiproduct->enabled)
+			'tabcond'=>array($conf->mmiproduct->enabled)
 		);
-		*/
 
 		// Boxes/Widgets
 		// Add here list of php file(s) stored in mmiproduct/core/boxes that contains a class to show a widget.
@@ -328,6 +326,7 @@ class modMMIProduct extends DolibarrModules
 		// Category
 
 		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 10, "10,5", 'categorie', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+        $extrafields->addExtraField('fk_cat_universe', $langs->trans('Extrafield_cat_universe'), 'sellist', 100, '', 'categorie', 0, 0, '', "a:1:{s:7:\"options\";a:1:{s:35:\"cat_universe:name:fk_cat_universe::\";N;}}", 1, '', 5, $langs->trans('ExtrafieldToolTip_cat_universe'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Products
 
