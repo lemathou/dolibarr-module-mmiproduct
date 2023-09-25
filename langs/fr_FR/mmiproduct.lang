@@ -98,7 +98,6 @@ Extrafield_margin_coeff = Coeff. de marge
 Extrafield_margin_calc_type = Méthode de calcul de la marge
 Extrafield_fk_categorie_default = Catégorie par défaut
 ExtrafieldTooltip_fk_categorie_default = Sert notamment au calcul de prix de vente selon le taux de marge de la catégorie principale
-Extrafield_cat_universe = Rayon/Univers
 
 #
 # Global

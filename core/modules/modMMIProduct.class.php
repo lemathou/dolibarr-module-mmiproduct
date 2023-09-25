@@ -209,25 +209,6 @@ class modMMIProduct extends DolibarrModules
 
 		// Dictionaries
 		$this->dictionaries=array(
-			'langs'=>'mmiproduct@mmiproduct',
-			// List of tables we want to see into dictonnary editor
-			'tabname'=>array(MAIN_DB_PREFIX."c_cat_universe"),
-			// Label of tables
-			'tablib'=>array('Universe catregory'),
-			// Request to select fields
-			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active, f.pos FROM '.MAIN_DB_PREFIX.'c_cat_universe as f'),
-			// Sort order
-			'tabsqlsort'=>array('pos ASC'),
-			// List of fields (result of select to show dictionary)
-			'tabfield'=>array("code,label,pos"),
-			// List of fields (list of fields to edit a record)
-			'tabfieldvalue'=>array("code,label,pos"),
-			// List of fields (list of fields for insert)
-			'tabfieldinsert'=>array("code,label,pos"),
-			// Name of columns with primary key (try to always name it 'rowid')
-			'tabrowid'=>array('rowid'),
-			// Condition to show each dictionary
-			'tabcond'=>array($conf->mmiproduct->enabled)
 		);
 
 		// Boxes/Widgets
@@ -326,7 +307,6 @@ class modMMIProduct extends DolibarrModules
 		// Category
 
 		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 10, "10,5", 'categorie', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
-        $extrafields->addExtraField('fk_cat_universe', $langs->trans('Extrafield_cat_universe'), 'sellist', 100, '', 'categorie', 0, 0, '', "a:1:{s:7:\"options\";a:1:{s:35:\"cat_universe:name:fk_cat_universe::\";N;}}", 1, '', 5, $langs->trans('ExtrafieldToolTip_cat_universe'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Products
 
