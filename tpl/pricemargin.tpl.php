@@ -1,213 +1,365 @@
-<?php
-$url_len_disp_limit = 50;
-?>
-<div>
-<h3>Historique des prix de la concurrence</h3>
-
-<div style="float: right;margin: 0 10px;">
-	<p><a href="?id=<?php echo $id; ?>&action=pc_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter une url concurrent</a></p>
-	<p><a href="?id=<?php echo $id; ?>&action=pcp_add"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span> Ajouter un prix</a></p>
-</div>
-
-<?php if ($action=='pcp_add') { ?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pcp_add">
-<table>
-	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
-		<td><select name="fk_soc"><option value="">--</option><?php foreach ($pc_list as $r) {
-			echo '<option value="'.$r['fk_soc'].'"'.(!empty($fk_soc) && $fk_soc==$r['fk_soc'] ?' selected' :'').'>'.$r['nom'].' - '.$r['url'].'</option>';
-		} ?></select></td>
-	</tr>
-	<tr>
-		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
-		<td><input name="date" type="date" value="<?php echo $datenow; ?>" /></td>
-	</tr>
-	<tr>
-		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
-		<td><input name="qte" value="1" /></td>
-	</tr>
-	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
-		<td><input name="price" value="" /></td>
-	</tr>
-	<tr>
-		<td></td>
-		<td><input type="submit" name="" value="Ajouter un prix concurrent" /></td>
-	</tr>
-</table></form>
-<hr />
-<?php } elseif ($action=='pcp_edit' && !empty($pcp_edit) && isset($pcp_list[$pcp_edit])) {
-	$pcp = $pcp_list[$pcp_edit];
-?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pcp_edit&pcp_edit=<?php echo $pcp_edit; ?>">
-<table>
-	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
-		<td><?php echo $pcp['nom']; ?></td>
-	</tr>
-	<tr>
-		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
-		<td><input name="date" type="date" value="<?php echo $pcp['date']; ?>" /></td>
-	</tr>
-	<tr>
-		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
-		<td><input name="qte" value="<?php echo $pcp['qte']; ?>" /></td>
-	</tr>
-	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
-		<td><input name="price" value="<?php echo $pcp['price']; ?>" /></td>
-	</tr>
-	<tr>
-		<td></td>
-		<td><input type="submit" name="" value="Modifier le prix concurrent" /></td>
-	</tr>
-</table></form>
-<hr />
-<?php } elseif ($action=='pc_add') { ?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pc_add">
-<table>
-	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
-		<td><select name="fk_soc"><option value="">--</option><?php foreach ($s_list as $r) {
-			echo '<option value="'.$r['rowid'].'">'.$r['nom'].'</option>';
-		} ?></select></td>
-	</tr>
-	<tr>
-		<td><label for="url"><?php echo $langs->trans('URL'); ?></label></td>
-		<td><input name="url" value="" size="64" /></td>
-	</tr>
-	<tr>
-		<td><label for="date"><?php echo $langs->trans('Date'); ?></label></td>
-		<td><input name="date" type="date" value="<?php echo $datenow; ?>" /></td>
-	</tr>
-	<tr>
-		<td><label for="qte"><?php echo $langs->trans('Quantity'); ?></label></td>
-		<td><input name="qte" value="1" /></td>
-	</tr>
-	<tr>
-		<td><label for="price"><?php echo $langs->trans('Price'); ?></label></td>
-		<td><input name="price" value="" /></td>
-	</tr>
-	<tr>
-		<td></td>
-		<td><input type="submit" name="" value="Ajouter l'URL du concurrent (et prix si renseigné)" /></td>
-	</tr>
-</table></form>
-<hr />
-<?php } elseif ($action=='pc_edit' && !empty($pc_edit) && isset($pc_list[$pc_edit])) {
-	$pc = $pc_list[$pc_edit];
-?>
-<form method="POST" action="?id=<?php echo $id; ?>&action=pc_edit&pc_edit=<?php echo $pc_edit; ?>">
-<table>
-	<tr>
-		<td><label for="fk_soc"><?php echo $langs->trans('Competitor'); ?></label></td>
-		<td><?php echo $pc['nom']; ?></td>
-	</tr>
-	<tr>
-		<td><label for="url"><?php echo $langs->trans('URL'); ?></label></td>
-		<td><input name="url" value="<?php echo $pc['url']; ?>" size="64" /></td>
-	</tr>
-	<tr>
-		<td></td>
-		<td><input type="submit" name="" value="Modifier le concurrent" /></td>
-	</tr>
-</table></form>
-<hr />
-<?php } ?>
-
-<?php
-$pachat = NULL;
-foreach($pfp_list as $pfp) {
-	$pachat = $pfp['unitprice'];
+<style>
+#pricemargin caption {
+	text-align: left;
+	font-weight: bold;
 }
-?>
+#pricemargin .price, #pricemargin .price input, #pricemargin .price select {
+	text-align: right;
+}
+</style>
+<script>
+var fk_product = <?php echo $object->id; ?>;
+var calc_type;
+var revient_price;
+var public_price;
+var concurrent_price;
+var categ_margin_coeff;
+var sell_price;
+var sell_margin_coeff;
+var sell_margin_tx;
+$(document).ready(function() {
+	revient_price = parseFloat($('#revient_price').data('value'));
+	public_price = parseFloat($('#public_price').data('value'));
+	concurrent_price = parseFloat($('#concurrent_price').data('value'));
+	categ_margin_coeff = parseFloat($('#categ option:selected').data('value'));
+	calc_type = $('#calc_type').val();
 
-<table border="1" cellpadding="4">
+	$('#calc_type').change(function() {
+		calc_type = $(this).val();
+		calc_price();
+	});
+	$('#sell_price input').keyup(function() {
+		$('#calc_type').val('sell_price');
+	}).change(function() {
+		sell_price = $(this).val();
+		calc_margin();
+	});
+	$('#categ select').change(function() {
+		categ_margin_coeff = parseFloat($('option:selected', this).data('value'));
+		$('#categ_margin_coeff').text(num_round(categ_margin_coeff));
+
+		// Lien
+		$('#categ_update_link').attr('href', '/categories/viewcat.php?id='+$(this).val()+'&type=0');
+
+		calc_price();
+	});
+	$('#fourn select').change(function() {
+		// public
+		public_price = $('option:selected', this).data('unitprice');
+		$('#public_price').data('value', public_price).text(num_round(public_price));
+		public_price = parseFloat(public_price);
+		// Remise
+		fourn_remise_percent = $('option:selected', this).data('remise_percent');
+		$('#fourn_remise_percent').data('value', fourn_remise_percent).text(num_round(fourn_remise_percent));
+		fourn_remise_percent = parseFloat(fourn_remise_percent);
+		// Unit Remisé
+		fourn_unitprice_remise = public_price*(1-fourn_remise_percent/100);
+		$('#fourn_unitprice_remise').data('value', fourn_unitprice_remise).text(num_round(fourn_unitprice_remise));
+		// Shipping
+		fourn_shipping_price = $('option:selected', this).data('shipping_price');
+		if (fourn_shipping_price=='')
+			fourn_shipping_price = 0;
+		$('#fourn_shipping_price').data('value', fourn_shipping_price).text(num_round(fourn_shipping_price));
+		fourn_shipping_price = parseFloat(fourn_shipping_price);
+		// Revient
+		revient_price = fourn_unitprice_remise + fourn_shipping_price;
+		$('#revient_price').data('value', revient_price).text(num_round(revient_price));
+
+		// Lien
+		$('#fourn_price_update_link').attr('href', '/product/fournisseurs.php?id='+fk_product+'&socid='+$('option:selected', this).data('fk_soc')+'&action=update_price&rowid='+$(this).val());
+
+		calc_price();
+	});
+
+	// Actions
+	$('#fourn select').change();
+	$('#categ select').change();
+});
+
+/**
+ * To avoid problems with MacOS...
+ */
+function num_parse(number_string)
+{
+	if (typeof number_string === 'string')
+		return parseFloat(number_string.replace(',', '.'))
+	if (isNaN(number_string))
+		return 0;
+	return number_string;
+}
+
+function num_round(number)
+{
+	console.log(number);
+	return Math.round(number*100)/100;
+}
+
+function calc_price()
+{
+	if (calc_type=='public_price') {
+		sell_price = public_price;
+	}
+	else if (calc_type=='concurrent') {
+		sell_price = concurrent_price;
+	}
+	else if (calc_type=='category_margin') {
+		sell_price = revient_price*categ_margin_coeff;
+	}
+	else {
+		//sell_price = 0;
+	}
+
+	$('#calc_public_price .calc_price').text(num_round(public_price));
+	$('#calc_public_price .calc_margin_coeff').text(num_round(public_price/revient_price));
+	$('#calc_public_price .calc_margin_tx').text(num_round(100*(public_price-revient_price)/public_price)+' %');
+	$('#calc_concurrent .calc_price').text(num_round(concurrent_price));
+	$('#calc_concurrent .calc_margin_coeff').text(num_round(concurrent_price/revient_price));
+	$('#calc_concurrent .calc_margin_tx').text(num_round(100*(concurrent_price-revient_price)/concurrent_price)+' %');
+	$('#calc_category_margin .calc_price').text(num_round(revient_price*categ_margin_coeff));
+	$('#calc_category_margin .calc_margin_coeff').text(num_round(categ_margin_coeff));
+	$('#calc_category_margin .calc_margin_tx').text(num_round(100*(categ_margin_coeff-1)/categ_margin_coeff)+' %');
+
+	$('#sell_price input').val(num_round(sell_price)).change();
+}
+
+function calc_margin()
+{
+	sell_margin_coeff = sell_price/revient_price;
+	sell_margin_tx = 100*(sell_price-revient_price)/sell_price;
+	$('#sell_margin').text(num_round(sell_margin_coeff)+' / '+num_round(sell_margin_tx)+'%');
+}
+</script>
+<div>
+<?php
+$calc_type_list = [
+	'sell_price' => ['label'=>'Prix final fixé'],
+	'public_price' => ['label'=>'Prix public fournisseur fixé'],
+	'concurrent' => ['label'=>'Prix similaire à la concurrence'],
+	'category_margin' => ['label'=>'Marge définie par la catégorie'],
+	//'' => ['label'=>''],
+];
+$margin_calc_type = $object->array_options['options_margin_calc_type'];
+
+require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+$product_fourn_static = new ProductFournisseur($db);
+$product_fourn_list = $product_fourn_static->list_product_fournisseur_price($object->id, '', '');
+//var_dump($product_fourn_list);
+$product_fourn = NULL;
+$product_fourn_extra = NULL;
+$product_fourn_list_extra = [];
+foreach($product_fourn_list as $pf) {
+	//var_dump($product_fourn);
+	$sql = 'SELECT *';
+	$sql .= " FROM ".MAIN_DB_PREFIX."product_fournisseur_price_extrafields";
+	$sql .= " WHERE fk_object = ".((int) $pf->product_fourn_price_id);
+	$q = $db->query($sql);
+	if($pfe=$db->fetch_object($q))
+		$product_fourn_list_extra[$pf->product_fourn_price_id] = $pfe;
+	//var_dump($product_fourn_extra);
+	//var_dump($object->array_options['options_fk_soc_fournisseur'], $pf);
+	if (!empty($product_fourn))
+		continue;
+	if (!empty($object->array_options['options_fk_soc_fournisseur']) && $pf->fourn_id != $object->array_options['options_fk_soc_fournisseur'])
+		continue;
+	
+	$product_fourn = $pf;
+	break;
+}
+$revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_percent/100) + $product_fourn_list_extra[$product_fourn->product_fourn_price_id]->shipping_price;
+
+//var_dump($object);
+?>
+<h3>Assistance calcul de marge</h3>
+<form method="POST" action="">
+<input name="action" type="hidden" value="margin_calc_update" />
+<table id="pricemargin">
 	<thead>
-	<tr>
-		<th></th>
-		<th><?php echo $langs->trans('Competitor'); ?></th>
-		<th><?php echo $langs->trans('URL'); ?></th>
-		<th><?php echo $langs->trans('Date'); ?></th>
-		<th><?php echo $langs->trans('Quantity'); ?></th>
-		<th><?php echo $langs->trans('Price'); ?></th>
-		<th><?php echo $langs->trans('SupplierPrice'); ?></th>
-		<th><?php echo $langs->trans('Margin'); ?> Coeff</th>
-		<th><?php echo $langs->trans('Margin'); ?> Taux</th>
-	</tr>
+
 	</thead>
 	<tbody>
-	<?php
-	$competitor_price_list = [];
-	foreach($pcp_list as $row) {
-		//var_dump($s_list[$row['fk_soc']]);
-		$competitor_price_list[] = $row['price'];
-		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
-		$margin_taux = $pachat ?round(100*($row['price']-$pachat)/$row['price'], 2).'%' :'-';
-		echo '<tr>';
-		echo '<td><a href="?id='.$id.'&action=pcp_edit&pcp_edit='.$row['rowid'].'"><span class="fas fa-pencil-alt"></span>&nbsp;'.$row['rowid'].'</a></td>';
-		echo '<td>'.$row['nom'].'<br /><a href="'.$s_list[$row['fk_soc']]['url'].'" target="_blank">'.$s_list[$row['fk_soc']]['url'].'</a></td>';
-		echo '<td>';
-		foreach ($pc_list_soc_url[$row['fk_soc']] as $url) {
-			$len = strlen($url);
-			$cut = $len>$url_len_disp_limit;
-			echo '<a href="'.$url.'" target="_blank"'.($cut ?' title="'.$url.'"' :'').'>'.($cut ?substr($url, 0, $url_len_disp_limit).'...' :$url).'</a><br />';
-		}
-		echo '</td>';
-		echo '<td>'.implode('/', array_reverse(explode('-', $row['date']))).'</td>';
-		echo '<td align="right">'.$row['qte'].'</td>';
-		echo '<td align="right">'.$row['price'].'</td>';
-		echo '<td align="right">'.round($pachat, 2).'</td>';
-		echo '<td align="right">'.$margin_coeff.'</td>';
-		echo '<td align="right">'.$margin_taux.'</td>';
-		echo '<td><a href="?id='.$id.'&action=pcp_add&fk_soc='.$row['fk_soc'].'"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span></a></td>';
-		echo '</tr>';
-	}
-	//$a = array_filter($competitor_price_list);
-	$a = $competitor_price_list;
-	$competitor_price_avg = count($a)>0 ?round(array_sum($a)/count($a), 2) :'-';
-	?>
+	<tr>
+		<td>Prix d'achat fournisseur utilisé :</td>
+		<td class="price" id="fourn"><select name="product_fourn_price_id"><?php foreach($product_fourn_list as $pf)
+			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.price_format($pf->fourn_unitprice)).'</option>';
+		?></select></td>
+		<td><a href="javascript:;" id="fourn_price_update_link">Modifier le prix</a></td>
+	</tr>
+	<tr>
+		<td>Prix public fournisseur :</td>
+		<td class="price" id="public_price" data-value=""></td>
+		<td id="fourn_ispublic"></td>
+	</tr>
+	<tr>
+		<td>Remise fournisseur :</td>
+		<td class="price" id="fourn_remise_percent"></td>
+	</tr>
+	<tr>
+		<td>Prix d'achat fournisseur :</td>
+		<td class="price" id="fourn_unitprice_remise"></td>
+	</tr>
+	<tr>
+		<td>Frais d'acheminement :</td>
+		<td class="price" id="fourn_shipping_price"></td>
+	</tr>
+	<tr>
+		<td>Prix de revient :</td>
+		<td class="price" id="revient_price" data-value=""></td>
+	</tr>
 	</tbody>
+	<tbody>
 	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">Prix médian :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">1er quartile :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<td>Catégorie :</td>
+		<td class="price" id="categ"><select name="fk_categorie_default"><?php
+		foreach($categ_list as $cat)
+			echo '<option value="'.$cat['rowid'].'" data-value="'.$cat['margin_coeff'].'"'.($categ && $categ['rowid']==$cat['rowid'] ?' selected' :'').'>'.$cat['label'].'</option>';
+		?></select></td>
+		<td><a href="javascript:;" id="categ_update_link">Modifier le taux de marge de la catégorie</a></td>
 	</tr>
 	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">3ème quartile :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php  ?></th>
+		<td>Taux de marge catégorie :</td>
+		<td class="price" id="categ_margin_coeff"></td>
+		<td id="is_categ_margin_coeff" style="display: none;">=> On a un taux de marge catégorie</td>
 	</tr>
 	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">Prix moyen :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php echo $competitor_price_avg; ?></th>
-		<th align="right"><?php echo round($pachat, 2); ?></th>
+		<td></td>
+		<td></td>
+		<td><a href="/product/card.php?action=edit&id=<?php echo $object->id; ?>">Modifier les catégories du produit</a><br />
+		Faire un tableau récap pour mieux comparer ?<br />
+		Si on supprime une catégorie ou modifie le taux d'une catégorie ou modifie les carégories du produit,<br />
+		il faut répercuter immédiatement sur le prix de vente des produits concernés.</td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
 	</tr>
 	<tr>
-		<th style="visibility:hidden;"></th>
-		<th colspan="3">Prix actuel :</th>
-		<th align="right">(1)</th>
-		<th align="right"><?php echo round($object->price, 2); ?></th>
-		<th align="right"><?php echo round($pachat, 2); ?></th>
-		<th align="right"><?php echo $pachat>0 ?round($object->price/$pachat, 2) :''; ?></th>
-		<th align="right"><?php echo $pachat>0 ?round(100*($object->price-$pachat)/$object->price, 2).'%' :''; ?></th>
+		<td>Prix concurrent médian :</td>
+		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_median; ?>"><?php echo price_format($pcp_median); ?></td>
+		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
 	</tr>
+	<tr>
+		<td>Marge concurrent (Coeff / Tx Marque) :</td>
+		<td class="price"><?php echo num_format($pcp_median/$revient).' / '.percent_format(100*($pcp_median-$revient)/$pcp_median); ?></td>
+	</tr>
+	<tr>
+		<td colspan="2">
+		<table colspan="2" border="1">
+		<tr>
+			<th></th>
+			<th>Px vente</th>
+			<th>Coeff marge</th>
+			<th>Tx marque</th>
+		</tr>
+		<tr>
+			<td>1er quartile (25% du bas) :</td>
+			<td align="right"><?php echo price_format($pcp_quartile_25); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_quartile_25/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_25-$revient)/$pcp_quartile_25, 2).'%' :'-'; ?></td>
+		</tr>
+		<tr>
+			<td>Prix médian (50% du bas) :</td>
+			<td align="right"><?php echo price_format($pcp_median); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_median/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_median-$revient)/$pcp_median, 2).'%' :'-'; ?></td>
+		</tr>
+		<tr>
+			<td>3ème quartile (75% du bas) :</td>
+			<td align="right"><?php echo price_format($pcp_quartile_75); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_quartile_75/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_75-$revient)/$pcp_quartile_75, 2).'%' :'-'; ?></td>
+		</tr>
+		<tr>
+			<td>Prix moyen :</td>
+			<td align="right"><?php echo price_format($pcp_avg); ?></td>
+			<td align="right"><?php echo $revient ?round($pcp_avg/$revient, 2) :'-'; ?></td>
+			<td align="right"><?php echo $revient ?round(100*($pcp_avg-$revient)/$pcp_avg, 2).'%' :'-'; ?></td>
+		</tr>
+	</table>
+	</td>
+		<td>Si on ajoute, supprime, modifie un prix concurrent,<br />
+		ou même si un jour passe et qu'un ancien prix n'est plus à prendre en compte dans le calcul du prix concurrent,<br />
+		il faut répercuter immédiatement sur le prix de vente des produits concernés.</td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
+	</tr>
+	<tr>
+		<td>Prix de vente actuel :</td>
+		<td class="price"><?php echo price_format($object->price); ?></td>
+	</tr>
+	<tr>
+		<td>Marge actuelle (Coeff / Tx Marque) :</td>
+		<td class="price"><?php echo num_format($object->price/$revient).' / '.percent_format(100*($object->price-$revient)/$object->price); ?></td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<table border="1">
+				<thead>
+				<tr>
+					<th>Type/Méthode</th>
+					<th>Px vente</th>
+					<th>Coeff marge</th>
+					<th>Tx marque</th>
+				</tr>
+				</thead>
+				<tbody>
+				<?php foreach($calc_type_list as $i=>$j) {
+					echo '<tr id="calc_'.$i.'">';
+					echo '<td>'.$j['label'].'</td>';
+					echo '<td class="calc_price price"></td>';
+					echo '<td class="calc_margin_coeff price"></td>';
+					echo '<td class="calc_margin_tx price"></td>';
+					echo '</tr>';
+				} ?>
+				</tbody>
+			</table>
+		</td>
+		<td>
+			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
+		</td>
+	</tr>
+	</tbody>
+	<tbody>
+	<tr>
+		<td colspan="3"><hr /></td>
+	</tr>
+	<tr>
+		<td>Règle de calcul de marge :</td>
+		<td class="price"><select id="calc_type" name="margin_calc_type">
+			<option value="">---</option>
+			<?php foreach($calc_type_list as $i=>$j)
+			echo '<option value="'.$i.'"'.($margin_calc_type==$i ?' selected' :'').'>'.$j['label'].'</option>';
+			?>
+		</select></td>
+	</tr>
+	<tr>
+		<td>Prix de vente :</td>
+		<td class="price" id="sell_price" data-value=""><input type="text" name="sell_price" value="" size="10" /></td>
+	</tr>
+	<tr>
+		<td>Marge effective :</td>
+		<td class="price" id="sell_margin" data-value=""></td>
+	</tr>
+	</tbody>
+	<tfoot>
+	<tr>
+		<td></td>
+		<td class="price"><input type="submit" class="button button-save" value="Mettre à jour" /></td>
+	</tr>
+	</tfoot>
 </table>
-
-<p>Voir comment calculer les prix concurrent mini, maxi, moyen en fct des prix par quantité et de l'historique des prix concurrents.</p>
-<p>Dans un premier temps, prend-on le dernier prix de chaque concurrent quelle que soit la quantité ?</p>
-<p>On peut aussi reagrder les marges des produits similaires, c'est-à-dire dont les prix sont proches (+- X % à définir) et dans la même catégorie.</p>
-<p>On peut aller très loin dans le détail et la précision mais de fait vite s'y perdre en ayant trop d'indiacateurs inexploitables...</p>
+</form>
 </div>
 
 <hr />

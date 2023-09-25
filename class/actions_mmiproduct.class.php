@@ -274,6 +274,32 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             return -1;
         }
     }
+
+	function doDisplayMoreInfos($parameters, &$object, &$action, $hookmanager)
+    {
+        $error = 0; // Error counter
+        $print = '';
+    
+        if ($this->in_context($parameters, 'ordercard')) {
+			global $conf;
+
+            //var_dump($parameters);
+            if($action=='addline' && !empty($conf->global->MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS)) {
+				echo "<script>$(document).ready(function(){ document.location.href = document.location.href+'#search_idprod'; \$('#search_idprod').focus(); });</script>";
+			}
+        }
+    
+        if (! $error)
+        {
+            $this->resprints = $print;
+            return 0; // or return 1 to replace standard code
+        }
+        else
+        {
+            $this->errors[] = 'Error message';
+            return -1;
+        }
+    }
 }
 
 ActionsMMIProduct::__init();

@@ -43,6 +43,7 @@ MMIPRODUCT_STOCK_COMPOSED_AUTO = Recalculer automatiquement le stock d'un produi
 MMIPRODUCT_STOCK_COMPOSED_USE_RESERVED = Prendre en compte le stock réservé des composants pour le calcul du stock réservé du kit, et vice versa (et donc pour le calcul du stock théorique)
 MMIPRODUCT_ALERT_EMAIL_TO = Email destinataire pour les alertes produit (stock, etc.)
 MMIPRODUCT_ALERT_EMAIL_FROM = Email expéditeur pour les alertes produit (stock, etc.)
+MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS = Se repositionner dans le champ de recherche de produit dans une commande après ajout d'un produit
 
 #
 # About page
@@ -84,6 +85,19 @@ Extrafield_margin_effective_coeff = Coeff de marge effectif
 Extrafield_margin_desired_coeff = Coeff de marge désiré
 Extrafiel_competitor_note = Commenaire concurrents
 ExtrafieldToolTip_competitor_note = Informations complémentaire sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
+Extrafield_product_supplier_shipping_price = Frais d'acheminement
+ExtrafieldTooltip_product_supplier_shipping_price = Frais d'acheminement par unité de produit
+Extrafield_product_shipping_cost_price = Frais d'acheminement
+Extrafield_product_logistic_cost_price = Frais logistiques
+Extrafield_product_misc_cost_price = Frais divers
+Extrafield_commande_fournisseur_shipping_price = Frais d'acheminement
+ExtrafieldTooltip_commande_fournisseur_shipping_price = Frais d'acheminement pour l'ensemble de la commande (en considérant d'éventuels frais supplémentaires)
+Extrafield_commande_fournisseur_fk_entrepot = Entrepôt réception
+ExtrafieldTooltip_commande_fournisseur_fk_entrepot = Entrepôt de réception de la marchandise, lorsque tout est reçu dans le même entrepôt de la société
+Extrafield_margin_coeff = Coeff. de marge
+Extrafield_margin_calc_type = Méthode de calcul de la marge
+Extrafield_fk_categorie_default = Catégorie par défaut
+ExtrafieldTooltip_fk_categorie_default = Sert notamment au calcul de prix de vente selon le taux de marge de la catégorie principale
 
 #
 # Global

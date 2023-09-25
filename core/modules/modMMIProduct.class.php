@@ -118,6 +118,7 @@ class modMMIProduct extends DolibarrModules
 			),
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			'hooks' => array(
+				'ordercard',
 				'productcard',
 				'stockreplenishlist',
 				//   'data' => array(
@@ -179,6 +180,7 @@ class modMMIProduct extends DolibarrModules
 		// Array to add new pages in new tabs
 		$this->tabs = array();
 		$this->tabs[] = array('data'=>'product:+pricemargin:Calcul Prix et Marge:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/pricemargin.php?id=__ID__');
+		$this->tabs[] = array('data'=>'product:+concurrents:Prix concurrents:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/concurrents.php?id=__ID__');
 		// Example:
 		// $this->tabs[] = array('data'=>'objecttype:+tabname1:Title1:mylangfile@mmiproduct:$user->rights->mmiproduct->read:/mmiproduct/mynewtab1.php?id=__ID__');  					// To add a new tab identified by code tabname1
 		// $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@mmiproduct:$user->rights->othermodule->read:/mmiproduct/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
@@ -206,30 +208,8 @@ class modMMIProduct extends DolibarrModules
 		// 'user'             to add a tab in user view
 
 		// Dictionaries
-		$this->dictionaries = array();
-		/* Example:
 		$this->dictionaries=array(
-			'langs'=>'mmiproduct@mmiproduct',
-			// List of tables we want to see into dictonnary editor
-			'tabname'=>array(MAIN_DB_PREFIX."table1", MAIN_DB_PREFIX."table2", MAIN_DB_PREFIX."table3"),
-			// Label of tables
-			'tablib'=>array("Table1", "Table2", "Table3"),
-			// Request to select fields
-			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f', 'SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),
-			// Sort order
-			'tabsqlsort'=>array("label ASC", "label ASC", "label ASC"),
-			// List of fields (result of select to show dictionary)
-			'tabfield'=>array("code,label", "code,label", "code,label"),
-			// List of fields (list of fields to edit a record)
-			'tabfieldvalue'=>array("code,label", "code,label", "code,label"),
-			// List of fields (list of fields for insert)
-			'tabfieldinsert'=>array("code,label", "code,label", "code,label"),
-			// Name of columns with primary key (try to always name it 'rowid')
-			'tabrowid'=>array("rowid", "rowid", "rowid"),
-			// Condition to show each dictionary
-			'tabcond'=>array($conf->mmiproduct->enabled, $conf->mmiproduct->enabled, $conf->mmiproduct->enabled)
 		);
-		*/
 
 		// Boxes/Widgets
 		// Add here list of php file(s) stored in mmiproduct/core/boxes that contains a class to show a widget.
@@ -324,6 +304,10 @@ class modMMIProduct extends DolibarrModules
 		
 		$extrafields->addExtraField('competitor', $langs->trans('Extrafield_competitor'), 'boolean', 10, '', 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		
+		// Category
+
+		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 10, "10,5", 'categorie', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+
 		// Products
 
 		// Default supplier and supplier ref
@@ -348,8 +332,28 @@ class modMMIProduct extends DolibarrModules
 		$extrafields->addExtraField('season_date_begin', $langs->trans('Extrafield_season_date_begin'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_begin'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		// Season date end
 		$extrafields->addExtraField('season_date_end', $langs->trans('Extrafield_season_date_end'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_end'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
+		// logistic cost
+        $extrafields->addExtraField('logistic_cost_price', $langs->trans('Extrafield_product_logistic_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_logistic_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// misc cost
+        $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// shipping cost
+        $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// default category
+        $extrafields->addExtraField('fk_categorie_default', $langs->trans('Extrafield_fk_categorie_default'), 'int', 100, 11, 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_fk_categorie_default'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// margin calculation method
+        $extrafields->addExtraField('margin_calc_type', $langs->trans('Extrafield_margin_calc_type'), 'select', 100, '', 'product', 0, 0, '', ['options'=>['sell_price' => 'Prix final fixé', 'public_price' => 'Prix public fournisseur fixé', 'concurrent' => 'Prix similaire à la concurrence', 'category_margin'=>'Marge définie par la catégorie']], 1, '', 1, $langs->trans('ExtrafieldToolTip_margin_calc_type'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
-		// Suppliers / Replenish		
+		// Product Fournisseur Price
+		
+		// Supplier shipping price
+        $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_product_supplier_shipping_price'), 'price', 100, "20,5", 'product_fournisseur_price', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_supplier_shipping_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE_ORDERS', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+
+		// Commande Fournisseur
+
+		// Supplier shipping price
+        $extrafields->addExtraField('shipping_price', $langs->trans('Extrafieldcommande_fournisseur_shipping_price'), 'price', 100, "20,5", 'commande_fournisseur', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_commande_fournisseur_shipping_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+
+		// Suppliers
 		// Replenish note
 		$extrafields->addExtraField('replenish_note', $langs->trans('Extrafield_replenish_note'), 'varchar', 1, 255, 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
