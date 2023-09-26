@@ -43,6 +43,7 @@ MMIPRODUCT_STOCK_COMPOSED_AUTO = Recalculer automatiquement le stock d'un produi
 MMIPRODUCT_STOCK_COMPOSED_USE_RESERVED = Prendre en compte le stock réservé des composants pour le calcul du stock réservé du kit, et vice versa (et donc pour le calcul du stock théorique)
 MMIPRODUCT_ALERT_EMAIL_TO = Email destinataire pour les alertes produit (stock, etc.)
 MMIPRODUCT_ALERT_EMAIL_FROM = Email expéditeur pour les alertes produit (stock, etc.)
+MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS = Se repositionner dans le champ de recherche de produit dans une commande après ajout d'un produit
 
 #
 # About page
