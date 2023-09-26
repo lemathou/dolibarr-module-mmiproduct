@@ -4,6 +4,9 @@
 require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
+// Blocage
+die();
+
 $keywords_bl = ['www', 'en', 'et', 'services', 'materiaux', 'sarl', 'pour', 'de'];
 
 $s_list = [];
