@@ -273,7 +273,7 @@ class modMMIProduct extends DolibarrModules
 			'langs'=>'mmiproduct@mmiproduct',
 			'position'=>1000+$r,
 			'enabled'=>'$conf->mmiproduct->enabled',
-			'perms'=>1, //'$user->rights->mmiproduct->time->user',
+			'perms'=>'$user->rights->stock->mouvement->creer && $user->rights->fournisseur->lire', //'$user->rights->mmiproduct->time->user',
 			'target'=>'',
 			'user'=>2,				                // 0=Menu for internal users, 1=external users, 2=both
 		);
