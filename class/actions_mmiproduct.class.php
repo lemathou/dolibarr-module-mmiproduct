@@ -281,10 +281,17 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $print = '';
     
         if ($this->in_context($parameters, 'ordercard')) {
-			global $conf;
-
-            //var_dump($parameters);
-            if($action=='addline' && !empty($conf->global->MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS)) {
+			global $user, $conf;
+			
+			// SI on vient d'ajouter un produit
+			// OU on est sur le client caisse
+			// OU on utilise le compte doli caisse
+			// ALORS focus ajout produit pour faciliter l'utilisation de la douchette
+            if(
+				($action=='addline' && !empty($conf->global->MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS))
+				|| (!empty($conf->global->MMIPAYMENTS_CAISSE_USER) && $conf->global->MMIPAYMENTS_CAISSE_USER==$user->id)
+				|| (!empty($conf->global->MMIPAYMENTS_CAISSE_COMPANY) && $conf->global->MMIPAYMENTS_CAISSE_COMPANY==$object->thirdparty->id)
+			) {
 				echo "<script>$(document).ready(function(){ document.location.href = document.location.href+'#search_idprod'; \$('#search_idprod').focus(); });</script>";
 			}
         }
