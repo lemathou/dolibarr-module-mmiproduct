@@ -362,11 +362,11 @@ foreach($l as $id=>$row) {
 	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
 	echo '<h3>'.(strlen($row['nom'])>20 ?substr($row['nom'], 0, 18).'...' :$row['nom']).'</h3>';
 	if ($row['info_nb']>0)
-		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1' :'').'">'.$row['info_nb'].'</a></p>';
+		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['info_nb'].'</a></p>';
 	if ($row['warn_nb']>0)
-		echo '<p class="nb nb_warn"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1' :'').'">'.$row['warn_nb'].'</a></p>';
+		echo '<p class="nb nb_warn"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['warn_nb'].'</a></p>';
 	if ($row['alert_nb']>0)
-		echo '<p class="nb nb_alert"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1' :'').'">'.$row['alert_nb'].'</a></p>';
+		echo '<p class="nb nb_alert"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['alert_nb'].'</a></p>';
 	echo '<p><a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].' produits</a></p>';
 	echo '<p><a href="/fourn/commande/list.php?socid='.$id.'">'.($row['cmd_f_encours_nb'] ?$row['cmd_f_encours_nb'] :0).' cmd'.(!empty($row['cmd_f_valid_nb']) ?' +'.$row['cmd_f_valid_nb'].' à valider' :'').(!empty($row['cmd_f_draft_nb']) ?' +'.$row['cmd_f_draft_nb'].' brouillon' :'').'</a></p>';
 	//echo '<p>'.($row['cmd_encours_nb'] ?$row['cmd_encours_nb'] :0).' cmd. cli. en cours</p>';
