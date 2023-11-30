@@ -173,6 +173,12 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 			if ($this->fk_supplier)
 				$print = ' AND pfp.fk_soc='.$this->fk_supplier;
         }
+        elseif ($this->in_context($parameters, 'stockatdate')) {
+            //var_dump($parameters);
+            $notnull = GETPOST('notnull');
+            if ($notnull)
+                $print .= ' AND ps.rowid IS NOT NULL';
+        }
     
         if (! $error)
         {
@@ -197,6 +203,11 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
             $print = '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
+        }
+        elseif ($this->in_context($parameters, 'stockatdate')) {
+            //var_dump($parameters);
+            $notnull = GETPOST('notnull');
+            $print = '<div class="inlin-block"><b>N\'afficher que les produits avec du stock</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
         }
     
         if (! $error)

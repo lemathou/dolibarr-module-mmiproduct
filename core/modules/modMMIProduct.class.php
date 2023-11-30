@@ -122,6 +122,7 @@ class modMMIProduct extends DolibarrModules
 				'productcard',
 				'stockreplenishlist',
 				'supplier_proposalcard',
+				'stockatdate',
 				//   'data' => array(
 				//       'hookcontext1',
 				//       'hookcontext2',
