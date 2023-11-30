@@ -48,6 +48,197 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $this->categ = GETPOST('categ', 'alpha');
     }
 
+
+	/**
+	 * Overloading the addMoreMassActions function : replacing the parent's function with the one below
+	 *
+	 * @param   array           $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    $object         The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          $action         Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function addMoreMassActions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+		$error = 0; // Error counter
+
+        //var_dump($parameters); die();
+		if ($this->in_context($parameters, 'productservicelist')) {
+			$this->resprints = '<option value="margin_config">'.$langs->trans("MMIProductPriceMarginConfig").'</option>';
+		}
+
+		if (!$error) {
+			return 0; // or return 1 to replace standard code
+		} else {
+			$this->errors[] = 'Error message';
+			return -1;
+		}
+	}
+
+	function doPreMassActions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+        $myvalue = '';
+        $print = '';
+		$error = 0; // Error counter
+
+		if ($this->in_context($parameters, 'productservicelist')) {
+			if ($_POST['massaction']=='margin_config') {
+				$print .= dol_get_fiche_head(null, '', '');
+				$print .= '<p>Configurateur de prix de vente et calcul de marge en masse ?</p>';
+				$print .= '<input type="hidden" name="action" value="confirm_margin_config">';
+
+				// Form sélection
+				$print .= '<p>Affecter les produits à la catégorie principale : </p>';
+                require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcategory.class.php';
+                $formcategory = new FormCategory($this->db);
+                $print .= $formcategory->getFilterBox(Categorie::TYPE_PRODUCT, []);
+				
+				// Form sélection
+				$print .= '<p>Règle de calcul de marge :&nbsp;
+                <select id="calc_type" name="margin_calc_type">
+                    <option value="">---</option>';
+                $calc_type_list = [
+                    'sell_price' => ['label'=>'Prix final fixé'],
+                    'public_price' => ['label'=>'Prix public fournisseur fixé'],
+                    'concurrent' => ['label'=>'Prix similaire à la concurrence'],
+                    'category_margin' => ['label'=>'Marge définie par la catégorie'],
+                    //'' => ['label'=>''],
+                ];
+                foreach($calc_type_list as $i=>$j)
+                    $print .= '<option value="'.$i.'"'.('category_margin'==$i ?' selected' :'').'>'.$j['label'].'</option>';
+                $print .= '</select></p>';
+				
+				$print .= '<p>Confirmation : <select class="flat width75 marginleftonly marginrightonly" id="confirm" name="confirm"><option value="yes">Oui</option>
+<option value="no" selected="">Non</option></select>';
+				$print .= '<input class="button valignmiddle confirmvalidatebutton" type="submit" value="Mettre à jour" /></p>';
+				$print .= dol_get_fiche_end();
+			}
+		}
+
+		if (!$error) {
+			$this->results = array('myreturn' => $myvalue);
+			$this->resprints = $print;
+			return 0; // or return 1 to replace standard code
+		} else {
+			$this->errors[] = 'Error message';
+			return -1;
+		}
+	}
+
+    protected function product_calc_type_update($object, $margin_calc_type, $options=[])
+    {
+        $error = 0;
+
+		global $conf, $user, $langs;
+        // Update calc type in product
+        $object->array_options['options_margin_calc_type'] = $margin_calc_type;
+        // Update default category in product
+        if (!empty($fk_categorie_default))
+            $object->array_options['options_fk_categorie_default'] = $fk_categorie_default;
+
+        $res = $object->update($object->id, $user);
+        var_dump($object, $res);
+        if($res < 0) {
+            var_dump($object->errors);
+            $error++;
+            $this->errors[] = $object->errors;
+
+            return -1;
+        }
+        
+        if ($margin_calc_type == 'category_margin') {
+            $sql = 'SELECT pfp.price, pfp.fk_soc
+                FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
+                WHERE pfp.fk_product='.$object->id;
+            $q = $this->db->query($sql);
+            if($r=$q->fetch_assoc()) {
+                $product_fourn = $r;
+                $object->array_options['options_fk_soc_fournisseur'] = $product_fourn['fk_soc'];
+                if ($margin_calc_type == 'category_margin')
+                    $sell_price = $r['price']*$options['cat']->array_options['options_margin_coeff'];
+                // Price update
+                $res = $object->updatePrice($sell_price, 'HT', $user);
+            }
+            else {
+                $error++;
+                $this->errors[] = 'Missing fournisseur price for product : '.$object->label;
+
+                return -1;
+            }
+        }
+    }
+
+	/**
+	 * Overloading the doMassActions function : replacing the parent's function with the one below
+	 *
+	 * @param   array           $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    $object         The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          $action         Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function doMassActions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+		$error = 0; // Error counter
+
+		if ($this->in_context($parameters, 'productservicelist')) {
+			if ($action == 'confirm_margin_config') {
+                var_dump($_POST);
+                // Default Category
+                $list_categorie_default = GETPOST('search_category_product_list', 'array');
+                $fk_categorie_default = !empty($list_categorie_default) ?$list_categorie_default[0] :NULL;
+                var_dump($fk_categorie_default);
+                $cat = new Categorie($this->db);
+                $cat->fetch($fk_categorie_default);
+                //$cat->fetch_optionals();
+                var_dump($cat);
+                $margin_calc_type = GETPOST('margin_calc_type', 'alphanum');
+
+                // 'sell_price' => ['label'=>'Prix final fixé'],
+                // 'public_price' => ['label'=>'Prix public fournisseur fixé'],
+                // 'concurrent' => ['label'=>'Prix similaire à la concurrence'],
+                // 'category_margin' => ['label'=>'Marge définie par la catégorie'],
+                if (in_array($margin_calc_type, ['category_margin', 'sell_price', 'public_price', 'concurrent'])) {
+                    if ($margin_calc_type=='category_margin' && empty($cat->array_options['options_margin_coeff'])) {
+                        $error++;
+                        $this->errors[] = 'Missing coeff on category';
+                    }
+
+                    if (!$error) {
+                        $object = new Product($this->db);
+                        foreach ($parameters['toselect'] as $objectid) {
+                            echo '<p>COUCOU : '.$objectid.'</p>';
+                            $object->fetch($objectid);
+
+                            if ($this->product_calc_type_update($object, $margin_calc_type, ['cat'=>$cat]) < 0) {
+                                $error++;
+                            }
+                        }
+                    }
+                }
+                else {
+                    $error++;
+                    $this->errors[] = 'Wrong calc type';
+                }
+            }
+		}
+
+		if (!$error) {
+			$this->results = array('myreturn' => 999);
+			$this->resprints = 'A text to show';
+			return 0; // or return 1 to replace standard code
+		} else {
+			//$this->errors[] = $errors[0];
+			return -1;
+		}
+	}
+
 	function doActions($parameters, &$object, &$action, $hookmanager)
 	{
 		if ($this->in_context($parameters, 'supplier_proposalcard') && $action=='products_add') {
