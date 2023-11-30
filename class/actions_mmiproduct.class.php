@@ -60,7 +60,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                 WHERE pf.fk_soc='.$object->socid;
             $q = $this->db->query($sql);
             while($row=$q->fetch_assoc()) {
-                var_dump($row);
+                //var_dump($row);
                 $object->addline($row['description'], $row['unitprice'], 1, $row['tva_tx'], $row['txlocaltax1_tx'], $row['txlocaltax2_tx'], $row['fk_product'], $row['remise_percent'], $row['price_base_type'], 0, 0, $type = 0, -1, 0, 0, $row['rowid'], 0, '', 0, $row['ref_fourn'], $row['fk_unit']);
             }
         }
