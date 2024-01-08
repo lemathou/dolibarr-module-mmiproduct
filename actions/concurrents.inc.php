@@ -18,6 +18,7 @@ $price = str_replace(',', '.', GETPOST('price', 'float'));
 
 $pc_edit = GETPOST('pc_edit', 'int');
 $pcp_edit = GETPOST('pcp_edit', 'int');
+$pcp_del = GETPOST('pcp_del', 'int');
 
 if ($action == 'pc_add' && !empty(GETPOST('create_soc'))) {
 	$societe = new Societe($db);
@@ -75,7 +76,7 @@ if ($action == 'pcp_edit' && !empty($pcp_edit) && !empty($price)) {
 	$db->query($sql);
 }
 
-if (!empty($del = GETPOST('pcp_delete', 'int'))) {
+if ($action == 'pcp_del' && !empty($del = GETPOST('pcp_del', 'int'))) {
 	$sql = 'DELETE FROM '.MAIN_DB_PREFIX.'product_competitor_price
 		WHERE rowid='.$del.'';
 	$db->query($sql);

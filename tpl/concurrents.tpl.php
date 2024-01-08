@@ -185,7 +185,10 @@ foreach($pfp_list as $pfp) {
 		echo '<td align="right">'.round($pachat, 2).'</td>';
 		echo '<td align="right">'.$margin_coeff.'</td>';
 		echo '<td align="right">'.$margin_taux.'</td>';
-		echo '<td><a href="?id='.$id.'&action=pcp_add&fk_soc='.$row['fk_soc'].'"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span></a></td>';
+		echo '<td>
+			<a href="?id='.$id.'&action=pcp_add&fk_soc='.$row['fk_soc'].'"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span></a>
+			<a href="?id='.$id.'&action=pcp_del&pcp_del='.$row['rowid'].'"><span class="fa fa-remove valignmiddle btnTitle-icon""></span></a>
+		</td>';
 		echo '</tr>';
 	}
 	//$a = array_filter($competitor_price_list);

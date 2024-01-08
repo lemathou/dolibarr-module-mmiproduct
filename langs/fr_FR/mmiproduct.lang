@@ -111,3 +111,5 @@ MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL = Rechercher les produits par nom de fourniss
 # Menus / Pages
 #
 MMIProductStockReplenish = Réappro liste fournisseur
+
+MMIProductsAddAllProducts = Ajouter toute une famille de produits

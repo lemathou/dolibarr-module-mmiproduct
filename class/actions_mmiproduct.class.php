@@ -48,6 +48,50 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $this->categ = GETPOST('categ', 'alpha');
     }
 
+	function doActions($parameters, &$object, &$action, $hookmanager)
+	{
+		if ($this->in_context($parameters, 'supplier_proposalcard') && $action=='products_add') {
+            //var_dump($object);
+
+            $sql = 'SELECT p.label, p.description, p.price_base_type, p.fk_unit, pf.*
+                FROM '.MAIN_DB_PREFIX.'product AS p
+                INNER JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price AS pf
+                    ON pf.fk_product=p.rowid
+                WHERE pf.fk_soc='.$object->socid;
+            $q = $this->db->query($sql);
+            while($row=$q->fetch_assoc()) {
+                //var_dump($row);
+                $object->addline($row['description'], $row['unitprice'], 1, $row['tva_tx'], $row['txlocaltax1_tx'], $row['txlocaltax2_tx'], $row['fk_product'], $row['remise_percent'], $row['price_base_type'], 0, 0, $type = 0, -1, 0, 0, $row['rowid'], 0, '', 0, $row['ref_fourn'], $row['fk_unit']);
+            }
+        }
+
+		return 0;
+	}
+
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $user, $langs;
+
+		$error = '';
+		$print = '';
+		if ($this->in_context($parameters, 'supplier_proposalcard')) {
+            $link = '?id='.$object->id.'&action=products_add';
+            echo "<a class='butAction' href='".$link."'>".$langs->trans("MMIProductsAddAllProducts")."</a>";;
+        }
+    
+		if (! $error)
+		{
+			$this->resprints = $print;
+			return 0; // or return 1 to replace standard code
+		}
+		else
+		{
+			$this->errors[] = 'Error message';
+			return -1;
+		}
+			
+	}
+
 	function formObjectOptions($parameters, &$object, &$action, $hookmanager)
 	{
 		$error = '';

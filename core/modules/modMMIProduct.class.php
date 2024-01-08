@@ -121,6 +121,7 @@ class modMMIProduct extends DolibarrModules
 				'ordercard',
 				'productcard',
 				'stockreplenishlist',
+				'supplier_proposalcard',
 				'stockatdate',
 				//   'data' => array(
 				//       'hookcontext1',
@@ -304,6 +305,7 @@ class modMMIProduct extends DolibarrModules
 		// Societe
 		
 		$extrafields->addExtraField('competitor', $langs->trans('Extrafield_competitor'), 'boolean', 10, '', 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 10, "20,5", 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		
 		// Category
 
