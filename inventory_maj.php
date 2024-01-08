@@ -30,7 +30,7 @@ $id = GETPOST('id', 'int');
 if (empty($id))
 	die('Empty Id');
 
-$sql = 'SELECT p.ref, p.label, i.qty_stock, i.qty_view
+$sql = 'SELECT i.rowid, p.ref, p.label, i.qty_stock, i.qty_view
 	FROM '.MAIN_DB_PREFIX.'inventorydet i
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=i.fk_product
 	WHERE i.fk_inventory='.$id;
@@ -50,7 +50,12 @@ if(empty($handle))
 $cols = fgetcsv($handle, NULL, ';');
 var_dump($cols);
 
-$max = 5;
+$max = GETPOST('max', 'int');
+if (empty($max))
+	$max = 5000;
+
+$go = GETPOST('go');
+
 $n = 0;
 $no = 0;
 while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
@@ -63,6 +68,14 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 	$qty = $data[6];
 	if (!empty($l[$ref])) {
 		var_dump($l[$ref]);
+		// Update stock
+		$sql = 'UPDATE '.MAIN_DB_PREFIX.'inventorydet
+			SET qty_view='.$qty.'
+			WHERE rowid='.$l[$ref]['rowid'];
+		echo '<p>'.$sql.'</p>';
+		if ($go) {
+			$db->query($sql);
+		}
 	}
 	else {
 		var_dump($data);
