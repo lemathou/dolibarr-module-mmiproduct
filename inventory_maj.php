@@ -68,6 +68,7 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 	$qty = $data[6];
 	if (!empty($l[$ref])) {
 		var_dump($l[$ref]);
+		$l[$ref]['i'] = true;
 		// Update stock
 		$sql = 'UPDATE '.MAIN_DB_PREFIX.'inventorydet
 			SET qty_view='.$qty.'
@@ -83,6 +84,16 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 		echo '<p style="color: ref;">Introuvable dans inventory</p>';
 	}
 }
+
+$inok = [];
+foreach($l as $ref=>$row) {
+	if (empty($row[$i]))
+		$inok[$ref] = $row;
+}
+
+echo '<hr />';
+echo '<p>Manquant : '.count($inok).'</p>';
+var_dump($inok);
 
 echo '<hr />';
 echo '<p>Introuvabkles : '.$no.'</p>';
