@@ -310,6 +310,7 @@ class modMMIProduct extends DolibarrModules
 		// Category
 
 		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 10, "10,5", 'categorie', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('margin_tx_marque', $langs->trans('Extrafield_margin_tx_marque'), 'double', 10, "10,5", 'categorie', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_tx_marque'), '($object->array_options["options_margin_coeff"]>0 ?100*($object->array_options["options_margin_coeff"]-1)/$object->array_options["options_margin_coeff"] :NULL)', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 
 		// Products
 
