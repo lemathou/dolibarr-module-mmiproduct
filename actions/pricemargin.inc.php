@@ -36,10 +36,11 @@ if ($action=='margin_calc_update') {
 	// Price update
 	$sell_price = GETPOST('sell_price');
 	$price_vat_tx = 20;
-	$sell_price = $sell_price; // @todo
-
+	$sell_coeff = GETPOST('sell_coeff'); // @todo
+	$sell_min_coeff = GETPOST('sell_min_coeff'); // @todo
+	$sell_min_price = GETPOST('sell_min_price'); // @todo
 	$object->update($object->id, $user);
-	$res = $object->updatePrice($sell_price, 'HT', $user);
+	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, !empty($sell_min_price) ?$sell_min_price :NULL);
 	//$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, $sell_price_min);
 }
 
@@ -78,9 +79,10 @@ $pcp_quartile_75 = Quartile_75($pcp_values_ok);
 
 // Prix fournisseur
 $pfp_list = [];
-$sql = 'SELECT pfp.*, s.nom
+$sql = 'SELECT pfp.*, s.nom, s2.margin_min_coeff
 	FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pfp.fk_soc
+	INNER JOIN `'.MAIN_DB_PREFIX.'societe_extrafields` AS s2 ON s2.fk_object=s.rowid
 	WHERE pfp.fk_product='.$id;
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())

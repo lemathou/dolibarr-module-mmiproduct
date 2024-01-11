@@ -13,11 +13,20 @@ var calc_type;
 var revient_price;
 var public_price;
 var concurrent_price;
+var fourn_margin_coeff;
+var fourn_margin_min_coeff;
 var categ_margin_coeff;
+var categ_margin_min_coeff;
+// prix de vente
 var sell_price;
 var sell_margin_coeff;
 var sell_margin_tx_marge;
 var sell_margin_tx_maque;
+// Prix de vente mini
+var sell_min_price;
+var sell_min_coeff;
+var sell_min_tx_marge;
+var sell_min_tx_marque;
 $(document).ready(function() {
 	revient_price = parseFloat($('#revient_price').data('value'));
 	public_price = parseFloat($('#public_price').data('value'));
@@ -35,13 +44,24 @@ $(document).ready(function() {
 		sell_price = $(this).val();
 		calc_margin();
 	});
+	$('#sell_min_coeff input').change(function() {
+		sell_min_coeff = $(this).val();
+		calc_margin();
+	});
 	$('#categ select').change(function() {
-		categ_margin_coeff = parseFloat($('option:selected', this).data('value'));
+		categ_margin_coeff = parseFloat($('option:selected', this).data('coeff'));
 		categ_margin_tx_marge = 100*(categ_margin_coeff-1);
 		categ_margin_tx_marque = 100*(categ_margin_coeff-1)/categ_margin_coeff;
 		$('#categ_margin_coeff').text(num_round(categ_margin_coeff));
 		$('#categ_margin_tx_marge').text(num_round(categ_margin_tx_marge)+'%');
 		$('#categ_margin_tx_marque').text(num_round(categ_margin_tx_marque)+'%');
+
+		categ_margin_min_coeff = parseFloat($('option:selected', this).data('min_coeff'));
+		categ_margin_min_tx_marge = 100*(categ_margin_min_coeff-1);
+		categ_margin_min_tx_marque = 100*(categ_margin_min_coeff-1)/categ_margin_min_coeff;
+		$('#categ_margin_min_coeff').text(num_round(categ_margin_min_coeff));
+		$('#categ_margin_min_tx_marge').text(num_round(categ_margin_min_tx_marge)+'%');
+		$('#categ_margin_min_tx_marque').text(num_round(categ_margin_min_tx_marque)+'%');
 
 		// Lien
 		$('#categ_update_link').attr('href', '/categories/viewcat.php?id='+$(this).val()+'&type=0');
@@ -72,8 +92,12 @@ $(document).ready(function() {
 		// Coeff
 		fourn_margin_coeff = $('option:selected', this).data('fourn_margin_coeff');
 		$('#fourn_margin_coeff').data('value', fourn_margin_coeff).text(fourn_margin_coeff);
-		$('#fourn_margin_tx_marge').text(num_round(100*(fourn_margin_coeff-1))+' %');
-		$('#fourn_margin_tx_marque').text(num_round(100*(fourn_margin_coeff-1)/fourn_margin_coeff)+' %');
+		$('#fourn_margin_tx_marge').text(fourn_margin_coeff>0 ?num_round(100*(fourn_margin_coeff-1))+' %' :'');
+		$('#fourn_margin_tx_marque').text(fourn_margin_coeff>0 ?num_round(100*(fourn_margin_coeff-1)/fourn_margin_coeff)+' %' :'');
+		fourn_margin_min_coeff = $('option:selected', this).data('fourn_margin_min_coeff');
+		$('#fourn_margin_min_coeff').data('value', fourn_margin_min_coeff).text(fourn_margin_min_coeff);
+		$('#fourn_margin_min_tx_marge').text(fourn_margin_min_coeff>0 ?num_round(100*(fourn_margin_min_coeff-1))+' %' :'');
+		$('#fourn_margin_min_tx_marque').text(fourn_margin_min_coeff >0 ?num_round(100*(fourn_margin_min_coeff-1)/fourn_margin_min_coeff)+' %' :'');
 
 		// Lien
 		$('#fourn_price_update_link').attr('href', '/product/fournisseurs.php?id='+fk_product+'&socid='+$('option:selected', this).data('fk_soc')+'&action=update_price&rowid='+$(this).val());
@@ -111,31 +135,52 @@ function calc_price()
 	}
 	else if (calc_type=='four_margin_coeff') {
 		sell_price = revient_price*fourn_margin_coeff;
+		sell_min_coeff = fourn_margin_min_coeff;
+		$('#sell_min_coeff input').val(num_round(sell_min_coeff));
 	}
 	else if (calc_type=='concurrent') {
 		sell_price = concurrent_price;
 	}
 	else if (calc_type=='category_margin') {
 		sell_price = revient_price*categ_margin_coeff;
+		sell_min_coeff = categ_margin_min_coeff;
+		$('#sell_min_coeff input').val(num_round(sell_min_coeff));
 	}
 	else {
 		//sell_price = 0;
 	}
+		//alert(sell_min_coeff);
 
 	$('#calc_public_price .calc_price').text(num_round(public_price));
 	$('#calc_public_price .calc_margin_coeff').text(num_round(public_price/revient_price));
 	$('#calc_public_price .calc_margin_tx_marge').text(num_round(100*(public_price-revient_price)/revient_price)+' %');
 	$('#calc_public_price .calc_margin_tx_marque').text(num_round(100*(public_price-revient_price)/public_price)+' %');
+
+	$('#calc_four_margin_coeff .calc_price').text(num_round(revient_price*fourn_margin_coeff));
+	$('#calc_four_margin_coeff .calc_margin_coeff').text(num_round(fourn_margin_coeff));
+	$('#calc_four_margin_coeff .calc_margin_tx_marge').text(num_round(100*(fourn_margin_coeff-1))+' %');
+	$('#calc_four_margin_coeff .calc_margin_tx_marque').text(num_round(100*(fourn_margin_coeff-1)/fourn_margin_coeff)+' %');
+	$('#calc_four_margin_coeff .calc_min_price').text(num_round(revient_price*fourn_margin_min_coeff));
+	$('#calc_four_margin_coeff .calc_margin_min_coeff').text(num_round(fourn_margin_min_coeff));
+	$('#calc_four_margin_coeff .calc_margin_min_tx_marge').text(num_round(100*(fourn_margin_min_coeff-1))+' %');
+	$('#calc_four_margin_coeff .calc_margin_min_tx_marque').text(num_round(100*(fourn_margin_min_coeff-1)/fourn_margin_min_coeff)+' %');
+
 	$('#calc_concurrent .calc_price').text(num_round(concurrent_price));
 	$('#calc_concurrent .calc_margin_coeff').text(num_round(concurrent_price/revient_price));
 	$('#calc_concurrent .calc_margin_tx_marge').text(num_round(100*(concurrent_price-revient_price)/revient_price)+' %');
 	$('#calc_concurrent .calc_margin_tx_marque').text(num_round(100*(concurrent_price-revient_price)/concurrent_price)+' %');
+
 	$('#calc_category_margin .calc_price').text(num_round(revient_price*categ_margin_coeff));
 	$('#calc_category_margin .calc_margin_coeff').text(num_round(categ_margin_coeff));
 	$('#calc_category_margin .calc_margin_tx_marge').text(num_round(100*(categ_margin_coeff-1))+' %');
 	$('#calc_category_margin .calc_margin_tx_marque').text(num_round(100*(categ_margin_coeff-1)/categ_margin_coeff)+' %');
+	$('#calc_category_margin .calc_min_price').text(num_round(revient_price*categ_margin_min_coeff));
+	$('#calc_category_margin .calc_margin_min_coeff').text(num_round(categ_margin_min_coeff));
+	$('#calc_category_margin .calc_margin_min_tx_marge').text(num_round(100*(categ_margin_min_coeff-1))+' %');
+	$('#calc_category_margin .calc_margin_min_tx_marque').text(num_round(100*(categ_margin_min_coeff-1)/categ_margin_min_coeff)+' %');
 
 	$('#sell_price input').val(num_round(sell_price)).change();
+	//alert(sell_min_coeff);
 }
 
 function calc_margin()
@@ -144,8 +189,17 @@ function calc_margin()
 	sell_tx_marge = 100*(sell_price-revient_price)/revient_price;
 	sell_tx_marque = 100*(sell_price-revient_price)/sell_price;
 	$('#sell_coeff').text(num_round(sell_coeff));
-	$('#sell_tx_marge').text(+num_round(sell_tx_marge)+'%');
+	$('#sell_tx_marge').text('+'+num_round(sell_tx_marge)+'%');
 	$('#sell_tx_marque').text(num_round(sell_tx_marque)+'%');
+
+	sell_min_coeff = parseFloat($('#sell_min_coeff input').val());
+	sell_min_tx_marge = sell_min_coeff>0 ?100*(sell_min_coeff-1) :'';
+	sell_min_tx_marque = sell_min_coeff>0 ?100*(sell_min_coeff-1)/sell_min_coeff :'';
+	sell_min_price = revient_price*sell_min_coeff;
+	//$('#sell_coeff').text(num_round(sell_coeff));
+	$('#sell_min_price input').val(num_round(sell_min_price));
+	$('#sell_min_tx_marge').text('+'+num_round(sell_min_tx_marge)+'%');
+	$('#sell_min_tx_marque').text(num_round(sell_min_tx_marque)+'%');
 }
 </script>
 <div>
@@ -201,11 +255,12 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<thead>
 
 	</thead>
+	<h4>Prix d'achat fournisseur</h4>
 	<tbody>
 	<tr>
 		<td>Prix d'achat fournisseur utilisé :</td>
 		<td class="price" id="fourn"><select name="product_fourn_price_id"><?php foreach($product_fourn_list as $pf)
-			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'" data-fourn_margin_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_coeff'].'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.price_format($pf->fourn_unitprice)).'</option>';
+			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'" data-fourn_margin_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_coeff'].'" data-fourn_margin_min_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_min_coeff'].'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.price_format($pf->fourn_unitprice)).'</option>';
 		?></select></td>
 		<td><a href="javascript:;" id="fourn_price_update_link">Modifier le prix</a></td>
 	</tr>
@@ -230,6 +285,7 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td>Prix de revient :</td>
 		<td class="price" id="revient_price" data-value=""></td>
 	</tr>
+	<tr><td colspan="2"><hr /></td></tr>
 	<tr>
 		<td>Coeff de marge fournisseur :</td>
 		<td class="price" id="fourn_margin_coeff"></td>
@@ -245,16 +301,35 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td class="price" id="fourn_margin_tx_marque"></td>
 		<td id="is_fourn_margin_tx_marque" style="display: none;"></td>
 	</tr>
+	<tr><td colspan="2"><hr /></td></tr>
+	<tr>
+		<td>Coeff de marge mini fournisseur :</td>
+		<td class="price" id="fourn_margin_min_coeff"></td>
+		<td id="is_fourn_margin_min_coeff" style="display: none;">=> On a un coeff de marge fournisseur (à appliquer à tous ses produits)</td>
+	</tr>
+	<tr>
+		<td>Taux de marge mini fournisseur :</td>
+		<td class="price" id="fourn_margin_min_tx_marge"></td>
+		<td id="is_fourn_margin_min_tx_marge" style="display: none;"></td>
+	</tr>
+	<tr>
+		<td>Taux de marque mini fournisseur :</td>
+		<td class="price" id="fourn_margin_min_tx_marque"></td>
+		<td id="is_fourn_margin_min_tx_marque" style="display: none;"></td>
+	</tr>
 	</tbody>
 	<tbody>
 	<tr>
-		<td colspan="3"><hr /></td>
+		<td colspan="3">
+			<hr />
+			<h4>Catégorie</h4>
+		</td>
 	</tr>
 	<tr>
 		<td>Catégorie :</td>
 		<td class="price" id="categ"><select name="fk_categorie_default"><?php
 		foreach($categ_list as $cat)
-			echo '<option value="'.$cat['rowid'].'" data-value="'.$cat['margin_coeff'].'"'.($categ && $categ['rowid']==$cat['rowid'] ?' selected' :'').'>'.$cat['label'].'</option>';
+			echo '<option value="'.$cat['rowid'].'" data-coeff="'.$cat['margin_coeff'].'" data-min_coeff="'.$cat['margin_min_coeff'].'"'.($categ && $categ['rowid']==$cat['rowid'] ?' selected' :'').'>'.$cat['label'].'</option>';
 		?></select></td>
 		<td><a href="javascript:;" id="categ_update_link">Modifier le coeff de marge de la catégorie</a></td>
 	</tr>
@@ -274,6 +349,24 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td id="is_categ_margin_tx_marque" style="display: none;"></td>
 	</tr>
 	<tr>
+		<td colspan="2"><hr /></td>
+	</tr>
+	<tr>
+		<td>Coeff min de marge catégorie :</td>
+		<td class="price" id="categ_margin_min_coeff"></td>
+		<td id="is_categ_margin_min_coeff" style="display: none;">=> On a un coeff de marge catégorie</td>
+	</tr>
+	<tr>
+		<td>Taux min de marge catégorie :</td>
+		<td class="price" id="categ_margin_min_tx_marge"></td>
+		<td id="is_categ_margin_min_tx_marge" style="display: none;"></td>
+	</tr>
+	<tr>
+		<td>Taux min de marque catégorie :</td>
+		<td class="price" id="categ_margin_min_tx_marque"></td>
+		<td id="is_categ_margin_min_tx_marque" style="display: none;"></td>
+	</tr>
+	<tr>
 		<td></td>
 		<td></td>
 		<td><a href="/product/card.php?action=edit&id=<?php echo $object->id; ?>">Modifier les catégories du produit</a><br />
@@ -284,7 +377,10 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tbody>
 	<tbody>
 	<tr>
-		<td colspan="3"><hr /></td>
+		<td colspan="3">
+			<hr />
+			<h4>Concurrents</h4>
+		</td>
 	</tr>
 	<tr>
 		<td>Prix concurrent médian :</td>
@@ -350,7 +446,10 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tbody>
 	<tbody>
 	<tr>
-		<td colspan="3"><hr /></td>
+		<td colspan="3">
+			<hr />
+			<h4>Actuel</h4>
+		</td>
 	</tr>
 	<tr>
 		<td>Prix de vente actuel :</td>
@@ -371,10 +470,13 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tbody>
 	<tbody>
 	<tr>
-		<td colspan="3"><hr /></td>
+		<td colspan="3">
+			<hr />
+			<h4>Comparaison méthodes</h4>
+		</td>
 	</tr>
 	<tr>
-		<td colspan="2">
+		<td colspan="3">
 			<table border="1">
 				<thead>
 				<tr>
@@ -383,6 +485,10 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 					<th>Coeff marge</th>
 					<th>Tx marge</th>
 					<th>Tx marque</th>
+					<th>min Px vente</th>
+					<th>min Coeff marge</th>
+					<th>min Tx marge</th>
+					<th>min Tx marque</th>
 				</tr>
 				</thead>
 				<tbody>
@@ -391,21 +497,26 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 					echo '<td>'.$j['label'].'</td>';
 					echo '<td class="calc_price price"></td>';
 					echo '<td class="calc_margin_coeff price"></td>';
-					echo '<td class="calc_margin_tx_marque price"></td>';
 					echo '<td class="calc_margin_tx_marge price"></td>';
+					echo '<td class="calc_margin_tx_marque price"></td>';
+					echo '<td class="calc_min_price price"></td>';
+					echo '<td class="calc_margin_min_coeff price"></td>';
+					echo '<td class="calc_margin_min_tx_marge price"></td>';
+					echo '<td class="calc_margin_min_tx_marque price"></td>';
 					echo '</tr>';
 				} ?>
 				</tbody>
 			</table>
-		</td>
-		<td>
 			<p>Voir plus tard pour ajouter l'info spécifique de catégorie, prix fournisseur, etc.</p>
 		</td>
 	</tr>
 	</tbody>
 	<tbody>
 	<tr>
-		<td colspan="3"><hr /></td>
+		<td colspan="3">
+			<hr />
+			<h4>Choix</h4>
+		</td>
 	</tr>
 	<tr>
 		<td>Règle de calcul de marge :</td>
@@ -432,13 +543,22 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		<td>Taux marque effective :</td>
 		<td class="price" id="sell_tx_marque" data-value=""></td>
 	</tr>
+	<tr><td colspan="2"><hr /></td></tr>
 	<tr>
 		<td>Coeff marge mini :</td>
-		<td class="price" id="sell_min_coeff" data-value=""></td>
+		<td class="price" id="sell_min_coeff" data-value=""><input type="text" name="sell_min_coeff" value="" size="10" /></td>
+	</tr>
+	<tr>
+		<td>Taux marge mini :</td>
+		<td class="price" id="sell_min_tx_marge" data-value=""></td>
+	</tr>
+	<tr>
+		<td>Taux marque mini :</td>
+		<td class="price" id="sell_min_tx_marque" data-value=""></td>
 	</tr>
 	<tr>
 		<td>Prix de vente mini :</td>
-		<td class="price" id="sell_min_price" data-value=""><input type="text" name="sell_min_price" value="" size="10" /></td>
+		<td class="price" id="sell_min_price" data-value=""><input type="text" name="sell_min_price" value="" size="10" onfocus="this.blur()" /></td>
 	</tr>
 	</tbody>
 	<tfoot>
