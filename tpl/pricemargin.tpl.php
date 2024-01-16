@@ -600,5 +600,10 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<li>Materiaux : ...</li>
 </ul>
 
-<h3></h3>
+<h3>Méthode de calcul</h3>
+<p>- Appliquer un pourcentage de remise sur prix public pur tout ou partie des produits du fournisseur (par le biais de filtres)<br />
+- Bien prendre en compte du transport via le module spé</p>
+
+<p>- Définit un pourcentage de marge, qui permet de calculer automatiquement le prix de vente à partir du prix de revient</p>
+
 <?php
