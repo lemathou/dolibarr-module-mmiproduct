@@ -16,8 +16,8 @@
  */
 
 /**
- *   \file       mmiproduct/pricemargin.php
- *   \brief      Margin calculation helper
+ *   \file       mmiproduct/inventory_maj.php
+ *   \brief      Inventory update from csv
  */
 
 require_once 'env.inc.php';
@@ -87,7 +87,7 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 
 $inok = [];
 foreach($l as $ref=>$row) {
-	if (empty($row[$i]))
+	if (empty($row['i']))
 		$inok[$ref] = $row;
 }
 
