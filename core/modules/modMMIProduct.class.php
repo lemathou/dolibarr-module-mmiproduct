@@ -124,6 +124,7 @@ class modMMIProduct extends DolibarrModules
 				'productservicelist',
 				'supplier_proposalcard',
 				'stockatdate',
+				'pricesuppliercard',
 				//   'data' => array(
 				//       'hookcontext1',
 				//       'hookcontext2',
@@ -305,7 +306,7 @@ class modMMIProduct extends DolibarrModules
 
 		// Societe
 		
-		$extrafields->addExtraField('competitor', $langs->trans('Extrafield_competitor'), 'boolean', 10, '', 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('competitor', $langs->trans('Extrafield_competitor'), 'boolean', 55, '', 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_coeff', $langs->trans('Extrafield_margin_coeff'), 'double', 55, "10,5", 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_tx_marque', $langs->trans('Extrafield_margin_tx_marque'), 'double', 55, "10,5", 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_tx_marque'), '($object->array_options["options_margin_coeff"]>0 ?100*($object->array_options["options_margin_coeff"]-1)/$object->array_options["options_margin_coeff"] :NULL)', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_min_coeff', $langs->trans('Extrafield_margin_min_coeff'), 'double', 55, "10,5", 'societe', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_min_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
@@ -323,8 +324,10 @@ class modMMIProduct extends DolibarrModules
 		// Default supplier and supplier ref
 		$extrafields->addExtraField('supplier_ref', $langs->trans('Extrafield_supplier_ref'), 'varchar', 10, 32, 'product', 0, 0, '', "", 1, '', 5, $langs->trans('ExtrafieldToolTip_supplier_ref'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
         $extrafields->addExtraField('fk_soc_fournisseur', $langs->trans('Extrafield_fk_soc_fournisseur'), 'sellist', 10, '', 'product', 0, 0, '', "a:1:{s:7:\"options\";a:1:{s:32:\"societe:nom:rowid::fournisseur=1\";N;}}", 1, '', 5, $langs->trans('ExtrafieldToolTip_fk_soc_fournisseur'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// default category
+        $extrafields->addExtraField('fk_categorie_default', $langs->trans('Extrafield_fk_categorie_default'), 'int', 100, 11, 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_fk_categorie_default'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Public price
-		$extrafields->addExtraField('public_price', $langs->trans('Extrafield_public_price'), 'double', 10, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_public_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_PUBLIC_PRICE');
+		$extrafields->addExtraField('public_price', $langs->trans('Extrafield_public_price'), 'double', 55, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_public_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_PUBLIC_PRICE');
 		// Composed product
         $extrafields->addExtraField('compose', $langs->trans('Extrafield_compose'), 'boolean', 10, '', 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_compose'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_COMPOSED');
 		// Custom Product
@@ -339,21 +342,21 @@ class modMMIProduct extends DolibarrModules
 		$extrafields->addExtraField('margin_effective_tx', $langs->trans('Extrafield_margin_effective_tx'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_tx'), '($object->cost_price > 0 && $object->price > 0) ?100*($object->price-$object->cost_price)/$object->price :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_effective_coeff', $langs->trans('Extrafield_margin_effective_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_coeff'), '($object->cost_price > 0 && $object->price > 0) ?$object->price/$object->cost_price  :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_desired_coeff', $langs->trans('Extrafield_margin_desired_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_desired_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		$extrafields->addExtraField('margin_desired_tx', $langs->trans('Extrafield_margin_desired_tx'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_tx'), '($object->array_options["options_margin_desired_coeff"] > 0) ?100*($object->array_options["options_margin_desired_coeff"]-1)/$object->array_options["options_margin_desired_coeff"]  :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_min_coeff', $langs->trans('Extrafield_margin_min_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_min_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_min_tx_marque', $langs->trans('Extrafield_margin_min_tx_marque'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_min_tx_marque'), '($object->array_options["options_margin_min_coeff"]>0 ?100*($object->array_options["options_margin_min_coeff"]-1)/$object->array_options["options_margin_min_coeff"] :NULL)', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		// margin calculation method
-        $extrafields->addExtraField('margin_calc_type', $langs->trans('Extrafield_margin_calc_type'), 'select', 55, '', 'product', 0, 0, '', ['options'=>['sell_price' => 'Prix final fixé', 'public_price' => 'Prix public fournisseur fixé', 'concurrent' => 'Prix similaire à la concurrence', 'category_margin'=>'Marge définie par la catégorie']], 1, '', 1, $langs->trans('ExtrafieldToolTip_margin_calc_type'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('margin_calc_type', $langs->trans('Extrafield_margin_calc_type'), 'select', 55, '', 'product', 0, 0, '', ['options'=>['sell_price' => 'Prix final fixé', 'public_price' => 'Prix public fournisseur fixé', 'concurrent' => 'Prix similaire à la concurrence', 'category_margin'=>'Marge définie par la catégorie']], 1, '', 1, $langs->trans('ExtrafieldToolTip_margin_calc_type'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+        $extrafields->addExtraField('margin_calc_options', $langs->trans('Extrafield_margin_calc_options'), 'varchar', 55, '256', 'product', 0, 0, '', '', 1, '', -3, $langs->trans('ExtrafieldToolTip_margin_calc_options'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		// Season dates begin, end, price/adjust
 		$extrafields->addExtraField('season_date_begin', $langs->trans('Extrafield_season_date_begin'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_begin'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		$extrafields->addExtraField('season_date_end', $langs->trans('Extrafield_season_date_end'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_end'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		// logistic cost
-        $extrafields->addExtraField('logistic_cost_price', $langs->trans('Extrafield_product_logistic_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_logistic_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('logistic_cost_price', $langs->trans('Extrafield_product_logistic_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_logistic_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// misc cost
-        $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// shipping cost
-        $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 100, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
-		// default category
-        $extrafields->addExtraField('fk_categorie_default', $langs->trans('Extrafield_fk_categorie_default'), 'int', 100, 11, 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_fk_categorie_default'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		

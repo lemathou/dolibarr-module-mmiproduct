@@ -26,6 +26,7 @@ if ($action=='margin_calc_update') {
 	}
 
 	// Default Category
+	// @todo vérif avec presta
 	$fk_categorie_default = GETPOST('fk_categorie_default', 'int');
 	$object->array_options['options_fk_categorie_default'] = $fk_categorie_default;
 
@@ -34,17 +35,29 @@ if ($action=='margin_calc_update') {
 	$object->array_options['options_margin_calc_type'] = $margin_calc_type;
 
 	// Price update
+	$cost_price = GETPOST('revient_price');
+	$object->cost_price = $cost_price;
+	//var_dump($cost_price);
 	$sell_price = GETPOST('sell_price');
 	$price_vat_tx = 20;
 	$sell_coeff = GETPOST('sell_coeff'); // @todo
+	$object->array_options['options_margin_coeff'] = $sell_coeff;
+	$object->array_options['options_margin_desired_coeff'] = $sell_coeff;
 	$sell_min_coeff = GETPOST('sell_min_coeff'); // @todo
-	$sell_min_price = GETPOST('sell_min_price'); // @todo
+	$object->array_options['options_margin_min_coeff'] = $sell_min_coeff;
+	$sell_min_price = GETPOST('sell_min_price');
 	$object->update($object->id, $user);
 	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, !empty($sell_min_price) ?$sell_min_price :NULL);
 	//$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, $sell_price_min);
 }
 
 // DONNEES
+
+$product = new Product($db);
+$product->fetch($id);
+
+// Prix public
+$public_price =  $product->array_options['options_public_price'];
 
 // Prix concurrent
 $pcp_list = [];

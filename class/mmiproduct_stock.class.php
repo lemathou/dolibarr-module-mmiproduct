@@ -13,6 +13,8 @@ class MMIProduct_Stock extends MMI_Delayed_1_0
 
 // CLASS
 
+const MOD_NAME = 'mmiproduct';
+
 /**
  * @var MMIProduct_Stock $_instance
  */
