@@ -80,19 +80,20 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 			case 'PRODUCT_MODIFY':
 				//var_dump($object); //die();
 				$price_update = false;
+				$price_min_update = false;
 				$product = $object;
 				if (empty($product->array_options['options_margin_calc_type']))
 					break;
 				// Recalcul prix selon prix public
-				if (!empty($product->array_options['options_margin_calc_type'] == 'public_price')) {
+				if ($product->array_options['options_margin_calc_type'] == 'public_price') {
 					$public_price = $product->array_options['options_public_price'];
 					$sell_price = $public_price;
-					if ($public_price != (float)$product->price) {
+					if ($sell_price != (float)$product->price) {
 						$product->array_options['options_margin_desired_coeff'] = NULL;
 						//echo 'PRICE UPDATE';
 						//var_dump($public_price, (float)$product->price);
 						//var_dump($cost_price, $product->cost_price, $product->array_options['options_margin_desired_coeff'], $product->array_options);
-						$product->price = $public_price;
+						//$product->price = $public_price;
 						$price_update = true;
 					}
 				}
@@ -104,27 +105,21 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 							//echo 'PRICE UPDATE';
 							//var_dump($sell_price, (float)$product->price);
 							//var_dump($cost_price, $product->cost_price, $product->array_options['options_margin_desired_coeff'], $product->array_options);
-							$product->price = $sell_price;
+							//$product->price = $sell_price;
 							$price_update = true;
 						}
 					}
 					// Recalcul prix min selon coeff désiré
-					if (!empty($product->array_options['options_margin_min_coeff'])) {
+					if (!empty($product->array_options['options_margin_desired_coeff']) && !empty($product->array_options['options_margin_min_coeff'])) {
 						$sell_min_price = round($product->cost_price*$product->array_options['options_margin_min_coeff'], 5);
-						if ($sell_min_price != (float)$product->price_min) {
-							// echo 'PRICE MIN UPDATE';
-							// var_dump($sell_min_price, (float)$product->price_min);
-							// var_dump($cost_price, $product->cost_price, $product->array_options['options_margin_min_coeff'], $product->array_options);
-							$product->price_min = $sell_min_price;
-							$price_update = true;
-						}
+						$price_min_update = true;
 					}
 				}
 				// Need at least a sell_price
 				if ($price_update && !empty($sell_price)) {
 					//var_dump($product);
 					//$ret = $product->update($product->id, $user);
-					$ret = $product->updatePrice($sell_price, 'HT', $user, $product->tva_tx, !empty($sell_min_price) ?$sell_min_price :NULL);
+					$ret = $product->updatePrice($sell_price, 'HT', $user, $product->tva_tx, $price_min_update ?$sell_min_price :NULL);
 					//var_dump($ret);
 				}
 				//var_dump($sell_price, $product->price, $sell_min_price, $product->price_min, $product->array_options); die();

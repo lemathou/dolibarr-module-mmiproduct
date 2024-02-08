@@ -137,13 +137,15 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 			return -1;
 		}
 
-		// @todo récup prix de revient et pas prix fournisseur ?
-		$sql = 'SELECT pfp.price
+		// @todo récup prix fournisseur le plus bas dans ce cas précis
+		$sql = 'SELECT pfp.unitprice, pfp.remise_percent
 			FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
-			WHERE pfp.fk_product='.$object->id.' AND pfp.fk_soc='.$object->array_options['options_fk_soc_fournisseur'];
+			WHERE pfp.fk_product='.$object->id.' AND pfp.fk_soc='.$object->array_options['options_fk_soc_fournisseur'].'
+			ORDER BY IF(pfp.remise_percent>0, pfp.unitprice*(1-pfp.remise_percent/100), pfp.unitprice)
+			LIMIT 1';
 		$q = static::$db->query($sql);
 		if($r=$q->fetch_assoc()) {
-			$cost_price = $r['price'];
+			$cost_price = $r['unitprice']*(1-$r['remise_percent']/100);
 		}
 		else {
 			static::$error++;

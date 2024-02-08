@@ -212,7 +212,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                     if (!$error) {
                         $object = new Product($this->db);
                         foreach ($parameters['toselect'] as $objectid) {
-                            //echo '<p>COUCOU : '.$objectid.'</p>';
+                            //echo '<p>COUCOU : '.$objectid.'</p>'; var_dump($margin_calc_type, $options);
                             $object->fetch($objectid);
                             MMIProduct_Price::_errors_reset();
                             $ret = MMIProduct_Price::product_calc_type_update($object, $margin_calc_type, $options);
