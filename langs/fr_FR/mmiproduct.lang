@@ -44,6 +44,7 @@ MMIPRODUCT_STOCK_COMPOSED_USE_RESERVED = Prendre en compte le stock réservé de
 MMIPRODUCT_ALERT_EMAIL_TO = Email destinataire pour les alertes produit (stock, etc.)
 MMIPRODUCT_ALERT_EMAIL_FROM = Email expéditeur pour les alertes produit (stock, etc.)
 MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS = Se repositionner dans le champ de recherche de produit dans une commande après ajout d'un produit
+MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY = Afficher le prix remisé dans l'edition d'un prix fournisseur
 
 #
 # About page
@@ -118,3 +119,8 @@ MMIProductStockReplenish = Réappro liste fournisseur
 MMIProductPriceMarginConfig = Paramétrer marge et prix de vente
 
 MMIProductsAddAllProducts = Ajouter toute une famille de produits
+
+#
+# Infos
+#
+DiscountPriceQtyMin = Prix quantité min. remisé

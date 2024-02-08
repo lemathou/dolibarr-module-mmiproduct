@@ -49,6 +49,8 @@ $arrayofparameters = array(
 
 	'MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS'=>array('type'=>'yesno','enabled'=>1),
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
+
+	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');
