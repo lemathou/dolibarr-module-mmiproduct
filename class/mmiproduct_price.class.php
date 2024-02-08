@@ -110,6 +110,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		$coeff = $cat->array_options['options_margin_coeff'];
 		$coeff_min = $cat->array_options['options_margin_min_coeff'];
 		$sell_price = $cost_price*$coeff;
+		$sell_min_price = $cost_price*$coeff_min;
 	}
 	
 	elseif ($margin_calc_type == 'four_margin_coeff') {
@@ -155,6 +156,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		$coeff = $fourn->array_options['options_margin_coeff'];
 		$coeff_min = $fourn->array_options['options_margin_min_coeff'];
 		$sell_price = $cost_price*$coeff;
+		$sell_min_price = $cost_price*$coeff_min;
 	}
 	
 	elseif ($margin_calc_type == 'public_price') {
@@ -272,7 +274,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	}
 
 	// Price update
-	$res = $object->updatePrice($sell_price, 'HT', $user);
+	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL);
 	//var_dump($object, $res);
 	if($res < 0) {
 		var_dump($object->errors);
