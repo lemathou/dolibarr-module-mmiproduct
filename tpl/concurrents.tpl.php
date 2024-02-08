@@ -145,7 +145,7 @@ $(document).ready(function() {
 <?php
 $pachat = NULL;
 foreach($pfp_list as $pfp) {
-	$pachat = $pfp['unitprice'];
+	$pachat = $pfp['unitprice']*(1-$pfp['remise_percent']/100);
 }
 ?>
 
