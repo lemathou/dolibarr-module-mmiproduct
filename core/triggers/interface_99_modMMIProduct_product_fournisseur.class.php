@@ -83,7 +83,11 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
 				//var_dump($object); die();
+				/** @var ProductFournisseur $object */
+				$id = $object->product_fourn_price_id;
 				$product = new Product($db);
+				$pfp = new ProductFournisseurPrice($db);
+				$pfp->fetch($id);
 				// S'il manque l'un des deux il faut tout mettre à jour, sinon on aura des infos inconsistantes
 				if (empty($object->fourn_id) && !empty($object->product_fourn_price_id)) {
 					$object->fetch_product_fournisseur_price($object->product_fourn_price_id);
@@ -93,16 +97,15 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 					// Manque une info => on modifie tout
 					if (empty($product->array_options['options_supplier_ref']) || empty($product->array_options['options_fk_soc_fournisseur'])) {
 						$product->array_options['options_fk_soc_fournisseur'] = $object->fourn_id;
-						$product->array_options['options_supplier_ref'] = $object->ref_supplier;
-						$product->update($product->id, $user);
+						$product->array_options['options_supplier_ref'] = $pfp->ref_fourn;
+						$ret = $product->update($product->id, $user);
 					}
 					// Modif uniquement réf fourn
-					elseif ($product->array_options['options_fk_soc_fournisseur'] == $object->fourn_id && $product->array_options['options_supplier_ref'] != $object->ref_supplier) {
-						$product->array_options['options_supplier_ref'] = $object->ref_supplier;
-						$product->update($product->id, $user);
+					elseif ($product->array_options['options_fk_soc_fournisseur'] == $object->fourn_id && $product->array_options['options_supplier_ref'] != $pfp->ref_fourn) {
+						$product->array_options['options_supplier_ref'] = $pfp->ref_fourn;
+						$ret = $product->update($product->id, $user);
 					}
 				}
-				//var_dump($product->array_options); die();
 				break;
 		}
 		
