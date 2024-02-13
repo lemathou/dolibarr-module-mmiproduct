@@ -79,6 +79,7 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 		switch($action) {
 			case 'PRODUCT_MODIFY':
 				//var_dump($object); //die();
+				/** @var Product $object */
 				$price_update = false;
 				$price_min_update = false;
 				$product = $object;
@@ -128,6 +129,7 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
 				//var_dump($object); die();
+				/** @var ProductFournisseur $object */
 				$product = new Product($db);
 				// S'il manque l'un des deux il faut tout mettre à jour, sinon on aura des infos inconsistantes
 				if (empty($object->fourn_id) && !empty($object->product_fourn_price_id)) {

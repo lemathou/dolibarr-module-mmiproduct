@@ -339,8 +339,10 @@ class modMMIProduct extends DolibarrModules
 		$extrafields->addExtraField('competitor_avg_price', $langs->trans('Extrafield_competitor_avg_price'), 'double', 55, "20,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor_avg_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('competitor_note', $langs->trans('Extrafield_competitor_note'), 'varchar', 55, 255, 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_competitor_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		// Margin & coeff
+		// Effectif
 		$extrafields->addExtraField('margin_effective_tx', $langs->trans('Extrafield_margin_effective_tx'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_tx'), '($object->cost_price > 0 && $object->price > 0) ?100*($object->price-$object->cost_price)/$object->price :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_effective_coeff', $langs->trans('Extrafield_margin_effective_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_coeff'), '($object->cost_price > 0 && $object->price > 0) ?$object->price/$object->cost_price  :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
+		// Désiré (et min) selon config auto
 		$extrafields->addExtraField('margin_desired_coeff', $langs->trans('Extrafield_margin_desired_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_desired_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_desired_tx', $langs->trans('Extrafield_margin_desired_tx'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_effective_tx'), '($object->array_options["options_margin_desired_coeff"] > 0) ?100*($object->array_options["options_margin_desired_coeff"]-1)/$object->array_options["options_margin_desired_coeff"]  :NULL', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
 		$extrafields->addExtraField('margin_min_coeff', $langs->trans('Extrafield_margin_min_coeff'), 'double', 55, "10,5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_margin_min_coeff'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
@@ -357,6 +359,8 @@ class modMMIProduct extends DolibarrModules
         $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// shipping cost
         $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Garantie
+        $extrafields->addExtraField('garantie', $langs->trans('Extrafield_garantie'), 'varchar', 10, 255, 'product', 0, 0, '', "", 1, '', 3, $langs->trans('ExtrafieldToolTip_garantie'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		
