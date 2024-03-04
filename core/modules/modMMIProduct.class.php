@@ -33,9 +33,6 @@ include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
  */
 class modMMIProduct extends DolibarrModules
 {
-	protected $tabs = [];
-	protected $dictionaries = [];
-
 	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
