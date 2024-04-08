@@ -147,7 +147,7 @@ public function reserved_qty($fk_product)
 	$sql = 'SELECT COUNT(DISTINCT c.fk_soc) as nb_customers, COUNT(DISTINCT c.rowid) as nb, COUNT(cd.rowid) as nb_rows, SUM(cd.qty) as qty
 		FROM '.MAIN_DB_PREFIX.'commandedet as cd
 		INNER JOIN '.MAIN_DB_PREFIX.'commande as c ON c.rowid = cd.fk_commande
-		INNER JOIN '.MAIN_DB_PREFIX.'product as cd2 ON cd2.fk_object = cd.rowid
+		LEFT JOIN '.MAIN_DB_PREFIX.'commandedet_extrafields as cd2 ON cd2.fk_object = cd.rowid
 		WHERE cd.fk_product = '.$fk_product.'
 			AND c.fk_statut IN (1, 2)';
 	//trigger_error($sql);
