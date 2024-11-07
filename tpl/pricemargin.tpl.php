@@ -147,8 +147,8 @@ function num_round(number)
 
 function calc_price()
 {
-	if (calc_type=='public_price') {
-		sell_price = public_price;
+	if (calc_type=='fourn_public_price') {
+		sell_price = fourn_unitprice;
 	}
 	else if (calc_type=='four_margin_coeff') {
 		sell_price = revient_price*fourn_margin_coeff;
@@ -238,7 +238,7 @@ function calc_margin()
 <?php
 $calc_type_list = [
 	'sell_price' => ['label'=>'Prix final fixé'],
-	'public_price' => ['label'=>'Prix public fournisseur fixé'],
+	'fourn_public_price' => ['label'=>'Prix public fournisseur fixé'],
 	'four_margin_coeff' => ['label'=>'Coeff/Marge fournisseur fixée'],
 	'concurrent' => ['label'=>'Prix similaire à la concurrence'],
 	'category_margin' => ['label'=>'Marge définie par la catégorie'],
