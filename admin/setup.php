@@ -28,14 +28,21 @@ require_once '../main_load.inc.php';
 
 // Parameters
 $arrayofparameters = array(
+	// Champs supplémentaires
+	'MMIPRODUCT_FIELDS'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_COMPOSED'=>array('type'=>'yesno', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_PUBLIC_PRICE'=>array('type'=>'yesno', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_CUSTOM'=>array('type'=>'yesno', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SHOW_ADDED_PRODUCT_LABEL'=>array('type'=>'yesno','enabled'=>1),
+	'MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF'=>array('type'=>'yesno','enabled'=>1),
+	// Recherche
+	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_SHOW_MULTIPLE'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
+	// Alertes Stock & Commandes fournisseur
+	'MMIPRODUCT_REPLENISH'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_SEASON_DATE'=>array('type'=>'yesno','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_INFO_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
@@ -49,7 +56,7 @@ $arrayofparameters = array(
 
 	'MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS'=>array('type'=>'yesno','enabled'=>1),
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
-
+	// Prix fournisseur
 	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
 );
 

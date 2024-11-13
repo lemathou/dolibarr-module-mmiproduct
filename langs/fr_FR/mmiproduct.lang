@@ -28,11 +28,19 @@ ModuleMMIProductDesc = Ajout de champs supplémentaires, triggers, gestion marge
 MMIProductSetup = MMIProduct setup
 Settings = Settings
 MMIProductSetupPage = MMIProduct setup page
+
+MMIPRODUCT_FIELDS = Champs supplémentaires
 MMIPRODUCT_FIELD_COMPOSED = Champ : produit composé (kit)
 MMIPRODUCT_FIELD_PUBLIC_PRICE = Champ : Prix public
 MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY = Champ : Livraison direct fournisseur
 MMIPRODUCT_FIELD_CUSTOM = Champ : Produit sur mesure
+MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF = Afficher la ref fournisseur dans la tooltip produit
+
+MAIN_SEARCH_PRODUCT = Recherche
+
 MMIPRODUCT_PRICEMARGIN = Gestion avancée de la marge produit (onglet sur page produit) avec prix concurrents
+
+MMIPRODUCT_REPLENISH = Alertes Stock & Commandes fournisseur
 MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
 MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
 MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
