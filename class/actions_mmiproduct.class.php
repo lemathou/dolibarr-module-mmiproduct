@@ -389,24 +389,25 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                 $print .= ' AND ps.rowid IS NOT NULL';
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
-            //var_dump($parameters);
-            $categ_list = GETPOST('search_category_product_list', 'array');
-            if (!empty($categ_list)) {
-                $subcateg_list = $categ_list;
-	        $categ_todo = $categ_list;
-                // Recherche dans catégories enfant
-		if (GETPOST('includeinsubcat')) {
-		    while(!empty($categ_todo)) {
-			$sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
-                        $q = $this->db->query($sql);
-                        $categ_todo = [];
-                        while($row=$q->fetch_assoc()) {
-                            $categ_todo[] = $row['rowid'];
-                            $subcateg_list[] = $row['rowid'];
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                $categ_list = GETPOST('search_category_product_list', 'array');
+                if (!empty($categ_list)) {
+                    $subcateg_list = $categ_list;
+                    $categ_todo = $categ_list;
+                    // Recherche dans catégories enfant
+                    if (GETPOST('includeinsubcat')) {
+                        while(!empty($categ_todo)) {
+                        $sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
+                            $q = $this->db->query($sql);
+                            $categ_todo = [];
+                            while($row=$q->fetch_assoc()) {
+                                $categ_todo[] = $row['rowid'];
+                                $subcateg_list[] = $row['rowid'];
+                            }
                         }
-		    }
-		}
-                $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
+                    }
+                    $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
+                }
             }
         }
     
@@ -441,8 +442,10 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
             //var_dump($parameters);
-            $includeinsubcat = GETPOST('includeinsubcat');
-            $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                $includeinsubcat = GETPOST('includeinsubcat');
+                $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
+            }
         }
     
         if (! $error) {
@@ -492,8 +495,10 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $print = '';
     
         if ($this->in_context($parameters, 'productservicelist')) {
-            if (GETPOST('includeinsubcat'))
-                $print .= '&includeinsubcat=1';
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                if (GETPOST('includeinsubcat'))
+                    $print .= '&includeinsubcat=1';
+            }
         }
     
         if (! $error) {
