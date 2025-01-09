@@ -388,6 +388,28 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             if ($notnull)
                 $print .= ' AND ps.rowid IS NOT NULL';
         }
+        elseif ($this->in_context($parameters, 'productservicelist')) {
+            //var_dump($parameters);
+            if (GETPOST('includeinsubcat')) {
+                $categ_list = GETPOST('search_category_product_list', 'array');
+                if (!empty($categ_list)) {
+                    $subcateg_list = $categ_list;
+                    $categ_toto = $categ_list;
+                    // Recherche dans catégories enfant
+                    while(!empty($categ_todo)) {
+                        $sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
+                        $q = $this->db->query($sql);
+                        $categ_todo = [];
+                        while($row=$q->fetch_assoc()) {
+                            $categ_todo[] = $row['rowid'];
+                            $subcateg_list[] = $row['rowid'];
+                        }
+                    }
+
+                    $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
+                }
+            }
+        }
     
         if (! $error) {
             $this->resprints = $print;
@@ -418,6 +440,11 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             $notnull = GETPOST('notnull');
             $print = '<div class="inlin-block"><b>N\'afficher que les produits avec du stock</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
         }
+        elseif ($this->in_context($parameters, 'productservicelist')) {
+            //var_dump($parameters);
+            $includeinsubcat = GETPOST('includeinsubcat');
+            $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Afficher si dans sous-catégories</label>';
+        }
     
         if (! $error) {
             $this->resprints = $print;
@@ -443,6 +470,31 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             //var_dump($parameters);
             if ($this->categ)
                 $print .= '&categ='.$this->categ;
+        }
+    
+        if (! $error) {
+            $this->resprints = $print;
+            return 0; // or return 1 to replace standard code
+        }
+        else {
+            $this->errors[] = 'Error message';
+            return -1;
+        }
+    }
+
+    /**
+     * Semble servir à afficher des filtrer globaux
+     */
+    function printFieldListSearchParam($parameters, &$object, &$action, $hookmanager)
+    {
+		global $conf, $user;
+
+        $error = 0; // Error counter
+        $print = '';
+    
+        if ($this->in_context($parameters, 'productservicelist')) {
+            if (GETPOST('includeinsubcat'))
+                $print .= '&includeinsubcat=1';
         }
     
         if (! $error) {
