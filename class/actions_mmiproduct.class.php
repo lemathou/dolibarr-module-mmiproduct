@@ -390,24 +390,23 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
             //var_dump($parameters);
-            if (GETPOST('includeinsubcat')) {
-                $categ_list = GETPOST('search_category_product_list', 'array');
-                if (!empty($categ_list)) {
-                    $subcateg_list = $categ_list;
-                    $categ_toto = $categ_list;
-                    // Recherche dans catégories enfant
-                    while(!empty($categ_todo)) {
-                        $sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
+            $categ_list = GETPOST('search_category_product_list', 'array');
+            if (!empty($categ_list)) {
+                $subcateg_list = $categ_list;
+	        $categ_todo = $categ_list;
+                // Recherche dans catégories enfant
+		if (GETPOST('includeinsubcat')) {
+		    while(!empty($categ_todo)) {
+			$sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
                         $q = $this->db->query($sql);
                         $categ_todo = [];
                         while($row=$q->fetch_assoc()) {
                             $categ_todo[] = $row['rowid'];
                             $subcateg_list[] = $row['rowid'];
                         }
-                    }
-
-                    $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
-                }
+		    }
+		}
+                $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
             }
         }
     
@@ -443,7 +442,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         elseif ($this->in_context($parameters, 'productservicelist')) {
             //var_dump($parameters);
             $includeinsubcat = GETPOST('includeinsubcat');
-            $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Afficher si dans sous-catégories</label>';
+            $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
         }
     
         if (! $error) {
