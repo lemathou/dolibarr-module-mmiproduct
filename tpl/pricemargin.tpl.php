@@ -147,7 +147,10 @@ function num_round(number)
 
 function calc_price()
 {
-	if (calc_type=='fourn_public_price') {
+	if (calc_type=='public_price') {
+		sell_price = public_price;
+	}
+	else if (calc_type=='fourn_public_price') {
 		sell_price = fourn_unitprice;
 	}
 	else if (calc_type=='four_margin_coeff') {
@@ -187,6 +190,11 @@ function calc_price()
 	$('#calc_public_price .calc_margin_coeff').text(public_price>0 ?num_round(public_price/revient_price) :'');
 	$('#calc_public_price .calc_margin_tx_marge').text(public_price>0 ?num_round(100*(public_price-revient_price)/revient_price)+' %' :'');
 	$('#calc_public_price .calc_margin_tx_marque').text(public_price>0 ?num_round(100*(public_price-revient_price)/public_price)+' %' :'')
+
+	$('#calc_fourn_public_price .calc_price').text(fourn_unitprice>0 ?num_round(fourn_unitprice) :'');
+	$('#calc_fourn_public_price .calc_margin_coeff').text(fourn_unitprice>0 ?num_round(fourn_unitprice/revient_price) :'');
+	$('#calc_fourn_public_price .calc_margin_tx_marge').text(fourn_unitprice>0 ?num_round(100*(fourn_unitprice-revient_price)/revient_price)+' %' :'');
+	$('#calc_fourn_public_price .calc_margin_tx_marque').text(fourn_unitprice>0 ?num_round(100*(fourn_unitprice-revient_price)/public_price)+' %' :'')
 
 	$('#calc_four_margin_coeff .calc_price').text(num_round(revient_price*fourn_margin_coeff));
 	$('#calc_four_margin_coeff .calc_margin_coeff').text(num_round(fourn_margin_coeff));
@@ -238,6 +246,7 @@ function calc_margin()
 <?php
 $calc_type_list = [
 	'sell_price' => ['label'=>'Prix final fixé'],
+	'public_price' => ['label'=>'Prix public conseillé'],
 	'fourn_public_price' => ['label'=>'Prix public fournisseur fixé'],
 	'four_margin_coeff' => ['label'=>'Coeff/Marge fournisseur fixée'],
 	'concurrent' => ['label'=>'Prix similaire à la concurrence'],

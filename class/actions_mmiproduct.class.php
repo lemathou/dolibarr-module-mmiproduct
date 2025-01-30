@@ -121,9 +121,11 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 				$print .= '<p>Règle de calcul de marge :&nbsp;
                 <select id="calc_type" name="margin_calc_type">
                     <option value="">---</option>';
+                // @todo use global var
                 $calc_type_list = [
                     'sell_price' => ['label'=>'Prix final fixé'],
-                    'public_price' => ['label'=>'Prix public fournisseur fixé'],
+                    'public_price' => ['label'=>'Prix public conseillé'],
+                    'fourn_public_price' => ['label'=>'Prix public fournisseur fixé'],
                     'four_margin_coeff' => ['label'=>'Coeff/Marge fournisseur fixée'],
                     'concurrent' => ['label'=>'Prix similaire à la concurrence'],
                     'category_margin' => ['label'=>'Marge définie par la catégorie'],
@@ -189,7 +191,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                 // 'public_price' => ['label'=>'Prix public fournisseur fixé'],
                 // 'concurrent' => ['label'=>'Prix similaire à la concurrence'],
                 // 'category_margin' => ['label'=>'Marge définie par la catégorie'],
-                if (in_array($margin_calc_type, ['category_margin', 'sell_price', 'public_price', 'concurrent', 'four_margin_coeff'])) {
+                if (in_array($margin_calc_type, MMIProduct_Price::_margin_calc_types())) {
                     if ($margin_calc_type=='category_margin') {
                         if (!empty($cat) && !empty($cat->id) && empty($cat->array_options['options_margin_coeff'])) {
                             $error++;

@@ -85,7 +85,11 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 				$product = $object;
 				if (empty($product->array_options['options_margin_calc_type']))
 					break;
-				// Recalcul prix selon prix public
+				
+				// Vérification si il y a besoin de recalculer le prix de vente
+				// @todo pas certain de l'utilisé dans les situations où le prix est fixé. En outre, il faudrait repasser par la méthode centrale de la classe mmiproduct_price
+				
+				// Recalcul prix selon prix public conseillé
 				if ($product->array_options['options_margin_calc_type'] == 'public_price') {
 					$public_price = $product->array_options['options_public_price'];
 					$sell_price = $public_price;
@@ -98,9 +102,15 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 						$price_update = true;
 					}
 				}
-				if (!empty($product->cost_price)) {
+				// Recalcul prix selon prix public fournisseur
+				elseif ($product->array_options['options_margin_calc_type'] == 'fourn_public_price') {
+					//
+				}
+
+				// Si coefs désirés & min renseignés
+				if (!empty($product->cost_price) && !empty($product->array_options['options_margin_desired_coeff'])) {
 					// Recalcul prix selon coeff désiré
-					if (!empty($product->array_options['options_margin_desired_coeff']) && $product->array_options['options_margin_calc_type'] != 'public_price') {
+					if (!in_array($product->array_options['options_margin_calc_type'], ['sell_price', 'public_price', 'fourn_public_price'])) {
 						$sell_price = round($product->cost_price*$product->array_options['options_margin_desired_coeff'], 5);
 						if ($sell_price != (float)$product->price) {
 							//echo 'PRICE UPDATE';
@@ -111,7 +121,7 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 						}
 					}
 					// Recalcul prix min selon coeff désiré
-					if (!empty($product->array_options['options_margin_desired_coeff']) && !empty($product->array_options['options_margin_min_coeff'])) {
+					if (!empty($product->array_options['options_margin_min_coeff'])) {
 						$sell_min_price = round($product->cost_price*$product->array_options['options_margin_min_coeff'], 5);
 						$price_min_update = true;
 					}

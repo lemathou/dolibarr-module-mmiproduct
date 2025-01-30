@@ -16,6 +16,8 @@ protected static $db;
 protected static $error = 0;
 protected static $errors = [];
 
+protected static $margin_calc_types = ['category_margin', 'sell_price', 'public_price', 'fourn_public_price', 'concurrent', 'four_margin_coeff'];
+
 public static function __init()
 {
 	global $db;
@@ -39,6 +41,11 @@ public static function _error_get()
 	return static::$error;
 }
 
+public static function _margin_calc_types()
+{
+	return static::$margin_calc_types;
+}
+
 
 /**
  * Update Product margin and sell price calculation type
@@ -53,7 +60,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 
 	$db = static::$db;
 
-	if (!in_array($margin_calc_type, ['category_margin', 'sell_price', 'public_price', 'concurrent', 'four_margin_coeff'])) {
+	if (!in_array($margin_calc_type, static::$margin_calc_types)) {
 		static::$error++;
 		static::$errors[] = 'Wrong calc type'.(is_string($margin_calc_type) ?' : '.$margin_calc_type :'');
 		return -1;
@@ -173,6 +180,42 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		$coeff = 0;
 		//$coeff_min = NULL; // No change ?
 		$sell_price = $object->array_options['options_public_price'];
+	}
+	
+	elseif ($margin_calc_type == 'fourn_public_price') {
+		// Nouveau fourn
+		if (!empty($options['fourn'])) {
+			$fourn = $options['fourn'];
+			$object->array_options['options_fk_soc_fournisseur'] = $fourn->id;
+		}
+		elseif (!empty($object->array_options['options_fk_soc_fournisseur'])) {
+			$fourn = new Fournisseur($db);
+			$fourn->fetch($object->array_options['options_fk_soc_fournisseur']);
+		}
+		else {
+			static::$error++;
+			static::$errors[] = 'Missing default Fournisseur for product : '.$object->label;
+
+			return -1;
+		}
+
+		// @todo récup prix fournisseur le plus bas dans ce cas précis
+		$sql = 'SELECT pfp.unitprice, pfp.remise_percent
+			FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
+			WHERE pfp.fk_product='.$object->id.' AND pfp.fk_soc='.$object->array_options['options_fk_soc_fournisseur'].'
+			ORDER BY IF(pfp.remise_percent>0, pfp.unitprice*(1-pfp.remise_percent/100), pfp.unitprice)
+			LIMIT 1';
+		$q = static::$db->query($sql);
+		if($r=$q->fetch_assoc()) {
+			$cost_price = $r['unitprice']*(1-$r['remise_percent']/100);
+			$sell_price = $r['unitprice'];
+		}
+		else {
+			static::$error++;
+			static::$errors[] = 'Missing fournisseur price for product : '.$object->label;
+
+			return -1;
+		}
 	}
 	
 	elseif ($margin_calc_type == 'concurrent') {
