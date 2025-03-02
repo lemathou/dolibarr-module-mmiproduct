@@ -36,6 +36,9 @@ $arrayofparameters = array(
 	'MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SHOW_ADDED_PRODUCT_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF'=>array('type'=>'yesno','enabled'=>1),
+	// Supplier price
+	'MMIPRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
 	// Recherche
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),

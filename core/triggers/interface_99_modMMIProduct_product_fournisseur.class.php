@@ -81,6 +81,12 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
+				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
+					return 0;
+				}
+				if (empty($object->product_fourn_price_id))
+					return 0;
+
 				//var_dump($object); die();
 				/** @var ProductFournisseur $object */
 				$id = $object->product_fourn_price_id;
@@ -107,8 +113,12 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				}
 				break;
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
+				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
+					return 0;
+				}
 				if (empty($object->product_fourn_price_id))
 					return 0;
+				
 				/** @var ProductFournisseur $object */
 				$id = $object->product_fourn_price_id;
 				$pfp = new ProductFournisseurPrice($this->db);
