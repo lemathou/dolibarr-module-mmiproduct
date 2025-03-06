@@ -70,8 +70,11 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	$object->array_options['options_margin_calc_type'] = $margin_calc_type;
 
 	// Update default category in product
-	if (!empty($options['cat']))
+	if (!empty($options['cat'])) {
 		$object->array_options['options_fk_categorie_default'] = $options['cat']->id;
+		// Add cat
+		$object->setCategoriesCommon([$options['cat']->id], Categorie::TYPE_PRODUCT, false);
+	}
 	// Update default fourn in product
 	if (!empty($options['fourn']))
 		$object->array_options['options_fk_soc_fournisseur'] = $options['fourn']->id;
@@ -79,15 +82,50 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	if (!empty($options['public_price']))
 		$object->array_options['options_public_price'] = $options['public_price'];
 	
-	if ($margin_calc_type == 'category_margin') {
-		if (!empty($options['cat'])) {
-			$cat = $options['cat'];
-			// Add cat
-			$object->setCategoriesCommon([$cat->id], Categorie::TYPE_PRODUCT, false);
-			// Set cat as default
-			$object->array_options['options_fk_categorie_default'] = $cat->id;
+	// Fixed sell price
+	if ($margin_calc_type == 'sell_price') {
+		if (empty($options['sell_price'])) {
+			static::$error++;
+			static::$errors[] = 'Sell price not possible for product : '.$object->label;
+
+			return -1;
 		}
-		elseif (!empty($object->array_options['options_fk_categorie_default'])) {
+
+		// Calc new price
+		$res = $object->updatePrice($options['sell_price'], 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL);
+		//var_dump($object, $res);
+		if($res < 0) {
+			var_dump($object->errors);
+			static::$error++;
+			static::$errors[] = $object->errors;
+
+			return -1;
+		}
+	}
+
+	$res = $object->update($object->id, $user);
+	var_dump($object, $res);
+	if($res < 0) {
+		var_dump($object->errors);
+		static::$error++;
+		static::$errors[] = $object->errors;
+
+		return -1;
+	}
+
+	return static::product_price_update($object);
+}
+
+public static function product_price_update($object)
+{
+	global $conf, $user, $langs;
+
+	$db = static::$db;
+	$margin_calc_type = $object->array_options['options_margin_calc_type'];
+	//var_dump($object);
+
+	if ($margin_calc_type == 'category_margin') {
+		if (!empty($object->array_options['options_fk_categorie_default'])) {
 			$cat = new Categorie($db);
 			$cat->fetch($object->array_options['options_fk_categorie_default']);
 		}
@@ -122,11 +160,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	
 	elseif ($margin_calc_type == 'four_margin_coeff') {
 		// Nouveau fourn
-		if (!empty($options['fourn'])) {
-			$fourn = $options['fourn'];
-			$object->array_options['options_fk_soc_fournisseur'] = $fourn->id;
-		}
-		elseif (!empty($object->array_options['options_fk_soc_fournisseur'])) {
+		if (!empty($object->array_options['options_fk_soc_fournisseur'])) {
 			$fourn = new Fournisseur($db);
 			$fourn->fetch($object->array_options['options_fk_soc_fournisseur']);
 		}
@@ -184,11 +218,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	
 	elseif ($margin_calc_type == 'fourn_public_price') {
 		// Nouveau fourn
-		if (!empty($options['fourn'])) {
-			$fourn = $options['fourn'];
-			$object->array_options['options_fk_soc_fournisseur'] = $fourn->id;
-		}
-		elseif (!empty($object->array_options['options_fk_soc_fournisseur'])) {
+		if (!empty($object->array_options['options_fk_soc_fournisseur'])) {
 			$fourn = new Fournisseur($db);
 			$fourn->fetch($object->array_options['options_fk_soc_fournisseur']);
 		}
@@ -272,9 +302,9 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		// Calc new price
 		$coeff = NULL;
 		//$coeff_min = NULL; // No change ?
-		$sell_price = $options['sell_price'];
+		$sell_price = $object->price;
 	}
-	// Fixed sell coeff
+	// Fixed sell coeff (@todo : option introuvable)
 	elseif ($margin_calc_type == 'sell_coeff') {
 		if (empty($options['sell_coeff'])) {
 			static::$error++;
