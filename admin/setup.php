@@ -61,6 +61,11 @@ $arrayofparameters = array(
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
 	// Prix fournisseur
 	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
+	// Alerte coeff
+	'MMIPRODUCT_COEFF_EMAIL_ALERT'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_COEFF'=>array('type'=>'decimal','enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_FROM'=>array('type'=>'string','enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_TO'=>array('type'=>'string','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');

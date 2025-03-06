@@ -57,6 +57,11 @@ MMIPRODUCT_ALERT_EMAIL_FROM = Email expéditeur pour les alertes produit (stock,
 MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS = Se repositionner dans le champ de recherche de produit dans une commande après ajout d'un produit
 MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY = Afficher le prix remisé dans l'edition d'un prix fournisseur
 
+MMIPRODUCT_COEFF_EMAIL_ALERT = ALerte email sur coefficient de marge
+MMIPRODUCT_COEFF_EMAIL_ALERT_COEFF = Coeff de marge seuil d'alerte
+MMIPRODUCT_COEFF_EMAIL_ALERT_FROM = Email expéditeur pour les alertes de coefficient de marge
+MMIPRODUCT_COEFF_EMAIL_ALERT_TO = Email destinataire pour les alertes de coefficient de marge
+
 #
 # About page
 #
