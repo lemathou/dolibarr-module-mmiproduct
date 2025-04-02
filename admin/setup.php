@@ -66,6 +66,9 @@ $arrayofparameters = array(
 	'MMIPRODUCT_COEFF_EMAIL_ALERT_COEFF'=>array('type'=>'decimal','enabled'=>1),
 	'MMIPRODUCT_COEFF_EMAIL_ALERT_FROM'=>array('type'=>'string','enabled'=>1),
 	'MMIPRODUCT_COEFF_EMAIL_ALERT_TO'=>array('type'=>'string','enabled'=>1),
+
+	'MMIPRODUCT_STOCK'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_STOCKMOVEMENTLIST_STOCK'=>array('type'=>'yesno','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');

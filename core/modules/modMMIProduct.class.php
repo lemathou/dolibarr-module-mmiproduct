@@ -118,6 +118,7 @@ class modMMIProduct extends DolibarrModules
 				'ordercard',
 				'productcard',
 				'stockreplenishlist',
+				'stockmovementlist',
 				'productservicelist',
 				'supplier_proposalcard',
 				'stockatdate',

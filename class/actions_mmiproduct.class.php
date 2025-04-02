@@ -328,7 +328,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         $error = 0; // Error counter
         $print = '';
-        
+
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             if ($this->fk_supplier) {
 				$print .= ', pfp.packaging AS packaging';
@@ -432,7 +432,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         $error = 0; // Error counter
         $print = '';
-    
+
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
             $print = '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
@@ -495,7 +495,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         $error = 0; // Error counter
         $print = '';
-    
+
         if ($this->in_context($parameters, 'productservicelist')) {
             if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
                 if (GETPOST('includeinsubcat'))
@@ -523,7 +523,14 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+    
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$print = '<td class="liste_titre">&nbsp;</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
             $print = '<input type="hidden" name="categ" value="'.$this->categ.'" />';
         }
@@ -548,7 +555,13 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$print = '<td>Stock réel</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
 			if ($this->fk_supplier) {
             	$print = '<td>Emballage</td>';
@@ -572,13 +585,24 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     {
 		global $conf, $user;
 
+		static $stocks = [];
+
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$obj = $parameters['obj'];
+				//var_dump($obj->entrepot_id, $obj->rowid, $obj->batch, $obj); die();
+				$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch] += $obj->qty;
+				$print = '<td class="right">'.$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch].'</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
-            $objp = $parameters['objp'];
 			if ($this->fk_supplier) {
+				$objp = $parameters['objp'];
 				$print = '<td class="right">'.$objp->packaging.'</td>';
 			}
         }
