@@ -359,14 +359,14 @@ class modMMIProduct extends DolibarrModules
 		// misc cost
         $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// shipping cost
-        $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Garantie
         $extrafields->addExtraField('garantie', $langs->trans('Extrafield_garantie'), 'varchar', 10, 255, 'product', 0, 0, '', "", 1, '', 3, $langs->trans('ExtrafieldToolTip_garantie'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		
 		// Supplier shipping price
-        $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_product_supplier_shipping_price'), 'price', 100, "20,5", 'product_fournisseur_price', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_supplier_shipping_price'), '!$conf->global->MMIFOURNISSEURPRICE_AUTOCALCULATE_ORDERS', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_product_supplier_shipping_price'), 'price', 100, "20,5", 'product_fournisseur_price', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_supplier_shipping_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		
 		// Supplier shipping price
         $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_commande_fournisseur_shipping_price'), 'price', 100, "20,5", 'commande_fournisseur', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_commande_fournisseur_shipping_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
