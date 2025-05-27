@@ -99,17 +99,24 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				}
 				if (!empty($object->product_id) && !empty($object->fourn_id)) {
 					$product->fetch($object->product_id);
-					// Manque une info => on modifie tout
-					if (empty($product->array_options['options_supplier_ref']) || empty($product->array_options['options_fk_soc_fournisseur'])) {
+					// Créé ou modifié Fournisseur => modifie tout
+					if (empty($product->array_options['options_fk_soc_fournisseur']) || $product->array_options['options_fk_soc_fournisseur'] != $object->fourn_id) {
 						$product->array_options['options_fk_soc_fournisseur'] = $object->fourn_id;
-						$product->array_options['options_supplier_ref'] = $pfp->ref_fourn;
-						$ret = $product->update($product->id, $user);
+						$update = true;
+						$update_all = true;
 					}
-					// Modif uniquement réf fourn
-					elseif ($product->array_options['options_fk_soc_fournisseur'] == $object->fourn_id && $product->array_options['options_supplier_ref'] != $pfp->ref_fourn) {
+					// Modif réf fourn
+					if ($update_all || $product->array_options['options_supplier_ref'] != $pfp->ref_fourn) {
 						$product->array_options['options_supplier_ref'] = $pfp->ref_fourn;
-						$ret = $product->update($product->id, $user);
+						$update = true;
 					}
+					// Modif conditionnement
+					if ($update_all || $product->array_options['options_supplier_packaging'] != $pfp->packaging) {
+						$product->array_options['options_supplier_packaging'] = $pfp->packaging;
+						$update = true;
+					}
+					if ($update)
+						$ret = $product->update($product->id, $user);
 				}
 				break;
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
@@ -127,7 +134,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				if ($res > 0) {
 					$product = new Product($this->db);
 					$product->fetch($productfournisseurprice->fk_product);
-					if ($product->array_options['options_supplier_ref'] == $productfournisseurprice->ref_fourn && $product->array_options['options_fk_soc_fournisseur'] == $productfournisseurprice->fk_soc) {
+					if ($product->array_options['options_fk_soc_fournisseur'] == $productfournisseurprice->fk_soc) {
 						$records = $pfp->fetchAll('', '', 0, 0, ['fk_product' => $product->id]);
 						// Check if there us still a product supplier price
 						if (count($records) > 1) {
@@ -135,6 +142,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 								// We take the first price an set it as default product supplier & ref
 								if ($record->id != $id) {
 									$product->array_options['options_supplier_ref'] = $record->ref_fourn;
+									$product->array_options['options_supplier_packaging'] = $record->supplier_packaging;
 									$product->array_options['options_fk_soc_fournisseur'] = $record->fk_soc;
 									$product->update($product->id, $user);
 									break;
@@ -144,6 +152,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 						// Otherwise, we should remove the supplier & ref from the product
 						else {
 							$product->array_options['options_supplier_ref'] = '';
+							$product->array_options['options_supplier_packaging'] = NULL;
 							$product->array_options['options_fk_soc_fournisseur'] = NULL;
 							$product->update($product->id, $user);
 						}

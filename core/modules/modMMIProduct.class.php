@@ -322,9 +322,10 @@ class modMMIProduct extends DolibarrModules
 
 		// Products
 
-		// Default supplier and supplier ref
+		// Default supplier and supplier ref and shipping packaging
 		$extrafields->addExtraField('supplier_ref', $langs->trans('Extrafield_supplier_ref'), 'varchar', 10, 32, 'product', 0, 0, '', "", 1, '', 5, $langs->trans('ExtrafieldToolTip_supplier_ref'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
         $extrafields->addExtraField('fk_soc_fournisseur', $langs->trans('Extrafield_fk_soc_fournisseur'), 'sellist', 10, '', 'product', 0, 0, '', "a:1:{s:7:\"options\";a:1:{s:32:\"societe:nom:rowid::fournisseur=1\";N;}}", 1, '', 5, $langs->trans('ExtrafieldToolTip_fk_soc_fournisseur'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('supplier_packaging', $langs->trans('Extrafield_supplier_packaging'), 'int', 10, 11, 'product', 0, 0, '', "", 1, '', 5, $langs->trans('ExtrafieldToolTip_supplier_packaging'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// default category
         $extrafields->addExtraField('fk_categorie_default', $langs->trans('Extrafield_fk_categorie_default'), 'int', 100, 11, 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_fk_categorie_default'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Public price
