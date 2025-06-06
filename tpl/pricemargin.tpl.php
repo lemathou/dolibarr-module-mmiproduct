@@ -461,7 +461,7 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tr>
 	<tr>
 		<td>Taux marque concurrent :</td>
-		<td class="price"><?php echo percent_format(100*($pcp_median-$revient)/$pcp_median); ?></td>
+		<td class="price"><?php echo $pcp_median ?percent_format(100*($pcp_median-$revient)/$pcp_median) :'-'; ?></td>
 	</tr>
 	<tr>
 		<td colspan="2">

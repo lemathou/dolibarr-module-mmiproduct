@@ -69,6 +69,9 @@ $arrayofparameters = array(
 
 	'MMIPRODUCT_STOCK'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_STOCKMOVEMENTLIST_STOCK'=>array('type'=>'yesno','enabled'=>1),
+
+	'MMIPRODUCT_PRICE_CONCURRENT'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX'=>array('type'=>'int','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');
