@@ -4,11 +4,13 @@ $url_len_disp_limit = 50;
 <div>
 <script>
 $(document).ready(function() {
+	let ttc_round_num = 100;
+	let ht_round_num = 1000;
 	$('form table tbody input[name=price]').change(function(){
-		$('input[name=price_ttc]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())*1.2);
+		$('input[name=price_ttc]', this.parentNode.parentNode.parentNode).val(Math.round(parseFloat($(this).val().replace(',', '.'))*1.2*ttc_round_num)/ttc_round_num);
 	});
 	$('form table tbody input[name=price_ttc]').change(function(){
-		$('input[name=price]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())/1.2);
+		$('input[name=price]', this.parentNode.parentNode.parentNode).val(Math.round(parseFloat($(this).val().replace(',', '.'))/1.2*ht_round_num)/ht_round_num);
 	});
 });
 </script>
