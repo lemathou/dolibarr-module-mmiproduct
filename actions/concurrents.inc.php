@@ -1,12 +1,18 @@
 <?php
 
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+dol_include_once('custom/mmiproduct/class/mmiproduct_price.class.php');
 
 // ACTIONS
 
 // URL produit concurrent
 
 $datenow = date('Y-m-d');
+
+// ID PRODUCT
+//$id = GETPOST('id', 'int');
+//var_dump($id);
+//var_dump($object);
 
 $fk_soc = GETPOST('fk_soc', 'int');
 $url = GETPOST('url');
@@ -65,6 +71,7 @@ if (($action == 'pcp_add' || $action == 'pc_add') && !empty($fk_soc) && !empty($
 	//echo $sql;
 	$res = $db->query($sql);
 	//var_dump($res);
+	mmiproduct_price::product_price_update($object);
 }
 
 if ($action == 'pcp_edit' && !empty($pcp_edit) && !empty($price)) {
@@ -74,12 +81,14 @@ if ($action == 'pcp_edit' && !empty($pcp_edit) && !empty($price)) {
 		//, `fk_c_type_resource`='.$fk_c_type_resource.'
 	//echo $sql;
 	$db->query($sql);
+	mmiproduct_price::product_price_update($object);
 }
 
 if ($action == 'pcp_del' && !empty($del = GETPOST('pcp_del', 'int'))) {
 	$sql = 'DELETE FROM '.MAIN_DB_PREFIX.'product_competitor_price
 		WHERE rowid='.$del.'';
 	$db->query($sql);
+	mmiproduct_price::product_price_update($object);
 }
 
 // DONNEES

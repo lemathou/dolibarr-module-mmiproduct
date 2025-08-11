@@ -121,9 +121,11 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 				$print .= '<p>Règle de calcul de marge :&nbsp;
                 <select id="calc_type" name="margin_calc_type">
                     <option value="">---</option>';
+                // @todo use global var
                 $calc_type_list = [
                     'sell_price' => ['label'=>'Prix final fixé'],
-                    'public_price' => ['label'=>'Prix public fournisseur fixé'],
+                    'public_price' => ['label'=>'Prix public conseillé'],
+                    'fourn_public_price' => ['label'=>'Prix public fournisseur fixé'],
                     'four_margin_coeff' => ['label'=>'Coeff/Marge fournisseur fixée'],
                     'concurrent' => ['label'=>'Prix similaire à la concurrence'],
                     'category_margin' => ['label'=>'Marge définie par la catégorie'],
@@ -189,7 +191,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                 // 'public_price' => ['label'=>'Prix public fournisseur fixé'],
                 // 'concurrent' => ['label'=>'Prix similaire à la concurrence'],
                 // 'category_margin' => ['label'=>'Marge définie par la catégorie'],
-                if (in_array($margin_calc_type, ['category_margin', 'sell_price', 'public_price', 'concurrent', 'four_margin_coeff'])) {
+                if (in_array($margin_calc_type, MMIProduct_Price::_margin_calc_types())) {
                     if ($margin_calc_type=='category_margin') {
                         if (!empty($cat) && !empty($cat->id) && empty($cat->array_options['options_margin_coeff'])) {
                             $error++;
@@ -326,7 +328,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         $error = 0; // Error counter
         $print = '';
-        
+
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             if ($this->fk_supplier) {
 				$print .= ', pfp.packaging AS packaging';
@@ -388,6 +390,28 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             if ($notnull)
                 $print .= ' AND ps.rowid IS NOT NULL';
         }
+        elseif ($this->in_context($parameters, 'productservicelist')) {
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                $categ_list = GETPOST('search_category_product_list', 'array');
+                if (!empty($categ_list)) {
+                    $subcateg_list = $categ_list;
+                    $categ_todo = $categ_list;
+                    // Recherche dans catégories enfant
+                    if (GETPOST('includeinsubcat')) {
+                        while(!empty($categ_todo)) {
+                        $sql = 'SELECT rowid FROM '.MAIN_DB_PREFIX.'categorie WHERE fk_parent IN ('.implode(', ', $categ_todo).')';
+                            $q = $this->db->query($sql);
+                            $categ_todo = [];
+                            while($row=$q->fetch_assoc()) {
+                                $categ_todo[] = $row['rowid'];
+                                $subcateg_list[] = $row['rowid'];
+                            }
+                        }
+                    }
+                    $print = ' AND p.rowid IN (SELECT fk_product FROM '.MAIN_DB_PREFIX.'categorie_product WHERE fk_categorie IN ('.implode(',', $subcateg_list).'))';
+                }
+            }
+        }
     
         if (! $error) {
             $this->resprints = $print;
@@ -408,7 +432,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         $error = 0; // Error counter
         $print = '';
-    
+
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
             $print = '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
@@ -417,6 +441,13 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             //var_dump($parameters);
             $notnull = GETPOST('notnull');
             $print = '<div class="inlin-block"><b>N\'afficher que les produits avec du stock</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
+        }
+        elseif ($this->in_context($parameters, 'productservicelist')) {
+            //var_dump($parameters);
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                $includeinsubcat = GETPOST('includeinsubcat');
+                $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
+            }
         }
     
         if (! $error) {
@@ -458,6 +489,33 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     /**
      * Semble servir à afficher des filtrer globaux
      */
+    function printFieldListSearchParam($parameters, &$object, &$action, $hookmanager)
+    {
+		global $conf, $user;
+
+        $error = 0; // Error counter
+        $print = '';
+
+        if ($this->in_context($parameters, 'productservicelist')) {
+            if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
+                if (GETPOST('includeinsubcat'))
+                    $print .= '&includeinsubcat=1';
+            }
+        }
+    
+        if (! $error) {
+            $this->resprints = $print;
+            return 0; // or return 1 to replace standard code
+        }
+        else {
+            $this->errors[] = 'Error message';
+            return -1;
+        }
+    }
+
+    /**
+     * Semble servir à afficher des filtrer globaux
+     */
     function printFieldListOption($parameters, &$object, &$action, $hookmanager)
     {
 		global $conf, $user;
@@ -465,7 +523,14 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+    
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$print = '<td class="liste_titre">&nbsp;</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
             $print = '<input type="hidden" name="categ" value="'.$this->categ.'" />';
         }
@@ -490,7 +555,13 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$print = '<td>Stock réel</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
 			if ($this->fk_supplier) {
             	$print = '<td>Emballage</td>';
@@ -514,13 +585,24 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     {
 		global $conf, $user;
 
+		static $stocks = [];
+
         $error = 0; // Error counter
         $print = '';
     
-        if ($this->in_context($parameters, 'stockreplenishlist')) {
+        if ($this->in_context($parameters, 'stockmovementlist')) {
+			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
+				//var_dump($parameters);
+				$obj = $parameters['obj'];
+				//var_dump($obj->entrepot_id, $obj->rowid, $obj->batch, $obj); die();
+				$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch] += $obj->qty;
+				$print = '<td class="right">'.$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch].'</td>';
+			}
+        }
+        elseif ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
-            $objp = $parameters['objp'];
 			if ($this->fk_supplier) {
+				$objp = $parameters['objp'];
 				$print = '<td class="right">'.$objp->packaging.'</td>';
 			}
         }

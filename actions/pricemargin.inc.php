@@ -64,7 +64,8 @@ $pcp_list = [];
 $pcp_values = [];
 $pcp_values_f = [];
 $pcp_value_recent = 0;
-$date_min = date('Y-m-d', time()-86400*365);
+$pcp_days_max = getDolGlobalInt('MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX');
+$date_min = $pcp_days_max ?date('Y-m-d', time()-86400*$pcp_days_max) :0;
 $sql = 'SELECT pcp.*, s.nom, s.url s_url
 	FROM `'.MAIN_DB_PREFIX.'product_competitor_price` AS pcp
 	INNER JOIN `'.MAIN_DB_PREFIX.'societe` AS s ON s.rowid=pcp.fk_soc
@@ -76,7 +77,7 @@ while($r=$q->fetch_assoc()) {
 	$pcp_values[] = $r['price'];
 	if (empty($pcp_value_recent))
 		$pcp_value_recent = $r['price'];
-	if(!isset($pcp_values_f[$r['fk_soc']]) && $r['date']>=$date_min)
+	if(!isset($pcp_values_f[$r['fk_soc']]) && (!$date_min || $r['date']>=$date_min))
 		$pcp_values_f[$r['fk_soc']] = $r['price'];
 }
 //var_dump($pcp_list);

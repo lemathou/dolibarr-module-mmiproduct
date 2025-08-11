@@ -16,6 +16,8 @@ protected static $db;
 protected static $error = 0;
 protected static $errors = [];
 
+protected static $margin_calc_types = ['category_margin', 'sell_price', 'public_price', 'fourn_public_price', 'concurrent', 'four_margin_coeff'];
+
 public static function __init()
 {
 	global $db;
@@ -39,6 +41,11 @@ public static function _error_get()
 	return static::$error;
 }
 
+public static function _margin_calc_types()
+{
+	return static::$margin_calc_types;
+}
+
 
 /**
  * Update Product margin and sell price calculation type
@@ -53,7 +60,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 
 	$db = static::$db;
 
-	if (!in_array($margin_calc_type, ['category_margin', 'sell_price', 'public_price', 'concurrent', 'four_margin_coeff'])) {
+	if (!in_array($margin_calc_type, static::$margin_calc_types)) {
 		static::$error++;
 		static::$errors[] = 'Wrong calc type'.(is_string($margin_calc_type) ?' : '.$margin_calc_type :'');
 		return -1;
@@ -63,8 +70,11 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	$object->array_options['options_margin_calc_type'] = $margin_calc_type;
 
 	// Update default category in product
-	if (!empty($options['cat']))
+	if (!empty($options['cat'])) {
 		$object->array_options['options_fk_categorie_default'] = $options['cat']->id;
+		// Add cat
+		$object->setCategoriesCommon([$options['cat']->id], Categorie::TYPE_PRODUCT, false);
+	}
 	// Update default fourn in product
 	if (!empty($options['fourn']))
 		$object->array_options['options_fk_soc_fournisseur'] = $options['fourn']->id;
@@ -72,15 +82,50 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	if (!empty($options['public_price']))
 		$object->array_options['options_public_price'] = $options['public_price'];
 	
-	if ($margin_calc_type == 'category_margin') {
-		if (!empty($options['cat'])) {
-			$cat = $options['cat'];
-			// Add cat
-			$object->setCategoriesCommon([$cat->id], Categorie::TYPE_PRODUCT, false);
-			// Set cat as default
-			$object->array_options['options_fk_categorie_default'] = $cat->id;
+	// Fixed sell price
+	if ($margin_calc_type == 'sell_price') {
+		if (empty($options['sell_price'])) {
+			static::$error++;
+			static::$errors[] = 'Sell price not possible for product : '.$object->label;
+
+			return -1;
 		}
-		elseif (!empty($object->array_options['options_fk_categorie_default'])) {
+
+		// Calc new price
+		$res = $object->updatePrice($options['sell_price'], 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL);
+		//var_dump($object, $res);
+		if($res < 0) {
+			var_dump($object->errors);
+			static::$error++;
+			static::$errors[] = $object->errors;
+
+			return -1;
+		}
+	}
+
+	$res = $object->update($object->id, $user);
+	var_dump($object, $res);
+	if($res < 0) {
+		var_dump($object->errors);
+		static::$error++;
+		static::$errors[] = $object->errors;
+
+		return -1;
+	}
+
+	return static::product_price_update($object);
+}
+
+public static function product_price_update($object)
+{
+	global $conf, $user, $langs;
+
+	$db = static::$db;
+	$margin_calc_type = $object->array_options['options_margin_calc_type'];
+	//var_dump($object);
+
+	if ($margin_calc_type == 'category_margin') {
+		if (!empty($object->array_options['options_fk_categorie_default'])) {
 			$cat = new Categorie($db);
 			$cat->fetch($object->array_options['options_fk_categorie_default']);
 		}
@@ -115,11 +160,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	
 	elseif ($margin_calc_type == 'four_margin_coeff') {
 		// Nouveau fourn
-		if (!empty($options['fourn'])) {
-			$fourn = $options['fourn'];
-			$object->array_options['options_fk_soc_fournisseur'] = $fourn->id;
-		}
-		elseif (!empty($object->array_options['options_fk_soc_fournisseur'])) {
+		if (!empty($object->array_options['options_fk_soc_fournisseur'])) {
 			$fourn = new Fournisseur($db);
 			$fourn->fetch($object->array_options['options_fk_soc_fournisseur']);
 		}
@@ -173,6 +214,38 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		$coeff = 0;
 		//$coeff_min = NULL; // No change ?
 		$sell_price = $object->array_options['options_public_price'];
+	}
+	
+	elseif ($margin_calc_type == 'fourn_public_price') {
+		// Nouveau fourn
+		if (!empty($object->array_options['options_fk_soc_fournisseur'])) {
+			$fourn = new Fournisseur($db);
+			$fourn->fetch($object->array_options['options_fk_soc_fournisseur']);
+		}
+		else {
+			static::$error++;
+			static::$errors[] = 'Missing default Fournisseur for product : '.$object->label;
+
+			return -1;
+		}
+
+		// @todo récup prix fournisseur le plus bas dans ce cas précis
+		$sql = 'SELECT pfp.unitprice, pfp.remise_percent
+			FROM `'.MAIN_DB_PREFIX.'product_fournisseur_price` AS pfp
+			WHERE pfp.fk_product='.$object->id.' AND pfp.fk_soc='.$object->array_options['options_fk_soc_fournisseur'].'
+			ORDER BY IF(pfp.remise_percent>0, pfp.unitprice*(1-pfp.remise_percent/100), pfp.unitprice)
+			LIMIT 1';
+		$q = static::$db->query($sql);
+		if($r=$q->fetch_assoc()) {
+			$cost_price = $r['unitprice']*(1-$r['remise_percent']/100);
+			$sell_price = $r['unitprice'];
+		}
+		else {
+			static::$error++;
+			static::$errors[] = 'Missing fournisseur price for product : '.$object->label;
+
+			return -1;
+		}
 	}
 	
 	elseif ($margin_calc_type == 'concurrent') {
@@ -229,9 +302,9 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 		// Calc new price
 		$coeff = NULL;
 		//$coeff_min = NULL; // No change ?
-		$sell_price = $options['sell_price'];
+		$sell_price = $object->price;
 	}
-	// Fixed sell coeff
+	// Fixed sell coeff (@todo : option introuvable)
 	elseif ($margin_calc_type == 'sell_coeff') {
 		if (empty($options['sell_coeff'])) {
 			static::$error++;

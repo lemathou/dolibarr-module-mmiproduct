@@ -36,6 +36,9 @@ $arrayofparameters = array(
 	'MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SHOW_ADDED_PRODUCT_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF'=>array('type'=>'yesno','enabled'=>1),
+	// Supplier price
+	'MMIPRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
 	// Recherche
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),
@@ -58,6 +61,17 @@ $arrayofparameters = array(
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
 	// Prix fournisseur
 	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
+	// Alerte coeff
+	'MMIPRODUCT_COEFF_EMAIL_ALERT'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_COEFF'=>array('type'=>'decimal','enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_FROM'=>array('type'=>'string','enabled'=>1),
+	'MMIPRODUCT_COEFF_EMAIL_ALERT_TO'=>array('type'=>'string','enabled'=>1),
+
+	'MMIPRODUCT_STOCK'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_STOCKMOVEMENTLIST_STOCK'=>array('type'=>'yesno','enabled'=>1),
+
+	'MMIPRODUCT_PRICE_CONCURRENT'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX'=>array('type'=>'int','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');

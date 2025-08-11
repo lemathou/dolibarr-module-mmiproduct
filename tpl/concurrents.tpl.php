@@ -4,11 +4,13 @@ $url_len_disp_limit = 50;
 <div>
 <script>
 $(document).ready(function() {
+	let ttc_round_num = 100;
+	let ht_round_num = 1000;
 	$('form table tbody input[name=price]').change(function(){
-		$('input[name=price_ttc]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())*1.2);
+		$('input[name=price_ttc]', this.parentNode.parentNode.parentNode).val(Math.round(parseFloat($(this).val().replace(',', '.'))*1.2*ttc_round_num)/ttc_round_num);
 	});
 	$('form table tbody input[name=price_ttc]').change(function(){
-		$('input[name=price]', this.parentNode.parentNode.parentNode).val(parseFloat($(this).val())/1.2);
+		$('input[name=price]', this.parentNode.parentNode.parentNode).val(Math.round(parseFloat($(this).val().replace(',', '.'))/1.2*ht_round_num)/ht_round_num);
 	});
 });
 </script>
@@ -187,7 +189,7 @@ foreach($pfp_list as $pfp) {
 		echo '<td align="right">'.$margin_taux.'</td>';
 		echo '<td>
 			<a href="?id='.$id.'&action=pcp_add&fk_soc='.$row['fk_soc'].'"><span class="fa fa-plus-circle valignmiddle btnTitle-icon""></span></a>
-			<a href="?id='.$id.'&action=pcp_del&pcp_del='.$row['rowid'].'"><span class="fa fa-remove valignmiddle btnTitle-icon""></span></a>
+			<a href="?id='.$id.'&action=pcp_del&pcp_del='.$row['rowid'].'" onclick="return confirm(\'Êtes-vous certain?\')"><span class="fa fa-trash valignmiddle btnTitle-icon""></span></a>
 		</td>';
 		echo '</tr>';
 	}
