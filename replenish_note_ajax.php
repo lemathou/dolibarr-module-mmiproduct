@@ -21,7 +21,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $id = GETPOSTINT('id');
