@@ -25,15 +25,36 @@ $fk_categorie = 146;
 $fk_categorie = 7;
 
 // Filter par client
+$url_params = [];
 $filter_customer_id = GETPOSTINT('customer_id');
+if (!empty($filter_customer_id))
+	$url_params[] = 'customer_id='.$filter_customer_id;
 $filter_supplier_id = GETPOSTINT('supplier_id');
+if (!empty($filter_supplier_id))
+	$url_params[] = 'supplier_id='.$filter_supplier_id;
 $filter_month_nb = GETPOSTINT('filter_month_nb');
 if (empty($filter_month_nb))
 	$filter_month_nb = 6;
+$url_params[] = 'filter_month_nb='.$filter_month_nb;
 $show_cmd_list = GETPOSTINT('show_cmd_list');
+if (!empty($show_cmd_list))
+	$url_params[] = 'show_cmd_list=1';
 $show_product_cmd_only = GETPOSTINT('show_product_cmd_only');
-
-//
+if (!empty($show_product_cmd_only))
+	$url_params[] = 'show_product_cmd_only=1';
+$show_customers_detail = GETPOSTINT('show_customers_detail');
+if (!empty($show_customers_detail))
+	$url_params[] = 'show_customers_detail=1';
+$sort = GETPOST('sort', 'aZ09');
+$sortorder = (int)GETPOSTINT('sortorder');
+//var_dump($sort, $sortorder);
+/*
+if (!empty($sort))
+	$url_params[] = 'sort='.urlencode($sort);
+if (!empty($sortorder))
+	$url_params[] = 'sortorder='.urlencode($sortorder);
+*/
+$url_params_str = !empty($url_params) ?'?'.implode('&', $url_params) :'';
 
 $help_url = '';
 $page_name = 'MMIProductStockReplenishPRO';
@@ -172,11 +193,35 @@ if ($resql) {
 	$db->free($resql);
 }
 
+// Sort list
+if (!empty($sort)) {
+	$sort_func = function($a, $b) use ($sort, $sortorder) {
+		$val_a = $a->$sort;
+		$val_b = $b->$sort;
+		if (is_string($val_a))
+			$val_a = strtolower($val_a);
+		if (is_string($val_b))
+			$val_b = strtolower($val_b);
+		if ($val_a == $val_b)
+			return 0;
+		if ($sortorder)
+			return ($val_a < $val_b) ? 1 : -1;
+		else
+			return ($val_a < $val_b) ? -1 : 1;
+	};
+	usort($list, $sort_func);
+}
+
 //var_dump($list[235]);
 
 // DISPLAY
 
+// Formulaire
+
 echo '<form>';
+//echo '<input type="hidden" name="token" value="'.newToken().'" />';
+echo '<input type="hidden" name="sort" value="'.$sort.'" />';
+echo '<input type="hidden" name="sortorder" value="'.$sortorder.'" />';
 echo '<p>';
 echo '<label for="filter_month_nb">Nombre de mois à analyser :</label> ';
 echo '<input name="filter_month_nb" id="filter_month_nb" value="'.$filter_month_nb.'" size="2" onchange="this.form.submit();" />';
@@ -221,25 +266,41 @@ echo '<p>';
 echo '<label for="show_product_cmd_only">Afficher uniquement les produits commandés :</label> ';
 echo '<input type="checkbox" name="show_product_cmd_only" id="show_product_cmd_only" value="1"'.($show_product_cmd_only ?' checked' :'').' onchange="this.form.submit();" />';
 echo '</p>';
+echo '<p>';
+echo '<label for="show_customers_detail">Afficher une ligne par client :</label> ';
+echo '<input type="checkbox" name="show_customers_detail" id="show_customers_detail" value="1"'.($show_customers_detail ?' checked' :'').' onchange="this.form.submit();" />';
+echo '</p>';
 echo '</form>';
+
+// Colonnes
 
 $resql = $db->query($sql);
 echo '<table class="noborder" width="100%">';
 echo '<thead>';
 echo '<tr class="liste_titre">';
-echo '<th>Réf</th>';
-echo '<th>Réf fourn</th>';
-echo '<th>Fournisseur</th>';
-echo '<th>Nom</th>';
-echo '<th>Stock</th>';
-echo '<th>Lots</th>';
-//echo '<th>Nb clients</th>';
-echo '<th>Qty cmd</th>';
-echo '<th>Cmd</th>';
+$fields = [
+	'ref' => ['label'=>'Réf', 'sortable'=>true],
+	'supplier_ref' => ['label'=>'Réf fourn', 'sortable'=>true],
+	'fk_soc_fournisseur' => ['label'=>'Fournisseur', 'sortable'=>false],
+	'label' => ['label'=>'Nom', 'sortable'=>true],
+	'stock' => ['label'=>'Stock', 'align'=>'right', 'sortable'=>true],
+	'lots_nb' => ['label'=>'Lots', 'align'=>'right', 'sortable'=>true],
+	//'cust_nb' => ['label'=>'Nb clients', 'align'=>'right'],
+	'cmd_qte' => ['label'=>'Qty cmd', 'align'=>'right', 'sortable'=>true],
+	'cmd_nb' => ['label'=>'Cmd', 'sortable'=>true],
+];
+foreach($fields as $fieldname=>$field) {
+	echo '<th>'
+		.$field['label']
+		.($field['sortable'] ?'&nbsp;<a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=0"'.(($sort===$fieldname && $sortorder===0) ?' class="active"' :'').'>&#8595;</a>&nbsp;<a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=1"'.(($sort===$fieldname && $sortorder===1) ?' class="active"' :'').'>&#8593;</a>' :'')
+		.'</th>';
+}
 echo '</tr>';
 echo '</thead>';
 
 //var_dump($list);
+
+// Liste
 
 if (!empty($list)) {
 	echo '<tbody>';
@@ -269,7 +330,7 @@ if (!empty($list)) {
 		echo '<td align="right">'.$row->cmd_nb.'</td>';
 		//echo '<td><div class="hidden2">'.implode('<br />', $row->cmd_list).'</div></td>';
 		//echo '<td>'.implode('<br />', $cust_list).'</td>';
-		if (!empty($row->customers)) {
+		if (!empty($row->customers) && !empty($show_customers_detail)) {
 			echo '</tr>';
 			foreach($row->customers as $cust_info) {
 				$cust = $list_customer[$cust_info->cust_id];
@@ -303,6 +364,15 @@ echo '</table>';
 ?>
 
 <style>
+tr.liste_titre th a {
+	font-weight: bold;
+	border: 2px solid transparent;
+	padding: 1px 4px;
+}
+tr.liste_titre th a.active {
+	color: red;
+	border-color: red;
+}
 tr.product > td {
 	border-top: 1px solid black;
 }
