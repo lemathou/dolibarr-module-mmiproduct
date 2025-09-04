@@ -119,7 +119,7 @@ $list = [];
 $sql = 'SELECT p.rowid, p.ref, p.label, p2.fk_soc_fournisseur, p2.supplier_ref, p.stock, COUNT(DISTINCT psl.rowid) lots_nb, GROUP_CONCAT(DISTINCT pl.sellby, ";", pl.batch, ";", psl.qty SEPARATOR "\n") AS lots_list'
 	.' FROM llx_product AS p'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_object=p.rowid'
-	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p.rowid'
+	.($filter_product_pro ?' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
 	.' LEFT JOIN llx_product_lot AS pl ON pl.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_stock AS ps ON ps.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_batch AS psl ON psl.fk_product_stock=ps.rowid AND psl.batch=pl.batch AND psl.qty>0'
@@ -160,7 +160,7 @@ $list_supplier = [];
 $sql = 'SELECT DISTINCT s.rowid, s.nom'
 	.' FROM llx_societe AS s'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_soc_fournisseur=s.rowid'
-	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object'
+	.($filter_product_pro ?' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
 	.' WHERE 1'
 	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.' ORDER BY s.nom ASC';
@@ -180,7 +180,7 @@ $sql = 'SELECT cd.fk_product AS rowid, c.fk_soc AS cust_id, COUNT(DISTINCT c.row
 	.' FROM llx_commandedet AS cd'
 	.' INNER JOIN llx_product AS p ON p.rowid=cd.fk_product'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_object=cd.fk_product'
-	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=cd.fk_product'
+	.($filter_product_pro ?' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
 	.' INNER JOIN llx_commande AS c ON c.rowid=cd.fk_commande'
 	.' INNER JOIN llx_societe AS cs ON cs.rowid=c.fk_soc'
 	.' INNER JOIN llx_societe_extrafields AS cs2 ON cs2.fk_object=cs.rowid'
