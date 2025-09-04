@@ -124,11 +124,11 @@ $sql = 'SELECT p.rowid, p.ref, p.label, p2.fk_soc_fournisseur, p2.supplier_ref, 
 	.' LEFT JOIN llx_product_stock AS ps ON ps.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_batch AS psl ON psl.fk_product_stock=ps.rowid AND psl.batch=pl.batch AND psl.qty>0'
 	.' WHERE 1'
-	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
+	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.' AND ps.fk_entrepot=1'
 	.' GROUP BY p.rowid';
-
 $resql = $db->query($sql);
+//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
 if ($resql) {
 	while($row = $db->fetch_object($resql)) {
 		$list[$row->rowid] = $row;
@@ -145,7 +145,7 @@ $sql = 'SELECT s.rowid, s.nom'
 	.' WHERE cs2.pro=1'
 	.' ORDER BY s.nom ASC';
 $resql = $db->query($sql);
-//var_dump($sql, $resql, $db->lastqueryerror, $db->lasterror);
+//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
 if ($resql) {
 	while($row = $db->fetch_object($resql)) {
 		$list_customer[$row->rowid] = $row;
@@ -162,10 +162,10 @@ $sql = 'SELECT DISTINCT s.rowid, s.nom'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_soc_fournisseur=s.rowid'
 	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object'
 	.' WHERE 1'
-	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
+	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.' ORDER BY s.nom ASC';
 $resql = $db->query($sql);
-//
+//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
 if ($resql) {
 	while($row = $db->fetch_object($resql)) {
 		$list_supplier[$row->rowid] = $row;
@@ -185,7 +185,7 @@ $sql = 'SELECT cd.fk_product AS rowid, c.fk_soc AS cust_id, COUNT(DISTINCT c.row
 	.' INNER JOIN llx_societe AS cs ON cs.rowid=c.fk_soc'
 	.' INNER JOIN llx_societe_extrafields AS cs2 ON cs2.fk_object=cs.rowid'
 	.' WHERE 1'
-	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
+	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.' AND cs2.pro=1'
 	.' AND c.fk_statut >= 1 AND DATEDIFF(c.date_commande, NOW())>=-'.($filter_month_nb*30)
 	.(!empty($filter_customer_id) ?' AND c.fk_soc='.$filter_customer_id :'')
