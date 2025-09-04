@@ -21,30 +21,41 @@ require_once 'main_load.inc.php';
 // Config
 
 // Produits à suivre pour les clients PRO
-$fk_categorie = 146;
-$fk_categorie = 7;
+$fk_product_categorie = 146;
+$fk_product_categorie = 7;
 
-// Filter par client
 $url_params = [];
+// Uniquement les produits taggués PRO
+$filter_product_pro = GETPOSTINT('filter_product_pro');
+if (!empty($filter_product_pro))
+	$url_params[] = 'filter_product_pro=1';
+// Filter par client
 $filter_customer_id = GETPOSTINT('customer_id');
 if (!empty($filter_customer_id))
 	$url_params[] = 'customer_id='.$filter_customer_id;
+// Filter par fournisseur
 $filter_supplier_id = GETPOSTINT('supplier_id');
 if (!empty($filter_supplier_id))
 	$url_params[] = 'supplier_id='.$filter_supplier_id;
+// Filter par nb de mois
 $filter_month_nb = GETPOSTINT('filter_month_nb');
 if (empty($filter_month_nb))
 	$filter_month_nb = 6;
 $url_params[] = 'filter_month_nb='.$filter_month_nb;
+// Options d'affichage
+// Détail des commandes clients
 $show_cmd_list = GETPOSTINT('show_cmd_list');
 if (!empty($show_cmd_list))
 	$url_params[] = 'show_cmd_list=1';
+// Afficher uniquement les produits commandés
 $show_product_cmd_only = GETPOSTINT('show_product_cmd_only');
 if (!empty($show_product_cmd_only))
 	$url_params[] = 'show_product_cmd_only=1';
+// Afficher une ligne par client
 $show_customers_detail = GETPOSTINT('show_customers_detail');
 if (!empty($show_customers_detail))
 	$url_params[] = 'show_customers_detail=1';
+// Tri
 $sort = GETPOST('sort', 'aZ09');
 $sortorder = (int)GETPOSTINT('sortorder');
 //var_dump($sort, $sortorder);
@@ -108,11 +119,12 @@ $list = [];
 $sql = 'SELECT p.rowid, p.ref, p.label, p2.fk_soc_fournisseur, p2.supplier_ref, p.stock, COUNT(DISTINCT psl.rowid) lots_nb, GROUP_CONCAT(DISTINCT pl.sellby, ";", pl.batch, ";", psl.qty SEPARATOR "\n") AS lots_list'
 	.' FROM llx_product AS p'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_object=p.rowid'
-	.' INNER JOIN llx_categorie_product AS kp ON kp.fk_product=p.rowid'
+	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_lot AS pl ON pl.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_stock AS ps ON ps.fk_product=p.rowid'
 	.' LEFT JOIN llx_product_batch AS psl ON psl.fk_product_stock=ps.rowid AND psl.batch=pl.batch AND psl.qty>0'
-	.' WHERE kp.fk_categorie='.$fk_categorie
+	.' WHERE 1'
+	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
 	.' AND ps.fk_entrepot=1'
 	.' GROUP BY p.rowid';
 
@@ -148,8 +160,9 @@ $list_supplier = [];
 $sql = 'SELECT DISTINCT s.rowid, s.nom'
 	.' FROM llx_societe AS s'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_soc_fournisseur=s.rowid'
-	.' INNER JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object'
-	.' WHERE kp.fk_categorie='.$fk_categorie
+	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object'
+	.' WHERE 1'
+	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
 	.' ORDER BY s.nom ASC';
 $resql = $db->query($sql);
 //
@@ -167,11 +180,12 @@ $sql = 'SELECT cd.fk_product AS rowid, c.fk_soc AS cust_id, COUNT(DISTINCT c.row
 	.' FROM llx_commandedet AS cd'
 	.' INNER JOIN llx_product AS p ON p.rowid=cd.fk_product'
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_object=cd.fk_product'
-	.' INNER JOIN llx_categorie_product AS kp ON kp.fk_product=cd.fk_product'
+	.' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=cd.fk_product'
 	.' INNER JOIN llx_commande AS c ON c.rowid=cd.fk_commande'
 	.' INNER JOIN llx_societe AS cs ON cs.rowid=c.fk_soc'
 	.' INNER JOIN llx_societe_extrafields AS cs2 ON cs2.fk_object=cs.rowid'
-	.' WHERE kp.fk_categorie='.$fk_categorie
+	.' WHERE 1'
+	.($filter_product_pro ?' kp.fk_categorie='.$fk_product_categorie :'')
 	.' AND cs2.pro=1'
 	.' AND c.fk_statut >= 1 AND DATEDIFF(c.date_commande, NOW())>=-'.($filter_month_nb*30)
 	.(!empty($filter_customer_id) ?' AND c.fk_soc='.$filter_customer_id :'')
@@ -222,6 +236,10 @@ echo '<form>';
 //echo '<input type="hidden" name="token" value="'.newToken().'" />';
 echo '<input type="hidden" name="sort" value="'.$sort.'" />';
 echo '<input type="hidden" name="sortorder" value="'.$sortorder.'" />';
+echo '<p>';
+echo '<label for="filter_product_pro">Uniquement les produits taggués PRO :</label> ';
+echo '<input type="checkbox" name="filter_product_pro" id="filter_product_pro" value="1"'.($filter_product_pro ?' checked' :'').' onchange="this.form.submit();" />';
+echo '</p>';
 echo '<p>';
 echo '<label for="filter_month_nb">Nombre de mois à analyser :</label> ';
 echo '<input name="filter_month_nb" id="filter_month_nb" value="'.$filter_month_nb.'" size="2" onchange="this.form.submit();" />';
