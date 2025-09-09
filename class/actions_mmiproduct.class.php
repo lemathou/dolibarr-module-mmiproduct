@@ -388,7 +388,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             //var_dump($parameters);
             $notnull = GETPOST('notnull');
             if ($notnull)
-                $print .= ' AND ps.rowid IS NOT NULL';
+                $print .= ' AND (ps.rowid IS NOT NULL AND ps.reel <> 0)';
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
             if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
@@ -435,18 +435,20 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
         if ($this->in_context($parameters, 'stockreplenishlist')) {
             //var_dump($parameters);
-            $print = '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
+            $print .= '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
         }
         elseif ($this->in_context($parameters, 'stockatdate')) {
             //var_dump($parameters);
             $notnull = GETPOST('notnull');
-            $print = '<div class="inlin-block"><b>N\'afficher que les produits avec du stock</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
+            $print .= '<div class="inlin-block"><b>N\'afficher que les produits avec du stock actuellement</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
+            $notnullatdate = GETPOST('notnullatdate');
+            $print .= '<div class="inlin-block"><b>N\'afficher que les produits avec du stock à date</b> : <input type="checkbox" name="notnullatdate" value="1"'.($notnullatdate ?' checked' :'').' /></div>';
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
             //var_dump($parameters);
             if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
                 $includeinsubcat = GETPOST('includeinsubcat');
-                $print = '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
+                $print .= '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
             }
         }
     
@@ -474,6 +476,15 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             //var_dump($parameters);
             if ($this->categ)
                 $print .= '&categ='.$this->categ;
+        }
+        elseif ($this->in_context($parameters, 'stockatdate')) {
+            //var_dump($parameters);
+            $notnull = GETPOST('notnull');
+            if ($notnull)
+                $print .= '&notnull=1';
+            $notnullatdate = GETPOST('notnullatdate');
+            if ($notnullatdate)
+                $print .= '&notnullatdate=1';
         }
     
         if (! $error) {
