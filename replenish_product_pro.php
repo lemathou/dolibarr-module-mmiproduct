@@ -22,7 +22,9 @@ require_once 'main_load.inc.php';
 
 // Produits à suivre pour les clients PRO
 $fk_product_categorie = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
-//$fk_customer_categorie = getDolGlobalInt('MMIPRODUCT_PRO_CUSTOMER_CATEGORY'); // Use extrafied pro in soc.
+//$fk_customer_categorie = getDolGlobalInt('MMIPRODUCT_PRO_CUSTOMER_CATEGORY'); // Us&e extrafied pro in soc.
+
+$filter_entrepot_id = 1;
 
 $url_params = [];
 // Uniquement les produits taggués PRO
@@ -121,11 +123,10 @@ $sql = 'SELECT p.rowid, p.ref, p.label, p2.fk_soc_fournisseur, p2.supplier_ref, 
 	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_object=p.rowid'
 	.($filter_product_pro ?' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
 	.' LEFT JOIN llx_product_lot AS pl ON pl.fk_product=p.rowid'
-	.' LEFT JOIN llx_product_stock AS ps ON ps.fk_product=p.rowid'
+	.' LEFT JOIN llx_product_stock AS ps ON ps.fk_product=p.rowid'.($filter_entrepot_id ?' AND ps.fk_entrepot='.$filter_entrepot_id :'')
 	.' LEFT JOIN llx_product_batch AS psl ON psl.fk_product_stock=ps.rowid AND psl.batch=pl.batch AND psl.qty>0'
 	.' WHERE 1'
 	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
-	.' AND ps.fk_entrepot=1'
 	.' GROUP BY p.rowid';
 $resql = $db->query($sql);
 //echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
