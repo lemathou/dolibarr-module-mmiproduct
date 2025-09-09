@@ -68,6 +68,10 @@ MMIPRODUCT_STOCKMOVEMENTLIST_STOCK = Affichage du stock réel à côté des mouv
 MMIPRODUCT_PRICE_CONCURRENT = Gestion des prix concurrent
 MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX = Nombre de jours maximum pour l'utilisation des prix concurrents (0 si pas de limite)
 
+MMIPRODUCT_PRO = Suivi des clients/Produits PRO
+MMIPRODUCT_PRO_PRODUCT_CATEGORY = Catégorie de produit spécifique pour les clients PRO
+MMIPRODUCT_PRO_CUSTOMER_CATEGORY = Catégorie de client PRO
+
 #
 # About page
 #

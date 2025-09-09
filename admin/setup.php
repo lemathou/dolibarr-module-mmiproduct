@@ -23,7 +23,6 @@
  */
 
 // Load Dolibarr environment
-require_once '../env.inc.php';
 require_once '../main_load.inc.php';
 
 // Parameters
@@ -36,14 +35,17 @@ $arrayofparameters = array(
 	'MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SHOW_ADDED_PRODUCT_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF'=>array('type'=>'yesno','enabled'=>1),
+
 	// Supplier price
 	'MMIPRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
+
 	// Recherche
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_SHOW_MULTIPLE'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
+
 	// Alertes Stock & Commandes fournisseur
 	'MMIPRODUCT_REPLENISH'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_SEASON_DATE'=>array('type'=>'yesno','enabled'=>1),
@@ -61,6 +63,7 @@ $arrayofparameters = array(
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
 	// Prix fournisseur
 	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
+
 	// Alerte coeff
 	'MMIPRODUCT_COEFF_EMAIL_ALERT'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_COEFF_EMAIL_ALERT_COEFF'=>array('type'=>'decimal','enabled'=>1),
@@ -72,6 +75,11 @@ $arrayofparameters = array(
 
 	'MMIPRODUCT_PRICE_CONCURRENT'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX'=>array('type'=>'int','enabled'=>1),
+
+	// Produits PRO
+	'MMIPRODUCT_PRO'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_PRO_PRODUCT_CATEGORY'=>array('type'=>'int', 'enabled'=>1),
+	//'MMIPRODUCT_PRO_CUSTOMER_CATEGORY'=>array('type'=>'int', 'enabled'=>1), // Use extrafield pro in soc
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');

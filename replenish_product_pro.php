@@ -21,8 +21,8 @@ require_once 'main_load.inc.php';
 // Config
 
 // Produits à suivre pour les clients PRO
-$fk_product_categorie = 146;
-$fk_product_categorie = 7;
+$fk_product_categorie = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
+//$fk_customer_categorie = getDolGlobalInt('MMIPRODUCT_PRO_CUSTOMER_CATEGORY'); // Use extrafied pro in soc.
 
 $url_params = [];
 // Uniquement les produits taggués PRO
