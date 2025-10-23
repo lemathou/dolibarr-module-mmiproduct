@@ -19,6 +19,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcategory.class.php';
 
 dol_include_once('custom/mmicommon/class/mmi_actions.class.php');
 dol_include_once('custom/mmiproduct/class/mmiproduct_price.class.php');
+dol_include_once('custom/mmiproduct/class/mmiproduct_margin.class.php');
 
 /**
  * Class ActionsSfyCustom
@@ -683,6 +684,78 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 			print $form->editfieldval($text, 'public_price', $object->array_options['options_public_price'], $object, $usercancreate, 'amount:6');
 			print '</td></tr>';
 		}
+
+		if (! $error)
+		{
+			$this->resprints = $print;
+			return 0; // or return 1 to replace standard code
+		}
+		else
+		{
+			$this->errors[] = 'Error message';
+			return -1;
+		}
+	}
+
+	/**
+	 * Overloading the formConfirm function : replacing the parent's function with the one below
+	 *
+	 * @param   array           $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    $object         The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          $action         Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+    function formConfirm($parameters, &$object, &$action, $hookmanager)
+	{
+        global $langs;
+
+		$error = 0; // Error counter
+		$print = '';
+
+        if (! getDolGlobalString('MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP'))
+            return 0;
+
+        $margin = mmiproduct_margin::margin_calc($object);
+
+        $margin_min_1 = getDolGlobalString('MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_1');
+        $margin_min_2 = getDolGlobalString('MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_2');
+        $margin_min_3 = getDolGlobalString('MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_3');
+
+        $message = '';
+        $block = false;
+        
+        if ($margin_min_1 && $margin['total_mark_rate'] < $margin_min_1) {
+            $message = $langs->trans('MMI_PRODUCT_PRICEMARGIN_LOW', round($margin['total_mark_rate'], 2), $langs->trans('MMI_PRODUCT_PRICEMARGIN_REASON_1'), $margin_min_1);
+            $block = true;
+        }
+        elseif ($margin_min_2 && $margin['total_mark_rate'] < $margin_min_2) {
+            $message = $langs->trans('MMI_PRODUCT_PRICEMARGIN_LOW', round($margin['total_mark_rate'], 2), $langs->trans('MMI_PRODUCT_PRICEMARGIN_REASON_2'), $margin_min_2);
+        }
+        elseif ($margin_min_3 && $margin['total_mark_rate'] < $margin_min_3) {
+            $message = $langs->trans('MMI_PRODUCT_PRICEMARGIN_LOW', round($margin['total_mark_rate'], 2), $langs->trans('MMI_PRODUCT_PRICEMARGIN_REASON_3'), $margin_min_3);
+        }
+        if (!empty($message)) {
+            $print .= '<script>'
+                .'  $(document).ready(function() {'
+                .'    $("#dialog-confirm", this).each(function() {'
+                .'      $(".confirmmessage", this).append("<br /><span style=\"color: red;font-weight: bold;\">'.$message.'</span>");'
+                .'    });'
+                .'  });'
+                .'</script>';
+        }
+        if ($block) {
+            // Ne fonctionne pas car ui-dialog n'est généré qu'après, en ajax, donc on ne peut pas modifier les boutons...
+            $print .= '<script>'
+                .'  $(document).ready(function() {'
+                .'    $(".ui-dialog").each(function() {'
+                .'      $("#dialog-confirm", this).each(function() {'
+                .'        $(this).find("button.ui-button:eq(2)").prop("disabled", true);'
+                .'      });'
+                .'    });'
+                .'  });'
+                .'</script>';
+        }
 
 		if (! $error)
 		{

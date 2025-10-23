@@ -44,10 +44,9 @@ $arrayofparameters = array(
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_LABEL'=>array('type'=>'yesno','enabled'=>1),
 	'MAIN_SEARCH_PRODUCT_BY_FOURN_SHOW_MULTIPLE'=>array('type'=>'yesno','enabled'=>1),
-	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
 
 	// Alertes Stock & Commandes fournisseur
-	'MMIPRODUCT_REPLENISH'=>array('type'=>'separator', 'enabled'=>1),
+	'MMI_PRODUCT_REPLENISH_SETUP'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_FIELD_SEASON_DATE'=>array('type'=>'yesno','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_INFO_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
@@ -63,6 +62,17 @@ $arrayofparameters = array(
 	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
 	// Prix fournisseur
 	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
+
+	'MMI_PRODUCT_PRICEMARGIN_SETUP'=>array('type'=>'separator','enabled'=>1),
+	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
+	
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_SETUP'=>array('type'=>'separator','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP'=>array('type'=>'yesno','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_WARN'=>array('type'=>'yesno','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_1'=>array('type'=>'number','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_1_COLOR'=>array('type'=>'color','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_2'=>array('type'=>'number','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_2_COLOR'=>array('type'=>'color','enabled'=>1),
 
 	// Alerte coeff
 	'MMIPRODUCT_COEFF_EMAIL_ALERT'=>array('type'=>'separator', 'enabled'=>1),

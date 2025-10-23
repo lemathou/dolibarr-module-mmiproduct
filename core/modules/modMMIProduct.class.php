@@ -115,7 +115,6 @@ class modMMIProduct extends DolibarrModules
 			),
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			'hooks' => array(
-				'ordercard',
 				'productcard',
 				'stockreplenishlist',
 				'stockmovementlist',
@@ -123,6 +122,10 @@ class modMMIProduct extends DolibarrModules
 				'supplier_proposalcard',
 				'stockatdate',
 				'pricesuppliercard',
+				// For margin control
+				'propalcard',
+				'ordercard',
+				'invoicecard'
 				//   'data' => array(
 				//       'hookcontext1',
 				//       'hookcontext2',

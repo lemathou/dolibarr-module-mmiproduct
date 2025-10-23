@@ -41,9 +41,26 @@ MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE = Mise à jour automatique du fourniss
 
 MAIN_SEARCH_PRODUCT = Recherche
 
-MMIPRODUCT_PRICEMARGIN = Gestion avancée de la marge produit (onglet sur page produit) avec prix concurrents
+MMI_PRODUCT_PRICEMARGIN_SETUP = Gestion de la marge
+MMIPRODUCT_PRICEMARGIN = Onglet sur page produit pour gestion avancée de la marge produit, avec prix concurrents
 
-MMIPRODUCT_REPLENISH = Alertes Stock & Commandes fournisseur
+MMI_PRODUCT_PRICEMARGIN_CONTROL_SETUP = Contrôle de la marge
+MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP = Popup de confirmation à la validation de devis, commande, facture, en cas de marge inférieure à un seuil
+MMI_PRODUCT_PRICEMARGIN_CONTROL_WARN = Affichage colorisé dans les documents
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_1 = Seuil requis de marge
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_1_COLOR = Couleur seuil requis de marge
+MMI_PRODUCT_PRICEMARGIN_REASON_1 = requis
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_2 = Seuil acceptable de marge
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_2_COLOR = Couleur seuil acceptable de marge
+MMI_PRODUCT_PRICEMARGIN_REASON_2 = acceptable
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_3 = Seuil correct de marge
+MMI_PRODUCT_PRICEMARGIN_CONTROL_MIN_3_COLOR = Couleur seuil correct de marge
+MMI_PRODUCT_PRICEMARGIN_REASON_3 = correct
+
+MMI_PRODUCT_PRICEMARGIN_LOW = ATTENTION, la marge de votre proposition n'est pas bonne ! Elle est de %s %% alors que le minimum %s est de %s %%
+
+
+MMI_PRODUCT_REPLENISH_SETUP = Alertes Stock & Commandes fournisseur
 MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
 MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
 MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
