@@ -52,6 +52,8 @@ $arrayofparameters = array(
 	'MMI_PRODUCT_REPLENISH_INFO_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_ALERT_SEUIL'=>array('type'=>'int','enabled'=>1),
+	'MMI_PRODUCT_REPLENISH_AUTOCALC'=>array('type'=>'int','enabled'=>1),
+
 	'MMI_PROPAL_CLONE_USE_NEW_COST_PRICE'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_STOCK_COMPOSED_AUTO'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_STOCK_COMPOSED_USE_RESERVED'=>array('type'=>'yesno','enabled'=>1),

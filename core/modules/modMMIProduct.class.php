@@ -186,6 +186,7 @@ class modMMIProduct extends DolibarrModules
 		$this->tabs = array();
 		$this->tabs[] = array('data'=>'product:+pricemargin:Calcul Prix et Marge:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/pricemargin.php?id=__ID__');
 		$this->tabs[] = array('data'=>'product:+concurrents:Prix concurrents:mmiproduct@mmiproduct:$conf->global->MMIPRODUCT_PRICEMARGIN && $user->rights->mmiproduct->pricemargin->view:custom/mmiproduct/concurrents.php?id=__ID__');
+		$this->tabs[] = array('data'=>'product:+reappro:Réappro fournisseur:mmiproduct@mmiproduct:$conf->global->MMI_PRODUCT_REPLENISH_AUTOCALC && $user->rights->mmiproduct->view:custom/mmiproduct/product_reappro.php?id=__ID__');
 		// Example:
 		// $this->tabs[] = array('data'=>'objecttype:+tabname1:Title1:mylangfile@mmiproduct:$user->rights->mmiproduct->read:/mmiproduct/mynewtab1.php?id=__ID__');  					// To add a new tab identified by code tabname1
 		// $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@mmiproduct:$user->rights->othermodule->read:/mmiproduct/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
@@ -352,68 +353,49 @@ class modMMIProduct extends DolibarrModules
 		// margin calculation method
         $extrafields->addExtraField('margin_calc_type', $langs->trans('Extrafield_margin_calc_type'), 'select', 55, '', 'product', 0, 0, '', ['options'=>['sell_price' => 'Prix final fixé', 'public_price' => 'Prix public fournisseur fixé', 'concurrent' => 'Prix similaire à la concurrence', 'category_margin'=>'Marge définie par la catégorie']], 1, '', 1, $langs->trans('ExtrafieldToolTip_margin_calc_type'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
         $extrafields->addExtraField('margin_calc_options', $langs->trans('Extrafield_margin_calc_options'), 'varchar', 55, '256', 'product', 0, 0, '', '', 1, '', -3, $langs->trans('ExtrafieldToolTip_margin_calc_options'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_PRICEMARGIN');
-		// Season dates begin, end, price/adjust
+		// Season dates begin, end, price/adjust @todo : can be multiple seasonings... and can/should be calculated automatially
 		$extrafields->addExtraField('season_date_begin', $langs->trans('Extrafield_season_date_begin'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_begin'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		$extrafields->addExtraField('season_date_end', $langs->trans('Extrafield_season_date_end'), 'varchar', 10, "5", 'product', 0, 0, '', "", 1, '', -1, $langs->trans('ExtrafieldToolTip_season_date_end'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled && $conf->global->MMIPRODUCT_FIELD_SEASON_DATE');
 		// logistic cost
-        $extrafields->addExtraField('logistic_cost_price', $langs->trans('Extrafield_product_logistic_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_logistic_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
-		// misc cost
-        $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+        $extrafields->addExtraField('logistic_cost_price', $langs->trans('Extrafield_product_logistic_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_logistic_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// packaging cost
+        $extrafields->addExtraField('packaging_cost_price', $langs->trans('Extrafield_product_packaging_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_packaging_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// shipping cost
         $extrafields->addExtraField('shipping_cost_price', $langs->trans('Extrafield_product_shipping_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_shipping_cost_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// misc cost
+        $extrafields->addExtraField('misc_cost_price', $langs->trans('Extrafield_product_misc_cost_price'), 'price', 60, "20,5", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_misc_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Garantie
         $extrafields->addExtraField('garantie', $langs->trans('Extrafield_garantie'), 'varchar', 10, 255, 'product', 0, 0, '', "", 1, '', 3, $langs->trans('ExtrafieldToolTip_garantie'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// REPLENISH
+		// Replenish batch DDM typical delay (calculated)
+		$extrafields->addExtraField('replenish_batch_ddm_delay', $langs->trans('Extrafield_replenish_batch_ddm_delay'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_batch_ddm_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Replenish service level
+		$extrafields->addExtraField('replenish_service_level', $langs->trans('Extrafield_replenish_service_level'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_service_level'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		
 		// Supplier shipping price
         $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_product_supplier_shipping_price'), 'price', 100, "20,5", 'product_fournisseur_price', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_product_supplier_shipping_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		
-		// Supplier shipping price
+		// Supplier order shipping price
         $extrafields->addExtraField('shipping_price', $langs->trans('Extrafield_commande_fournisseur_shipping_price'), 'price', 100, "20,5", 'commande_fournisseur', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_commande_fournisseur_shipping_price'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Suppliers
 		// Replenish note
 		$extrafields->addExtraField('replenish_note', $langs->trans('Extrafield_replenish_note'), 'varchar', 1, 255, 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Réappro délai
+		$extrafields->addExtraField('replenish_delai', $langs->trans('Extrafield_replenish_delai'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delai'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_delai_moyen', $langs->trans('Extrafield_replenish_delai_moyen'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delai_moyen'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_delai_ecarttype', $langs->trans('Extrafield_replenish_delai_ecarttype'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delai_ecarttype'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Réception délai
+		$extrafields->addExtraField('reception_delai', $langs->trans('Extrafield_reception_delai'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delai'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('reception_delai_moyen', $langs->trans('Extrafield_reception_delai_moyen'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delai_moyen'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('reception_delai_ecarttype', $langs->trans('Extrafield_reception_delai_ecarttype'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delai_ecarttype'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Permissions
 		$this->remove($options);
 
 		$sql = array();
-
-		// Document templates
-		$moduledir = 'mmiproduct';
-		$myTmpObjects = array();
-		//$myTmpObjects['MyObject'] = array('includerefgeneration'=>0, 'includedocgeneration'=>0);
-
-		foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
-			if ($myTmpObjectKey == 'MyObject') {
-				continue;
-			}
-			if ($myTmpObjectArray['includerefgeneration']) {
-				$src = DOL_DOCUMENT_ROOT.'/install/doctemplates/mmiproduct/template_myobjects.odt';
-				$dirodt = DOL_DATA_ROOT.'/doctemplates/mmiproduct';
-				$dest = $dirodt.'/template_myobjects.odt';
-
-				if (file_exists($src) && !file_exists($dest)) {
-					require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
-					dol_mkdir($dirodt);
-					$result = dol_copy($src, $dest, 0, 0);
-					if ($result < 0) {
-						$langs->load("errors");
-						$this->error = $langs->trans('ErrorFailToCopyFile', $src, $dest);
-						return 0;
-					}
-				}
-
-				$sql = array_merge($sql, array(
-					"DELETE FROM ".MAIN_DB_PREFIX."document_model WHERE nom = 'standard_".strtolower($myTmpObjectKey)."' AND type = '".strtolower($myTmpObjectKey)."' AND entity = ".$conf->entity,
-					"INSERT INTO ".MAIN_DB_PREFIX."document_model (nom, type, entity) VALUES('standard_".strtolower($myTmpObjectKey)."','".strtolower($myTmpObjectKey)."',".$conf->entity.")",
-					"DELETE FROM ".MAIN_DB_PREFIX."document_model WHERE nom = 'generic_".strtolower($myTmpObjectKey)."_odt' AND type = '".strtolower($myTmpObjectKey)."' AND entity = ".$conf->entity,
-					"INSERT INTO ".MAIN_DB_PREFIX."document_model (nom, type, entity) VALUES('generic_".strtolower($myTmpObjectKey)."_odt', '".strtolower($myTmpObjectKey)."', ".$conf->entity.")"
-				));
-			}
-		}
 
 		return $this->_init($sql, $options);
 	}
