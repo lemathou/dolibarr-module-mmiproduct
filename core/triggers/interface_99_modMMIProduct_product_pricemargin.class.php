@@ -4,6 +4,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
+dol_include_once('custom/mmiproduct/class/mmiproduct_price.class.php');
 
 /**
  *  Class of triggers for MyModule module
@@ -85,7 +86,12 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 				$product = $object;
 				if (empty($product->array_options['options_margin_calc_type']))
 					break;
+
+				mmiproduct_price::product_price_update($product, false);
+				break;
 				
+				// @todo : virer la suite qui est en doublon
+
 				// Vérification si il y a besoin de recalculer le prix de vente
 				// @todo pas certain de l'utilisé dans les situations où le prix est fixé. En outre, il faudrait repasser par la méthode centrale de la classe mmiproduct_price
 				
@@ -128,6 +134,9 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 				}
 				// Need at least a sell_price
 				if ($price_update && !empty($sell_price)) {
+					$sell_price = price2num($sell_price, getDolGlobalInt($conf->global->MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL));
+					if (isset($sell_min_price))
+						$sell_min_price = price2num($sell_min_price, getDolGlobalInt($conf->global->MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL));
 					//var_dump($product);
 					//$ret = $product->update($product->id, $user);
 					$ret = $product->updatePrice($sell_price, 'HT', $user, $product->tva_tx, $price_min_update ?$sell_min_price :NULL);
@@ -138,6 +147,7 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
+			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
 				//var_dump($object); die();
 				/** @var ProductFournisseur $object */
 				$product = new Product($db);
@@ -146,8 +156,8 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 					//$object->fetch_product_fournisseur_price($object->product_fourn_price_id);
 				}
 				if (!empty($object->product_id) && !empty($object->fourn_id)) {
-					//$product->fetch($object->product_id);
-					
+					$product->fetch($object->product_id);
+					mmiproduct_price::product_price_update($product);
 				}
 				//var_dump($product->array_options); die();
 				break;

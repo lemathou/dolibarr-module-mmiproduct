@@ -1,4 +1,8 @@
 <?php
+
+if (!defined('DOL_VERSION'))
+	die('Dolibarr must be loaded');
+
 $url_len_disp_limit = 50;
 ?>
 <div>

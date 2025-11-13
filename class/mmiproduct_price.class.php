@@ -2,9 +2,6 @@
 
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
-/**
- * Décale l'execution à la mort de l'objet => à la fin du script puisque singleton
- */
 class MMIProduct_Price
 {
 
@@ -116,7 +113,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	return static::product_price_update($object);
 }
 
-public static function product_price_update($object)
+public static function product_price_update(Product $object, $cascade=true)
 {
 	global $conf, $user, $langs;
 
@@ -338,7 +335,7 @@ public static function product_price_update($object)
 		$object->array_options['options_margin_min_coeff'] = $coeff_min;
 
 	// Update object
-	$res = $object->update($object->id, $user);
+	$res = $object->update($object->id, $user, ! $cascade);
 	//var_dump($object, $res);
 	if($res < 0) {
 		var_dump($object->errors);
@@ -348,8 +345,15 @@ public static function product_price_update($object)
 		return -1;
 	}
 
+	// Rounding forced
+	if ($rouding = getDolGlobalInt('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL')) {
+		$sell_price = price2num($sell_price, $rouding);
+		if (isset($sell_min_price))
+			$sell_min_price = price2num($sell_min_price, $rouding);
+	}
+	
 	// Price update
-	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL);
+	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL); //, 0, 0, 0, 0, [], '', ! $cascade
 	//var_dump($object, $res);
 	if($res < 0) {
 		var_dump($object->errors);

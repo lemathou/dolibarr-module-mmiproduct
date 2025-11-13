@@ -1,5 +1,8 @@
 <?php
 
+if (!defined('DOL_VERSION'))
+	die('Dolibarr must be loaded');
+
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 dol_include_once('custom/mmiproduct/class/mmiproduct_price.class.php');
 

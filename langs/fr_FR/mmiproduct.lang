@@ -43,6 +43,7 @@ MAIN_SEARCH_PRODUCT = Recherche
 
 MMI_PRODUCT_PRICEMARGIN_SETUP = Gestion de la marge
 MMIPRODUCT_PRICEMARGIN = Onglet sur page produit pour gestion avancée de la marge produit, avec prix concurrents
+MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL = Décimales pour le calcul des prix de vente basés sur la marge
 
 MMI_PRODUCT_PRICEMARGIN_CONTROL_SETUP = Contrôle de la marge
 MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP = Popup de confirmation à la validation de devis, commande, facture, en cas de marge inférieure à un seuil

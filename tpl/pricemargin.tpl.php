@@ -1,3 +1,9 @@
+<?php
+
+if (!defined('DOL_VERSION'))
+	die('Dolibarr must be loaded');
+
+?>
 <style>
 #pricemargin caption {
 	text-align: left;

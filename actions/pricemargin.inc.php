@@ -1,5 +1,8 @@
 <?php
 
+if (!defined('DOL_VERSION'))
+	die('Dolibarr must be loaded');
+
 // ACTIONS
 
 // Calcul de marge

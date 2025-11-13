@@ -65,6 +65,7 @@ $arrayofparameters = array(
 
 	'MMI_PRODUCT_PRICEMARGIN_SETUP'=>array('type'=>'separator','enabled'=>1),
 	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
+	'MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL'=>array('type'=>'int','enabled'=>1),
 	
 	'MMI_PRODUCT_PRICEMARGIN_CONTROL_SETUP'=>array('type'=>'separator','enabled'=>1),
 	'MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP'=>array('type'=>'yesno','enabled'=>1),

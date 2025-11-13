@@ -72,7 +72,7 @@ class modMMIProduct extends DolibarrModules
 		$this->editor_url = 'https://iprospective.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.0';
+		$this->version = '1.0.1';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -171,6 +171,7 @@ class modMMIProduct extends DolibarrModules
 		// );
 		$this->const = array(
 			1 => array('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 'int', '1', 'Automatically update default supplier price (set or delete if none)', 0),
+			1 => array('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL', 'int', '2', '', 0),
 			// 2 => array('MMIPRODUCT_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		);
 
