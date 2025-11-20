@@ -3,6 +3,8 @@
 if (!defined('DOL_VERSION'))
 	die('Dolibarr must be loaded');
 
+dol_include_once('custom/mmicommon/class/mmi_prices.class.php');
+
 ?>
 <style>
 #pricemargin caption {
@@ -322,7 +324,7 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	<tr>
 		<td>Prix d'achat fournisseur utilisé :</td>
 		<td class="price" id="fourn"><select name="product_fourn_price_id"><?php foreach($product_fourn_list as $pf)
-			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'" data-fourn_margin_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_coeff'].'" data-fourn_margin_min_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_min_coeff'].'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.price_format($pf->fourn_unitprice)).'</option>';
+			echo '<option value="'.$pf->product_fourn_price_id.'"'.($product_fourn && $product_fourn->product_fourn_price_id==$pf->product_fourn_price_id ?' selected' :'').' data-unitprice="'.$pf->fourn_unitprice.'" data-fk_soc="'.$pf->fourn_id.'" data-remise_percent="'.$pf->fourn_remise_percent.'" data-shipping_price="'.$product_fourn_list_extra[$pf->product_fourn_price_id]->shipping_price.'" data-fourn_margin_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_coeff'].'" data-fourn_margin_min_coeff="'.$fourn_list[$pf->fourn_id]->array_options['options_margin_min_coeff'].'">'.($pf->fourn_name.' - '.$pf->fourn_ref.' - '.mmi_prices::price_format($pf->fourn_unitprice)).'</option>';
 		?></select></td>
 		<td>
 			<a href="javascript:;" id="fourn_price_update_link">Modifier prix</a>
@@ -454,20 +456,20 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tr>
 	<tr>
 		<td>Prix concurrent médian :</td>
-		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_median; ?>"><?php echo price_format($pcp_median); ?></td>
+		<td class="price" id="concurrent_price" data-value="<?php echo $pcp_median; ?>"><?php echo mmi_prices::price_format($pcp_median); ?></td>
 		<td><a href="/custom/mmiproduct/concurrents.php?id=<?php echo $object->id; ?>">Modifier les prix concurrents</a></td>
 	</tr>
 	<tr>
 		<td>Coeff marge concurrent :</td>
-		<td class="price"><?php echo num_format($pcp_median/$revient); ?></td>
+		<td class="price"><?php echo mmi_prices::number_format($pcp_median/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marge concurrent :</td>
-		<td class="price"><?php echo percent_format(100*($pcp_median-$revient)/$revient); ?></td>
+		<td class="price"><?php echo mmi_prices::percent_format(100*($pcp_median-$revient)/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marque concurrent :</td>
-		<td class="price"><?php echo $pcp_median ?percent_format(100*($pcp_median-$revient)/$pcp_median) :'-'; ?></td>
+		<td class="price"><?php echo $pcp_median ?mmi_prices::percent_format(100*($pcp_median-$revient)/$pcp_median) :'-'; ?></td>
 	</tr>
 	<tr>
 		<td colspan="2">
@@ -481,28 +483,28 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 		</tr>
 		<tr>
 			<td>1er quartile (25% du bas) :</td>
-			<td align="right"><?php echo price_format($pcp_quartile_25); ?></td>
+			<td align="right"><?php echo mmi_prices::price_format($pcp_quartile_25); ?></td>
 			<td align="right"><?php echo $revient ?round($pcp_quartile_25/$revient, 2) :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_25-$revient)/$revient, 2).'%' :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_25-$revient)/$pcp_quartile_25, 2).'%' :'-'; ?></td>
 		</tr>
 		<tr>
 			<td>Prix médian (50% du bas) :</td>
-			<td align="right"><?php echo price_format($pcp_median); ?></td>
+			<td align="right"><?php echo mmi_prices::price_format($pcp_median); ?></td>
 			<td align="right"><?php echo $revient ?round($pcp_median/$revient, 2) :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_median-$revient)/$revient, 2).'%' :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_median-$revient)/$pcp_median, 2).'%' :'-'; ?></td>
 		</tr>
 		<tr>
 			<td>3ème quartile (75% du bas) :</td>
-			<td align="right"><?php echo price_format($pcp_quartile_75); ?></td>
+			<td align="right"><?php echo mmi_prices::price_format($pcp_quartile_75); ?></td>
 			<td align="right"><?php echo $revient ?round($pcp_quartile_75/$revient, 2) :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_75-$revient)/$revient, 2).'%' :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_quartile_75-$revient)/$pcp_quartile_75, 2).'%' :'-'; ?></td>
 		</tr>
 		<tr>
 			<td>Prix moyen :</td>
-			<td align="right"><?php echo price_format($pcp_avg); ?></td>
+			<td align="right"><?php echo mmi_prices::price_format($pcp_avg); ?></td>
 			<td align="right"><?php echo $revient ?round($pcp_avg/$revient, 2) :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_avg-$revient)/$revient, 2).'%' :'-'; ?></td>
 			<td align="right"><?php echo $revient ?round(100*($pcp_avg-$revient)/$pcp_avg, 2).'%' :'-'; ?></td>
@@ -523,36 +525,36 @@ $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_perce
 	</tr>
 	<tr>
 		<td>Prix de vente actuel :</td>
-		<td id="actual_price" data-value="<?php echo $object->price; ?>" class="price"><?php echo price_format($object->price); ?></td>
+		<td id="actual_price" data-value="<?php echo $object->price; ?>" class="price"><?php echo mmi_prices::price_format($object->price); ?></td>
 	</tr>
 	<tr>
 		<td>Coeff marge actuel :</td>
-		<td id="actual_margin_coeff" data-value="<?php echo $object->price/$revient; ?>" class="price"><?php echo num_format($object->price/$revient); ?></td>
+		<td id="actual_margin_coeff" data-value="<?php echo $object->price/$revient; ?>" class="price"><?php echo mmi_prices::number_format($object->price/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marge actuel :</td>
-		<td class="price"><?php echo percent_format(100*($object->price-$revient)/$revient); ?></td>
+		<td class="price"><?php echo mmi_prices::percent_format(100*($object->price-$revient)/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marque actuel :</td>
-		<td class="price"><?php echo percent_format(100*($object->price-$revient)/$object->price); ?></td>
+		<td class="price"><?php echo mmi_prices::percent_format(100*($object->price-$revient)/$object->price); ?></td>
 	</tr>
 	<tr><td colspan="2"><hr /></td></tr>
 	<tr>
 		<td>Prix de vente mini actuel :</td>
-		<td id="actual_min_price" data-value="<?php echo $object->price_min; ?>" class="price"><?php echo price_format($object->price_min); ?></td>
+		<td id="actual_min_price" data-value="<?php echo $object->price_min; ?>" class="price"><?php echo mmi_prices::price_format($object->price_min); ?></td>
 	</tr>
 	<tr>
 		<td>Coeff marge mini actuel :</td>
-		<td id="actual_min_margin_coeff" data-value="<?php echo $object->price_min/$revient; ?>" class="price"><?php echo num_format($object->price_min/$revient); ?></td>
+		<td id="actual_min_margin_coeff" data-value="<?php echo $object->price_min/$revient; ?>" class="price"><?php echo mmi_prices::number_format($object->price_min/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marge mini actuel :</td>
-		<td class="price"><?php echo percent_format(100*($object->price_min-$revient)/$revient); ?></td>
+		<td class="price"><?php echo mmi_prices::percent_format(100*($object->price_min-$revient)/$revient); ?></td>
 	</tr>
 	<tr>
 		<td>Taux marque mini actuel :</td>
-		<td class="price"><?php echo percent_format(100*($object->price_min-$revient)/$object->price_min); ?></td>
+		<td class="price"><?php echo mmi_prices::percent_format(100*($object->price_min-$revient)/$object->price_min); ?></td>
 	</tr>
 	</tbody>
 	<tbody>

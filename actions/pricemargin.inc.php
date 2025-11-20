@@ -3,6 +3,8 @@
 if (!defined('DOL_VERSION'))
 	die('Dolibarr must be loaded');
 
+dol_include_once('custom/mmicommon/class/mmi_stats.class.php');
+
 // ACTIONS
 
 // Calcul de marge
@@ -89,9 +91,9 @@ $pcp_f_nb = count($pcp_values_f);
 $pcp_values_ok = $pcp_values_f;
 sort($pcp_values_ok);
 $pcp_avg = $pcp_f_nb>0 ?round(array_sum($pcp_values_f)/$pcp_f_nb, 2) :'-';
-$pcp_median = Median($pcp_values_ok);
-$pcp_quartile_25 = Quartile_25($pcp_values_ok);
-$pcp_quartile_75 = Quartile_75($pcp_values_ok);
+$pcp_median = mmi_stats::Median($pcp_values_ok);
+$pcp_quartile_25 = mmi_stats::Quartile_25($pcp_values_ok);
+$pcp_quartile_75 = mmi_stats::Quartile_75($pcp_values_ok);
 //var_dump($pcp_list);
 
 // Prix fournisseur
