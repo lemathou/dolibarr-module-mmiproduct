@@ -57,11 +57,10 @@ $arrayofparameters = array(
 	
 	'MMIPRODUCT_ALERT_EMAIL_FROM'=>array('type'=>'string','enabled'=>1),
 	'MMIPRODUCT_ALERT_EMAIL_TO'=>array('type'=>'string','enabled'=>1),
-
-	'MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS'=>array('type'=>'yesno','enabled'=>1),
-	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
-	// Prix fournisseur
-	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
+	
+	// Objets référents Produits montrer shipped qty
+	'MMIPRODUCT_STATS'=>array('type'=>'separator', 'enabled'=>1),
+	'PRODUCT_ORDERS_STATS_SHOW_SHIPPED_QTY'=>array('type'=>'yesno', 'enabled'=>1),
 
 	'MMI_PRODUCT_PRICEMARGIN_SETUP'=>array('type'=>'separator','enabled'=>1),
 	'MMIPRODUCT_PRICEMARGIN'=>array('type'=>'yesno','enabled'=>1),
@@ -91,6 +90,13 @@ $arrayofparameters = array(
 	'MMIPRODUCT_PRO'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_PRO_PRODUCT_CATEGORY'=>array('type'=>'int', 'enabled'=>1),
 	//'MMIPRODUCT_PRO_CUSTOMER_CATEGORY'=>array('type'=>'int', 'enabled'=>1), // Use extrafield pro in soc
+
+	// Divers
+	'MISC'=>array('type'=>'separator', 'enabled'=>1),
+	'MMIPRODUCT_ORDER_SEARCH_IDPROD_FOCUS'=>array('type'=>'yesno','enabled'=>1),
+	//'MMIPRODUCT_MARGIN_DATE_AUTOCHANGE'=>array('type'=>'yesno','enabled'=>1),
+	// Prix fournisseur
+	'MMIPRODUCT_SUPPLIER_PRICE_REDUCTED_DISPLAY'=>array('type'=>'yesno','enabled'=>1),
 );
 
 require_once('../../mmicommon/admin/mmisetup_1.inc.php');
