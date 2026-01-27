@@ -768,6 +768,65 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 			return -1;
 		}
 	}
+
+
+	/**
+	 * Overloading the formCreateProductOptions function : replacing the parent's function with the one below
+	 *
+	 * @param   array           $parameters     Hook metadatas (context, etc...)
+	 * @param   CommonObject    $object         The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+	 * @param   string          $action         Current action (if set). Generally create or edit or null
+	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
+	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
+	 */
+	public function formAddProductToDocumentCard($parameters, &$object, &$action, $hookmanager)
+	{
+        global $conf, $langs;
+
+		$error = 0; // Error counter
+		$print = '';
+		
+		if ($this->in_context($parameters, 'ordersuppliercard') && !empty($object->element) && $object->element=='order_supplier') {
+			if (!empty($conf->global->MAIN_SHOW_ADDED_PRODUCT_LABEL)) {
+				$print = '<div id="added_labelprod"></div><script>var DOL_URL_ROOT = "'.DOL_URL_ROOT.'";</script>';
+				$print .= <<<'MMI_STRING'
+					<script>
+					// MMI Added: When changing supplier product, we load and show product informations
+					$('#idprodfournprice').change(function(){
+						var idprod = $(this).val();
+						//alert(idprod);
+						$('#added_labelprod').html('');
+						$.get(DOL_URL_ROOT+'/custom/mmiproduct/ajax.php', { 'id': idprod, 'action': 'supplierproductinfo' }, function(resp) {
+							if (resp.r == true) {
+								var data = resp.data;
+								var label = '<b>'+data.ref+' ('+data.ref_supplier+') - '+data.label+'</b><br />Stock = '+data.stock_real;
+								if (Object.keys(data.lots).length > 0)
+									label = label+' - Lots ';
+								for (var i in data.lots) {
+									label = label+' - '+(data.lots[i].sellby ?data.lots[i].sellby :data.lots[i].eatby)+' = '+data.lots[i].qty+'<br />';
+								}
+								$('#added_labelprod').html(label);
+							} else {
+								$('#added_labelprod').html('');
+							}
+						}, 'json');
+					});
+					</script>
+					MMI_STRING;
+			}
+		}
+
+		if (! $error)
+		{
+			$this->resprints = $print;
+			return 0; // or return 1 to replace standard code
+		}
+		else
+		{
+			$this->errors[] = 'Error message';
+			return -1;
+		}
+	}
 }
 
 ActionsMMIProduct::__init();
