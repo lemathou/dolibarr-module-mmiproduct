@@ -43,13 +43,45 @@ if ($action == "productinfo") {
 	if (empty($p->id))
 		die(json_encode(['r'=>false, 'msg'=>'Product not found']));
 
-	echo json_encode(array(
-		'id' => $p->id,
-		'label' => $p->label,
-		'price_ht' => $p->price,
-		'price_ttc' => $p->price * (1 + $p->tva_tx / 100),
-		'tva_tx' => $p->tva_tx,
-	));
+	$p->load_stock();
+	$stock = [];
+	$lots = [];
+	foreach($p->stock_warehouse as $sw_id=>$sw) {
+		$stock[$sw_id] = ['name'=>$sw->ref, 'real'=>$sw->real];
+		foreach($sw->detail_batch as $batch_id=>$batch) {
+			if (empty($batch->qty)) continue;
+			if (!isset($lots[$batch_id])) {
+				$lots[$batch_id] = [
+					'qty'=>$batch->qty,
+					'lot_id'=>$batch->lotid,
+					'sellby'=>$batch->sellby ?date('Y-m-d', $batch->sellby) : '',
+					'eatby'=>$batch->eatby ?date('Y-m-d', $batch->eatby) : '',
+				];
+			}
+			else {
+				$lots[$batch_id]['qty'] += $batch->qty;
+			}
+		}
+	}
+
+	echo json_encode([
+		'r'=>true,
+		'data'=>[
+			'id' => $p->id,
+			'ref' => $p->ref,
+			'label' => $p->label,
+			// Price
+			'price_ht' => $fp->price,
+			'price_ttc' => $fp->price * (1 + $fp->tva_tx / 100),
+			'tva_tx' => $fp->tva_tx,
+			// Stock
+			'stock_real' => $p->stock_reel,
+			'stock_virtual' => $p->stock_theorique,
+			'stock' => $stock,
+			// Lots
+			'lots' => $lots,
+		],
+	]);
 }
 
 if ($action == "supplierproductinfo") {
@@ -101,12 +133,15 @@ if ($action == "supplierproductinfo") {
 			'id_supplier' => $fp->id,
 			'ref_supplier' => $fp->ref_fourn,
 			'label' => $p->label,
+			// Price
 			'price_ht' => $fp->price,
 			'price_ttc' => $fp->price * (1 + $fp->tva_tx / 100),
 			'tva_tx' => $fp->tva_tx,
+			// Stock
 			'stock_real' => $p->stock_reel,
 			'stock_virtual' => $p->stock_theorique,
 			'stock' => $stock,
+			// Lots
 			'lots' => $lots,
 		],
 	]);

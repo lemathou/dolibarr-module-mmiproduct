@@ -17,3 +17,7 @@ Fix missing dependences with price_format & co, use new helper class in module M
 
 Add formAddProductToDocumentCard hook in objectline_create to display stock with DDM/DLC when adding a product in a supplier order.
 
+# 1.1.1
+
+Fix formAddProductToDocumentCard hook
+

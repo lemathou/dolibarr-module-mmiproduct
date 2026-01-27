@@ -793,13 +793,21 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 					<script>
 					// MMI Added: When changing supplier product, we load and show product informations
 					$('#idprodfournprice').change(function(){
-						var idprod = $(this).val();
-						//alert(idprod);
 						$('#added_labelprod').html('');
-						$.get(DOL_URL_ROOT+'/custom/mmiproduct/ajax.php', { 'id': idprod, 'action': 'supplierproductinfo' }, function(resp) {
+
+						var mixedid = $(this).val();
+						if (mixedid.indexOf('_') > 0) {
+							var search_id = mixedid.split('_')[1];
+							var search_action = 'productinfo';
+						} else {
+							var search_id = mixedid;
+							var search_action = 'supplierproductinfo';
+						}
+
+						$.get(DOL_URL_ROOT+'/custom/mmiproduct/ajax.php', { 'id': search_id, 'action': search_action }, function(resp) {
 							if (resp.r == true) {
 								var data = resp.data;
-								var label = '<b>'+data.ref+' ('+data.ref_supplier+') - '+data.label+'</b><br />Stock = '+data.stock_real;
+								var label = '<b>'+data.ref+(data.ref_supplier ?' ('+data.ref_supplier+')' : '')+' - '+data.label+'</b><br />Stock = '+data.stock_real;
 								if (Object.keys(data.lots).length > 0)
 									label = label+' - Lots ';
 								for (var i in data.lots) {
@@ -810,6 +818,7 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 								$('#added_labelprod').html('');
 							}
 						}, 'json');
+						//alert(idprod);
 					});
 					</script>
 					MMI_STRING;
