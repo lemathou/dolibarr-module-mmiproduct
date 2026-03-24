@@ -20,7 +20,6 @@
  *   \brief      Inventory update from csv
  */
 
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 // Blocage

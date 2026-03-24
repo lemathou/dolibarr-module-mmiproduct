@@ -1,7 +1,6 @@
 <?php
 
 // Load Dolibarr environment
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 // Blocage

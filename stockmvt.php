@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 Mathieu Moulin            <contact@iprospective.fr>
+/* Copyright (C) 2023 MMI Mathieu Moulin            <contact@iprospective.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  */
 
 /**
- *   \file       mmiproduct/pricemargin.php
- *   \brief      Margin calculation helper
+ *   \file       mmiproduct/stockmvt.php
+ *   \brief      Rewrite missing movements
  */
 
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $confirm = GETPOST('confirm');
@@ -55,7 +54,7 @@ if ($type=="all") {
 	//var_dump($db);
 }
 elseif ($type=="simple") {
-	// Produits sans lots !! Sinon il faut gérer différemment...
+	// Produits sans lots
 	$sql = 'SELECT p.rowid fk_product, p.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, s.reel, COUNT(m.rowid) mvt_nb, SUM(m.value) mvt_reel,
 			NULL as batch, NULL as eatby, NULL as sellby
 		FROM '.MAIN_DB_PREFIX.'product p
@@ -74,7 +73,7 @@ elseif ($type=="simple") {
 	//var_dump($db);
 }
 elseif ($type=="batch") {
-	// Produits sans lots !! Sinon il faut gérer différemment...
+	// Produits avec lots
 	$sql = 'SELECT p.rowid fk_product, l.datec, p.label, p.fk_product_type, p.tobatch, e.rowid fk_entrepot, e.ref entreprot, ls.qty reel, COUNT(m.rowid) mvt_nb, SUM(m.value) mvt_reel,
 			l.batch, l.eatby, l.sellby
 		FROM '.MAIN_DB_PREFIX.'product p

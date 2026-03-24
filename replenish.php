@@ -26,7 +26,6 @@
  *   \ingroup    societe
  */
 
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $help_url = '';

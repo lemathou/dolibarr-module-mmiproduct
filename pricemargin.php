@@ -20,7 +20,6 @@
  *   \brief      Margin calculation helper
  */
 
-require_once 'env.inc.php';
 require_once 'main_load.inc.php';
 
 $tab_name = 'pricemargin';
