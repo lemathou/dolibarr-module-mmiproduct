@@ -135,14 +135,17 @@ ExtrafieldTooltip_fk_categorie_default = Sert notamment au calcul de prix de ven
 Extrafield_season_date_begin = Date de début de saison
 Extrafield_season_date_end = Date de fin de saison
 Extrafield_garantie = Garantie
-Extrafield_replenish_delai = Délai de réappro souhaité/théorique (entre deux commandes)
-Extrafield_replenish_delai_moyen = Délai de réappro moyen (jours)
-Extrafield_replenish_ecarttype = Ecart-type délai moyen de réappro (jours)
+# Replenish
+Extrafield_replenish_safety_stock = Stock de sécurité
+Extrafield_replenish_reorder_point = Point de commande (reorder point)
 Extrafield_replenish_batch_ddm_delay = Délai moyen (en jours) entre la date de péremption la plus proche et la date de réception
 Extrafield_replenish_service_level = Qualité de service (%) seuil de reappro
-Extrafield_reception_delai = Délai de réception souhaité/théorique (entre validation de commande et réception)
-Extrafield_reception_delai_moyen = Délai moyen de réception
-Extrafield_reception_delai_ecarttype = Ecart-type délai moyen de réception
+Extrafield_replenish_delay = Délai de réappro souhaité/théorique (entre deux commandes)
+Extrafield_replenish_delay_moy = Délai de réappro moyen (jours)
+Extrafield_replenish_delay_stddev = Ecart-type délai moyen de réappro (jours)
+Extrafield_reception_delay = Délai de réception souhaité/théorique (entre validation de commande et réception)
+Extrafield_reception_delay_moy = Délai moyen de réception
+Extrafield_reception_delay_stddev = Ecart-type délai moyen de réception
 
 #
 # Global
