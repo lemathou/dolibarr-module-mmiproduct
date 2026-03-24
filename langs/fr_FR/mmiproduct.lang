@@ -64,6 +64,8 @@ MMI_PRODUCT_PRICEMARGIN_LOW = ATTENTION, la marge de votre proposition n'est pas
 
 
 MMI_PRODUCT_REPLENISH_SETUP = Alertes Stock & Commandes fournisseur
+MMIPRODUCT_REPLENISH = Alertes Stock & Commandes fournisseur
+MMI_PRODUCT_REPLENISH_AUTOCALC = Calcul automatique des seuils de réapprovisionnement et de remplissage
 MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
 MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
 MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
@@ -158,6 +160,17 @@ ExtrafieldTooltip_fk_categorie_default = Sert notamment au calcul de prix de ven
 Extrafield_season_date_begin = Date de début de saison
 Extrafield_season_date_end = Date de fin de saison
 Extrafield_garantie = Garantie
+# Replenish
+Extrafield_replenish_safety_stock = Stock de sécurité
+Extrafield_replenish_reorder_point = Point de commande (reorder point)
+Extrafield_replenish_batch_ddm_delay = Délai moyen (en jours) entre la date de péremption la plus proche et la date de réception
+Extrafield_replenish_service_level = Qualité de service (%) seuil de reappro
+Extrafield_replenish_delay = Délai de réappro souhaité/théorique (entre deux commandes)
+Extrafield_replenish_delay_moy = Délai de réappro moyen (jours)
+Extrafield_replenish_delay_stddev = Ecart-type délai moyen de réappro (jours)
+Extrafield_reception_delay = Délai de réception souhaité/théorique (entre validation de commande et réception)
+Extrafield_reception_delay_moy = Délai moyen de réception
+Extrafield_reception_delay_stddev = Ecart-type délai moyen de réception
 
 #
 # Global
@@ -172,6 +185,7 @@ MMIProductStockReplenish = Réappro liste fournisseur
 MMIProductPriceMarginConfig = Paramétrer marge et prix de vente
 
 MMIProductStockReplenishPRO = Réappro produits pour les PRO
+MMIProductStockReplenishFournStats = Stats réappro produits fournisseurs
 
 MMIProductsAddAllProducts = Ajouter toute une famille de produits
 
