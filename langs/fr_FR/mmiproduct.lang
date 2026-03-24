@@ -160,6 +160,7 @@ MMIProductStockReplenish = Réappro liste fournisseur
 MMIProductPriceMarginConfig = Paramétrer marge et prix de vente
 
 MMIProductStockReplenishPRO = Réappro produits pour les PRO
+MMIProductStockReplenishFournStats = Stats réappro produits fournisseurs
 
 MMIProductsAddAllProducts = Ajouter toute une famille de produits
 
