@@ -236,6 +236,7 @@ LEFT JOIN (
 ON ds.day = d.day AND ds.fk_product = p.rowid
 
 WHERE p.fk_product_type=0
+'.($filter_supplier_id ?' AND p2.fk_soc_fournisseur='.$filter_supplier_id : '').'
 GROUP BY p.rowid
 
 HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
@@ -367,7 +368,7 @@ if (!empty($list)) {
 	foreach($list as $row) {
 		if (empty($row->cmd_qte) && !empty($show_product_cmd_only))
 			continue;
-		if(!empty($filter_supplier_id) && $row->fk_soc_fournisseur != $filter_supplier_id)
+		if(!empty($filter_supplier_id) && $row->fourn_id != $filter_supplier_id)
 			continue;
 
 		$lots = [];
