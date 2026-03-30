@@ -116,6 +116,8 @@ llxHeader('', $langs->trans($page_name), $help_url);
 
 print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
+echo '<p><a href="?regen">Régénérer les stats en base de donnée</a></p>';
+
 // Products
 
 $list = [];
@@ -143,7 +145,7 @@ $sql = 'SELECT
     p.ref,
     p.label,
     p2.supplier_ref,
-    p2.fk_soc_fournisseur AS fourn_id,
+    p2.fk_soc_fournisseur AS supplier_id,
 	p2.replenish_batch_ddm_delay,
 	p2.replenish_service_level,
 	p2.replenish_analysis_days,
@@ -236,6 +238,7 @@ LEFT JOIN (
 ON ds.day = d.day AND ds.fk_product = p.rowid
 
 WHERE p.fk_product_type=0
+'.(!empty($filter_supplier_id) ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'').'
 GROUP BY p.rowid
 
 HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
@@ -327,7 +330,7 @@ echo '<tr class="liste_titre">';
 $fields = [
 	'ref' => ['label'=>'Réf', 'sortable'=>true],
 	'supplier_ref' => ['label'=>'Réf fourn', 'sortable'=>true],
-	'fourn_id' => ['label'=>'Fournisseur', 'sortable'=>false],
+	'supplier_id' => ['label'=>'Fournisseur', 'sortable'=>false],
 	'label' => ['label'=>'Nom', 'sortable'=>true],
 
 	'd' => ['label'=>'d',],
@@ -367,7 +370,7 @@ if (!empty($list)) {
 	foreach($list as $row) {
 		if (empty($row->cmd_qte) && !empty($show_product_cmd_only))
 			continue;
-		if(!empty($filter_supplier_id) && $row->fk_soc_fournisseur != $filter_supplier_id)
+		if(!empty($filter_supplier_id) && $row->supplier_id != $filter_supplier_id)
 			continue;
 
 		$lots = [];
@@ -381,7 +384,7 @@ if (!empty($list)) {
 		echo '<tr class="product">';
 		echo '<td>'.$row->ref.'</td>';
 		echo '<td>'.$row->supplier_ref.'</td>';
-		echo '<td>'.$list_supplier[$row->fourn_id]->nom.'</td>';
+		echo '<td>'.$list_supplier[$row->supplier_id]->nom.'</td>';
 		echo '<td><a href="'.DOL_URL_ROOT.'/product/stock/product.php?id='.$row->product_id.'" target="_blank">'.$row->label.'</td>';
 
 		echo '<td align="right">'.round($row->d, 2).'</td>';
