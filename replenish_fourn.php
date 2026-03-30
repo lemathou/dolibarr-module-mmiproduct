@@ -42,7 +42,8 @@ if (!empty($filter_supplier_id))
 // Filter par nb de mois
 $filter_month_nb = GETPOSTINT('filter_month_nb');
 if (empty($filter_month_nb))
-	$filter_month_nb = 6;
+	$filter_month_nb = 3;
+$analyse_days_nb = $filter_month_nb*30;
 $url_params[] = 'filter_month_nb='.$filter_month_nb;
 // Options d'affichage
 // Détail des commandes clients
@@ -119,42 +120,65 @@ print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
 $list = [];
 
+// Days
+$sql_select_days = 'SELECT 0 n';
+for($i=1;$i<=$analyse_days_nb;$i++)
+	$sql_select_days .= ' UNION ALL SELECT '.$i;
+// Fuck cannot change
+// IF(p2.replenish_analysis_days, p2.replenish_analysis_days, '.$analyse_days_nb.')
+
+// Service Level
+// 1.28 for 90% service level, 1.65 for 95%, 1.96 for 97.5%, and 2.33 for 99%
+
+
+// Replenish delay (entre 2 commandes)
+// T = 28
+
+// Reception delay (livraison commande)
+// L = 10
+
+
 $sql = 'SELECT 
     p.rowid AS product_id,
     p.ref,
     p.label,
     p2.supplier_ref,
     p2.fk_soc_fournisseur AS fourn_id,
+	p2.replenish_batch_ddm_delay,
+	p2.replenish_service_level,
+	p2.replenish_analysis_days,
+	p2.replenish_safety_stock,
+	p2.replenish_reorder_point,
     
-    SUM(COALESCE(ds.total_qty, 0)) / 90 AS d,
+    SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.' AS d,
     
     STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
 
-    COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / 90 AS freq,
+    COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.' AS freq,
 
     STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-        * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / 90) 
+        * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.') 
         AS sigma_corrected,
     
-    10 AS L,
-    28 AS T,
-    1.28 AS Z,
+    IF (s2.reception_delay>0, s2.reception_delay, 10) AS L,
+    IF (s2.replenish_delay>0, s2.replenish_delay, 28) AS T,
+    IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) AS Z,
     
     ROUND(
-        1.28 * SQRT(10) *
+        IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
         (
             STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / 90)
+            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
         )
     , 2) AS safety_stock,
     
     ROUND(
-        (SUM(COALESCE(ds.total_qty, 0)) / 90) * 10
+        (SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * IF (s2.reception_delay>0, s2.reception_delay, 10)
         +
-        1.28 * SQRT(10) *
+        IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
         (
             STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / 90)
+            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
         )
     , 2) AS reorder_point,
     
@@ -163,12 +187,12 @@ $sql = 'SELECT
     GREATEST(
         ROUND(
             (
-                (SUM(COALESCE(ds.total_qty, 0)) / 90) * (10 + 28)
+                (SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
                 +
-                1.28 * SQRT(10) *
+                IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
                 (
                     STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-                    * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / 90)
+                    * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
                 )
             )
             - COALESCE(ps.reel, 0)
@@ -176,50 +200,39 @@ $sql = 'SELECT
         0
     ) AS qty_to_order
 
-FROM llx_product p
+FROM llx_product AS p
 
-LEFT JOIN llx_product_extrafields p2 ON p2.fk_object=p.rowid
+LEFT JOIN llx_product_extrafields AS p2
+	ON p2.fk_object=p.rowid
 
-LEFT JOIN llx_product_stock ps 
+LEFT JOIN llx_product_stock AS ps
     ON ps.fk_product = p.rowid
 
+LEFT JOIN llx_societe AS s
+	ON s.rowid=p2.fk_soc_fournisseur
+
+LEFT JOIN llx_societe_extrafields AS s2
+	ON s2.fk_object=s.rowid
 
 CROSS JOIN (
     SELECT DATE_SUB(CURDATE(), INTERVAL n DAY) AS day
     FROM (
-        SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
-        UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9
-        UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14
-        UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19
-        UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24
-        UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 27 UNION ALL SELECT 28 UNION ALL SELECT 29
-        UNION ALL SELECT 30 UNION ALL SELECT 31 UNION ALL SELECT 32 UNION ALL SELECT 33 UNION ALL SELECT 34
-        UNION ALL SELECT 35 UNION ALL SELECT 36 UNION ALL SELECT 37 UNION ALL SELECT 38 UNION ALL SELECT 39
-        UNION ALL SELECT 40 UNION ALL SELECT 41 UNION ALL SELECT 42 UNION ALL SELECT 43 UNION ALL SELECT 44
-        UNION ALL SELECT 45 UNION ALL SELECT 46 UNION ALL SELECT 47 UNION ALL SELECT 48 UNION ALL SELECT 49
-        UNION ALL SELECT 50 UNION ALL SELECT 51 UNION ALL SELECT 52 UNION ALL SELECT 53 UNION ALL SELECT 54
-        UNION ALL SELECT 55 UNION ALL SELECT 56 UNION ALL SELECT 57 UNION ALL SELECT 58 UNION ALL SELECT 59
-        UNION ALL SELECT 60 UNION ALL SELECT 61 UNION ALL SELECT 62 UNION ALL SELECT 63 UNION ALL SELECT 64
-        UNION ALL SELECT 65 UNION ALL SELECT 66 UNION ALL SELECT 67 UNION ALL SELECT 68 UNION ALL SELECT 69
-        UNION ALL SELECT 70 UNION ALL SELECT 71 UNION ALL SELECT 72 UNION ALL SELECT 73 UNION ALL SELECT 74
-        UNION ALL SELECT 75 UNION ALL SELECT 76 UNION ALL SELECT 77 UNION ALL SELECT 78 UNION ALL SELECT 79
-        UNION ALL SELECT 80 UNION ALL SELECT 81 UNION ALL SELECT 82 UNION ALL SELECT 83 UNION ALL SELECT 84
-        UNION ALL SELECT 85 UNION ALL SELECT 86 UNION ALL SELECT 87 UNION ALL SELECT 88 UNION ALL SELECT 89
+       '.$sql_select_days.'
     ) AS days
-) d
+) AS d
 
 
 LEFT JOIN (
     SELECT 
         DATE(c.date_commande) as day,
-        s.fk_product,
-        SUM(s.qty) AS total_qty
-    FROM llx_commandedet s
-    JOIN llx_commande c ON c.rowid = s.fk_commande
-    WHERE c.date_commande >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+        cl.fk_product,
+        SUM(cl.qty) AS total_qty
+    FROM llx_commandedet cl
+    JOIN llx_commande c ON c.rowid = cl.fk_commande
+    WHERE c.date_commande >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
       AND c.fk_statut IN (1,2,3)
-    GROUP BY day, s.fk_product
-) ds 
+    GROUP BY day, cl.fk_product
+) AS ds 
 ON ds.day = d.day AND ds.fk_product = p.rowid
 
 WHERE p.fk_product_type=0
@@ -369,7 +382,7 @@ if (!empty($list)) {
 		echo '<td>'.$row->ref.'</td>';
 		echo '<td>'.$row->supplier_ref.'</td>';
 		echo '<td>'.$list_supplier[$row->fourn_id]->nom.'</td>';
-		echo '<td><a href="'.DOL_URL_ROOT.'/product/stock/product.php?id='.$row->rowid.'" target="_blank">'.$row->label.'</td>';
+		echo '<td><a href="'.DOL_URL_ROOT.'/product/stock/product.php?id='.$row->product_id.'" target="_blank">'.$row->label.'</td>';
 
 		echo '<td align="right">'.round($row->d, 2).'</td>';
 		echo '<td align="right">'.round($row->signa_d, 2).'</td>';
