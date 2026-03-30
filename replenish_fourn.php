@@ -186,19 +186,16 @@ $sql = 'SELECT
     
     COALESCE(ps.reel, 0) AS stock_current,
     
-    GREATEST(
-        ROUND(
-            (
-                (SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
-                +
-                IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-                (
-                    STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-                    * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
-                )
-            )
-            - COALESCE(ps.reel, 0)
-        , 0),
+    ROUND(
+		(
+			(SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
+			+
+			IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
+			(
+				STDDEV_POP(COALESCE(ds.total_qty, 0)) 
+				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
+			)
+		),
         0
     ) AS qty_to_order
 
