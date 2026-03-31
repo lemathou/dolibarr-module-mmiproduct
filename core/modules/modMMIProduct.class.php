@@ -367,11 +367,11 @@ class modMMIProduct extends DolibarrModules
         $extrafields->addExtraField('garantie', $langs->trans('Extrafield_garantie'), 'varchar', 10, 255, 'product', 0, 0, '', "", 1, '', 3, $langs->trans('ExtrafieldToolTip_garantie'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// REPLENISH
 		// Replenish batch DDM typical delay (calculated)
-		$extrafields->addExtraField('replenish_batch_ddm_delay', $langs->trans('Extrafield_replenish_batch_ddm_delay'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_batch_ddm_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_batch_ddm_delay', $langs->trans('Extrafield_replenish_batch_ddm_delay'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_batch_ddm_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish service level
-		$extrafields->addExtraField('replenish_service_level', $langs->trans('Extrafield_replenish_service_level'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_service_level'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_service_level', $langs->trans('Extrafield_replenish_service_level'), 'select', 100, "", 'product', 0, 0, '', ['options'=>['1.28'=>'90%', '1.65'=>'95%', '1.96'=>'97.5%', '2.33'=>'99%']], 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_service_level'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish analysis days
-		$extrafields->addExtraField('replenish_analysis_days', $langs->trans('Extrafield_replenish_analysis_days'), 'int', 100, "3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_analysis_days'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_analysis_days', $langs->trans('Extrafield_replenish_analysis_days'), 'int', 100, "3", 'product', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_analysis_days'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// @todo Replenish seasonal
 		//$extrafields->addExtraField('replenish_seasonal', $langs->trans('Extrafield_replenish_seasonal'), 'boolean', 100, "", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_seasonal'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish season coeff
