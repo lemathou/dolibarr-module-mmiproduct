@@ -395,11 +395,11 @@ class modMMIProduct extends DolibarrModules
 		// Replenish note
 		$extrafields->addExtraField('replenish_note', $langs->trans('Extrafield_replenish_note'), 'varchar', 1, 255, 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Réappro délai
-		$extrafields->addExtraField('replenish_delay', $langs->trans('Extrafield_replenish_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_delay', $langs->trans('Extrafield_replenish_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_delay_moy', $langs->trans('Extrafield_replenish_delay_moy'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay_moy'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_delay_stddev', $langs->trans('Extrafield_replenish_delay_stddev'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay_stddev'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Réception délai
-		$extrafields->addExtraField('reception_delay', $langs->trans('Extrafield_reception_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('reception_delay', $langs->trans('Extrafield_reception_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_reception_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('reception_delay_moy', $langs->trans('Extrafield_reception_delay_moy'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay_moy'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('reception_delay_stddev', $langs->trans('Extrafield_reception_delay_stddev'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay_stddev'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 

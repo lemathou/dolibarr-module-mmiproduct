@@ -51,9 +51,9 @@ $show_cmd_list = GETPOSTINT('show_cmd_list');
 if (!empty($show_cmd_list))
 	$url_params[] = 'show_cmd_list=1';
 // Afficher uniquement les produits commandés
-$show_product_cmd_only = GETPOSTINT('show_product_cmd_only');
-if (!empty($show_product_cmd_only))
-	$url_params[] = 'show_product_cmd_only=1';
+$filter_product_cmd_only = GETPOSTINT('filter_product_cmd_only');
+if (!empty($filter_product_cmd_only))
+	$url_params[] = 'filter_product_cmd_only=1';
 // Afficher une ligne par client
 $show_customers_detail = GETPOSTINT('show_customers_detail');
 if (!empty($show_customers_detail))
@@ -103,7 +103,11 @@ $prestasync = !empty($conf->mmiprestasync->enabled);
  * Actions
  */
 
-// None
+$regen = GETPOST($regen);
+
+if ($regen) {
+
+}
 
 
 /*
@@ -116,7 +120,27 @@ llxHeader('', $langs->trans($page_name), $help_url);
 
 print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
-echo '<p><a href="?regen">Régénérer les stats en base de donnée</a></p>';
+echo '<div style="float: right;"><p><a href="'.$url_params_str.'&sort='.$sort.'&sortorder='.$sortorder.'&regen=1">Régénérer les stats en base de donnée</a></p></div>';
+
+// Suppliers
+$list_supplier = [];
+$sql_suppliers = 'SELECT DISTINCT s.rowid, s.nom, COUNT(DISTINCT p2.rowid) AS pdt_nb'
+	.' FROM `llx_societe` AS s'
+	.' INNER JOIN `llx_product_extrafields` AS p2 ON p2.fk_soc_fournisseur=s.rowid'
+	.($filter_product_pro ?' LEFT JOIN `llx_categorie_product` AS kp ON kp.fk_product=p2.fk_object' :'')
+	.' WHERE 1'
+	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
+	.' GROUP BY s.rowid'
+	.' ORDER BY s.nom ASC';
+$resql = $db->query($sql_suppliers);
+//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
+if ($resql) {
+	while($row = $db->fetch_object($resql)) {
+		$list_supplier[$row->rowid] = $row;
+	}
+	$db->free($resql);
+}
+//var_dump($list_supplier);
 
 // Products
 
@@ -130,8 +154,12 @@ for($i=1;$i<=$analyse_days_nb;$i++)
 // IF(p2.replenish_analysis_days, p2.replenish_analysis_days, '.$analyse_days_nb.')
 
 // Service Level
-// 1.28 for 90% service level, 1.65 for 95%, 1.96 for 97.5%, and 2.33 for 99%
-
+$service_levels = [
+	'90' => 1.28,
+	'95' => 1.65,
+	'97.5' => 1.96,
+	'99' => 2.33,
+];
 
 // Replenish delay (entre 2 commandes)
 // T = 28
@@ -152,6 +180,8 @@ $sql = 'SELECT
 	p2.replenish_safety_stock,
 	p2.replenish_reorder_point,
     
+    SUM(COALESCE(ds.total_qty, 0)) AS cmd_qty,
+    SUM(COALESCE(ds.total_nb, 0)) AS cmd_nb,
     SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.' AS d,
     
     STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
@@ -197,18 +227,28 @@ $sql = 'SELECT
 			)
 		),
         0
-    ) AS qty_to_order
+    ) AS order_qty,
+
+	IF(pfp.packaging>0, pfp.packaging, 1) AS packaging
 
 FROM llx_product AS p
 
 LEFT JOIN llx_product_extrafields AS p2
-	ON p2.fk_object=p.rowid
+	ON p2.fk_object=p.rowid'
 
-LEFT JOIN llx_product_stock AS ps
+.($filter_product_pro ?
+' LEFT JOIN llx_categorie_product AS kp
+	ON kp.fk_product=p2.fk_object'
+:'')
+
+.' LEFT JOIN llx_product_stock AS ps
     ON ps.fk_product = p.rowid
 
 LEFT JOIN llx_societe AS s
 	ON s.rowid=p2.fk_soc_fournisseur
+
+LEFT JOIN llx_product_fournisseur_price AS pfp
+	ON pfp.fk_product=p.rowid AND pfp.fk_soc=s.rowid
 
 LEFT JOIN llx_societe_extrafields AS s2
 	ON s2.fk_object=s.rowid
@@ -220,11 +260,11 @@ CROSS JOIN (
     ) AS days
 ) AS d
 
-
 LEFT JOIN (
     SELECT 
         DATE(c.date_commande) as day,
         cl.fk_product,
+        COUNT(DISTINCT c.rowid) AS total_nb,
         SUM(cl.qty) AS total_qty
     FROM llx_commandedet cl
     JOIN llx_commande c ON c.rowid = cl.fk_commande
@@ -234,40 +274,89 @@ LEFT JOIN (
 ) AS ds 
 ON ds.day = d.day AND ds.fk_product = p.rowid
 
-WHERE p.fk_product_type=0
-'.(!empty($filter_supplier_id) ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'').'
-GROUP BY p.rowid
+WHERE p.fk_product_type=0'
+.(!empty($filter_supplier_id) ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
+.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
+
+.' GROUP BY p.rowid
 
 HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
 
+// Fields list
+$fields = [
+	'ref' => ['label'=>'Réf', 'sortable'=>true],
+	'supplier_ref' => ['label'=>'Réf fourn', 'sortable'=>true],
+	'supplier_id' => ['label'=>'Fournisseur', 'sortable'=>false],
+	'label' => ['label'=>'Nom', 'sortable'=>true],
+
+	'd' => ['label'=>'d', 'desc'=>'Vente moyenne'],
+	'sigma_d' => ['label'=>'σd', 'desc'=>'Vente moyenne'],
+	'freq' => ['label'=>'freq', 'desc'=>'Dispersion vente moyenne'],
+	'sigma_corrected' => ['label'=>'σfix', 'desc'=>'Dispersion Vente moyenne corrigée'],
+
+	'L' => ['label'=>'L', 'desc'=>'Délai de réception commande fournisseur', 'sortable'=>true],
+	'T' => ['label'=>'T', 'desc'=>'Délai entre deux commandes fournisseur', 'sortable'=>true],
+	'Z' => ['label'=>'Z', 'desc'=>'Taux de service (1.28 <-> 90%)', 'sortable'=>true],
+
+	'safety_stock' => ['label'=>'safety stock', 'sortable'=>true],
+	'reorder_point' => ['label'=>'reorder point', 'sortable'=>true],
+
+	'stock_current' => ['label'=>'stock réel', 'sortable'=>true],
+	'stock_theo' => ['label'=>'stock théo.', 'sortable'=>true],
+
+	'packaging' => ['label'=>'Pack.', 'sortable'=>true],
+	'order_qty' => ['label'=>'Cmd Max', 'sortable'=>true],
+
+	'order_todo' => ['label'=>'Cmd Todo', 'sortable'=>true],
+
+	'lots_nb' => ['label'=>'Lots', 'align'=>'right', 'sortable'=>true],
+	//'cust_nb' => ['label'=>'Nb clients', 'align'=>'right'],
+	'cmd_qty' => ['label'=>'Cmd Qty', 'align'=>'right', 'sortable'=>true],
+	'cmd_nb' => ['label'=>'Cmd Nb', 'sortable'=>true],
+];
+
 $resql = $db->query($sql);
 //echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
 if ($resql) {
 	while($row = $db->fetch_object($resql)) {
+		// Stock théorique (moins en-cours, commandes en attente, lots périmés...)
+		$row->stock_theo = $row->stock_current;
+
+		// Paquets à commander
+		if ($row->stock_theo >= $row->order_qty) {
+			$row->order_todo = 0;
+		}
+		elseif ($row->packaging>0) {
+			if ($row->packaging != 1) {
+				$order_packs = round(($row->order_qty-$row->stock_theo)/$row->packaging, 2);
+				$row->order_todo = ceil($order_packs)*$row->packaging;
+			}
+			else {
+				$row->order_todo = $row->order_qty - $row->stock_theo;
+			}
+		}
+		else {
+			// Anomalie
+			$row->order_todo = 0;
+		}
 		$list[$row->product_id] = $row;
+
+		// Regen
+		if ($regen) {
+			$sql = 'UPDATE `llx_product` AS p'
+				.' INNER JOIN `llx_product_extrafields` AS p2 ON p2.fk_object=p.rowid'
+				.' SET'
+				.' p.seuil_stock_alerte="'.ceil($row->reorder_point).'",'
+				.' p.desiredstock="'.ceil($row->order_qty).'",'
+				.' p2.replenish_safety_stock="'.ceil($row->safety_stock).'",'
+				.' p2.replenish_reorder_point="'.ceil($row->reorder_point).'"'
+				.' WHERE p.rowid='.$row->product_id;
+			$q = $db->query($sql);
+			//echo '<p>'.$sql.'</p>'; var_dump($q);
+		}
 	}
 	$db->free($resql);
 }
-
-// Suppliers
-
-$list_supplier = [];
-$sql = 'SELECT DISTINCT s.rowid, s.nom'
-	.' FROM llx_societe AS s'
-	.' INNER JOIN llx_product_extrafields AS p2 ON p2.fk_soc_fournisseur=s.rowid'
-	.($filter_product_pro ?' LEFT JOIN llx_categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
-	.' WHERE 1'
-	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
-	.' ORDER BY s.nom ASC';
-$resql = $db->query($sql);
-//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
-if ($resql) {
-	while($row = $db->fetch_object($resql)) {
-		$list_supplier[$row->rowid] = $row;
-	}
-	$db->free($resql);
-}
-//var_dump($list_supplier);
 
 // Sort list
 if (!empty($sort)) {
@@ -292,30 +381,61 @@ if (!empty($sort)) {
 
 // DISPLAY
 
+?>
+
+<style>
+tr.liste_titre th a {
+	font-weight: bold;
+	border: 1px solid transparent;
+	padding: 1px;
+}
+tr.liste_titre th a.active {
+	color: red;
+	border-color: red;
+}
+tr.product > td {
+	border-top: 1px solid black;
+}
+.hidden {
+	display: none;
+}
+</style>
+
+<?php
+
 // Formulaire
 
 echo '<form>';
 //echo '<input type="hidden" name="token" value="'.newToken().'" />';
 echo '<input type="hidden" name="sort" value="'.$sort.'" />';
 echo '<input type="hidden" name="sortorder" value="'.$sortorder.'" />';
+
 echo '<p>';
 echo '<label for="filter_product_pro">Uniquement les produits taggués PRO :</label> ';
 echo '<input type="checkbox" name="filter_product_pro" id="filter_product_pro" value="1"'.($filter_product_pro ?' checked' :'').' onchange="this.form.submit();" />';
 echo '</p>';
+
 echo '<p>';
-echo '<label for="filter_month_nb">Nombre de mois à analyser :</label> ';
+echo '<label for="filter_product_cmd_only">Uniquement les produits avec des commandes :</label> ';
+echo '<input type="checkbox" name="filter_product_cmd_only" id="filter_product_cmd_only" value="1"'.($filter_product_cmd_only ?' checked' :'').' onchange="this.form.submit();" />';
+echo '</p>';
+
+echo '<p>';
+echo '<label for="filter_month_nb">Nombre de mois (max) à analyser :</label> ';
 echo '<input name="filter_month_nb" id="filter_month_nb" value="'.$filter_month_nb.'" size="2" onchange="this.form.submit();" />';
 echo '</p>';
+
 echo '<p>';
 echo '<label for="supplier_id">Filtrer par fournisseur :</label> ';
 echo '<select name="supplier_id" id="supplier_id" onchange="this.form.submit();">';
 echo '<option value="">-- Tous les fournisseurs --</option>';
 foreach($list_supplier as $supplier) {
 	$selected = ($supplier->rowid == $filter_supplier_id) ?' selected="selected"' :'';
-	echo '<option value="'.$supplier->rowid.'"'.$selected.'>'.$supplier->nom.'</option>';
+	echo '<option value="'.$supplier->rowid.'"'.$selected.'>'.$supplier->nom.' ('.$supplier->pdt_nb.')</option>';
 }
 echo '</select>';
 echo '</p>';
+
 echo '</form>';
 
 // Colonnes
@@ -324,35 +444,11 @@ $resql = $db->query($sql);
 echo '<table class="noborder" width="100%">';
 echo '<thead>';
 echo '<tr class="liste_titre">';
-$fields = [
-	'ref' => ['label'=>'Réf', 'sortable'=>true],
-	'supplier_ref' => ['label'=>'Réf fourn', 'sortable'=>true],
-	'supplier_id' => ['label'=>'Fournisseur', 'sortable'=>false],
-	'label' => ['label'=>'Nom', 'sortable'=>true],
-
-	'd' => ['label'=>'d',],
-	'sigma_d' => ['label'=>'sigma_d',],
-	'freq' => ['label'=>'freq',],
-	'sigma_corrected' => ['label'=>'sigma_corrected',],
-
-	'L' => ['label'=>'L', 'sortable'=>true],
-	'T' => ['label'=>'T', 'sortable'=>true],
-	'Z' => ['label'=>'Z', 'sortable'=>true],
-
-	'safety_stock' => ['label'=>'safety stock', 'sortable'=>true],
-	'reorder_point' => ['label'=>'reorder point', 'sortable'=>true],
-	'stock_current' => ['label'=>'stock', 'sortable'=>true],
-	'qty_to_order' => ['label'=>'Commander', 'sortable'=>true],
-
-	'lots_nb' => ['label'=>'Lots', 'align'=>'right', 'sortable'=>true],
-	//'cust_nb' => ['label'=>'Nb clients', 'align'=>'right'],
-	'cmd_qte' => ['label'=>'Qty cmd', 'align'=>'right', 'sortable'=>true],
-	'cmd_nb' => ['label'=>'Cmd', 'sortable'=>true],
-];
 foreach($fields as $fieldname=>$field) {
 	echo '<th>'
 		.$field['label']
-		.($field['sortable'] ?'&nbsp;<a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=0"'.(($sort===$fieldname && $sortorder===0) ?' class="active"' :'').'>&#8595;</a>&nbsp;<a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=1"'.(($sort===$fieldname && $sortorder===1) ?' class="active"' :'').'>&#8593;</a>' :'')
+		.(!empty($field['desc']) ?'<span'.' title="'.$field['desc'].'" class="fa fa-info-circle" style="cursor: help;"></span>' :'')
+		.($field['sortable'] ?'&nbsp;<a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=0"'.(($sort===$fieldname && $sortorder===0) ?' class="active"' :'').'>&#8595;</a><a href="'.$url_params_str.'&sort='.$fieldname.'&sortorder=1"'.(($sort===$fieldname && $sortorder===1) ?' class="active"' :'').'>&#8593;</a>' :'')
 		.'</th>';
 }
 echo '</tr>';
@@ -365,7 +461,7 @@ echo '</thead>';
 if (!empty($list)) {
 	echo '<tbody>';
 	foreach($list as $row) {
-		if (empty($row->cmd_qte) && !empty($show_product_cmd_only))
+		if (empty($row->cmd_nb) && !empty($filter_product_cmd_only))
 			continue;
 		if(!empty($filter_supplier_id) && $row->supplier_id != $filter_supplier_id)
 			continue;
@@ -378,10 +474,16 @@ if (!empty($list)) {
 			$lots[] = '<span title="'.$lot[1].'">'.$lot[0].'</span>&nbsp;:&nbsp;'.$lot[2];
 		}
 
+		// Update
+		if ($update) {
+
+		}
+
+		// Display
 		echo '<tr class="product">';
 		echo '<td>'.$row->ref.'</td>';
 		echo '<td>'.$row->supplier_ref.'</td>';
-		echo '<td>'.$list_supplier[$row->supplier_id]->nom.'</td>';
+		echo '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.$row->supplier_id.'" target="_blank">'.$list_supplier[$row->supplier_id]->nom.'</a></td>';
 		echo '<td><a href="'.DOL_URL_ROOT.'/product/stock/product.php?id='.$row->product_id.'" target="_blank">'.$row->label.'</td>';
 
 		echo '<td align="right">'.round($row->d, 2).'</td>';
@@ -397,61 +499,19 @@ if (!empty($list)) {
 		echo '<td align="right">'.round($row->reorder_point, 2).'</td>';
 
 		echo '<td align="right">'.round($row->stock_current, 2).'</td>';
-		echo '<td align="right">'.round($row->qty_to_order, 2).'</td>';
+		echo '<td align="right">'.round($row->stock_theo, 2).'</td>';
+
+		echo '<td align="right">'.round($row->packaging, 2).'</td>';
+		echo '<td align="right">'.round($row->order_qty, 2).'</td>';
+
+		echo '<td align="right">'.round($row->order_todo, 2).'</td>';
 
 		echo '<td>'.implode('<br />', $lots).'</td>';
 		//echo '<td align="right">'.$row->cust_nb.'</td>';
-		echo '<td align="right">'.$row->cmd_qte.'</td>';
+		echo '<td align="right">'.$row->cmd_qty.'</td>';
 		echo '<td align="right">'.$row->cmd_nb.'</td>';
-		//echo '<td><div class="hidden2">'.implode('<br />', $row->cmd_list).'</div></td>';
-		//echo '<td>'.implode('<br />', $cust_list).'</td>';
-		if (!empty($row->customers) && !empty($show_customers_detail)) {
-			echo '</tr>';
-			foreach($row->customers as $cust_info) {
-				$cust = $list_customer[$cust_info->cust_id];
-				echo '<tr class="customer">';
-				echo '<td colspan="3">&nbsp;</td>';
-				echo '<td colspan="3"><a href="'.DOL_URL_ROOT.'/societe/soc.php?socid='.$cust->cust_id.'" target="_blank">'.$cust->nom.'</a></td>';
-				echo '<td align="right">'.$cust_info->cmd_qte.'</td>';
-				if (!empty($show_cmd_list)) {
-					echo '<td><div class="hidden2">';
-					foreach($row->cmd_list as $cmd) {
-						$cmd = explode(',', $cmd);
-						echo '<a href="'.DOL_URL_ROOT.'/commande/card.php?id='.$cmd[0].'" target="_blank">'.$cmd[1].'</a><br />';
-					}
-					echo '</div></td>';
-				}
-				else
-					echo '<td></td>';
-				echo '<td></td>';
-				echo '</tr>';
-			}
-		}
-		else {
-			echo '</tr>';
-		}
+		echo '</tr>';
 	}
 	echo '</tbody>';
-	$db->free($resql);
 }
 echo '</table>';
-
-?>
-
-<style>
-tr.liste_titre th a {
-	font-weight: bold;
-	border: 2px solid transparent;
-	padding: 1px 4px;
-}
-tr.liste_titre th a.active {
-	color: red;
-	border-color: red;
-}
-tr.product > td {
-	border-top: 1px solid black;
-}
-.hidden {
-	display: none;
-}
-</style>
