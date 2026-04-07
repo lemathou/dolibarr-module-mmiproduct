@@ -57,6 +57,8 @@ $product_alert_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_ALERT_SEUIL) 
 
 $prestasync = !empty($conf->mmiprestasync->enabled);
 
+$vue = GETPOST('vue') ?: 'bloc';
+
 /*
  * Actions
  */
@@ -75,7 +77,10 @@ llxHeader('', $langs->trans($page_name), $help_url);
 
 print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
+echo '<div id="altmenu">';
 echo '<p id="refresh"><a href="?refresh">Actualiser</a></p>';
+echo '<p id="list"><a href="?vue=list">Vue liste</a></p>';
+echo '</div>';
 
 // Configuration header
 //$linkback = '<a href="'.($backtopage ? $backtopage : DOL_URL_ROOT.'/admin/modules.php?restore_lastsearch_values=1').'">'.$langs->trans("BackToModuleList").'</a>';
@@ -127,7 +132,7 @@ echo '<p id="refresh"><a href="?refresh">Actualiser</a></p>';
 		width: 240px;
 	}
 
-	#refresh {
+	#altmenu {
 		float: right;
 		margin-top: -50px;
 		margin-bottom: 0;
@@ -357,21 +362,68 @@ if (false) {
 	}
 }
 
+if ($vue=='list') {
+	echo '<table class="noborder">';
+	echo '<thead>';
+	echo '<tr class="liste_titre">';
+		echo '<th style="max-width: 500px;text-align: left;">Fournisseur</th>';
+		echo '<th width="100">Produits</th>';
+		echo '<th width="200">Commandes</th>';
+		echo '<th width="50">Info</th>';
+		echo '<th width="50">Warn</th>';
+		echo '<th width="50">Alertes</th>';
+		echo '<th></th>';
+	echo '</tr>';
+	echo '</thead>';
+	echo '<tbody>';
+}
+
 foreach($l as $id=>$row) {
-	echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
-	echo '<h3>'.(strlen($row['nom'])>20 ?substr($row['nom'], 0, 18).'...' :$row['nom']).'</h3>';
-	if ($row['info_nb']>0)
-		echo '<p class="nb nb_info"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['info_nb'].'</a></p>';
-	if ($row['warn_nb']>0)
-		echo '<p class="nb nb_warn"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['warn_nb'].'</a></p>';
-	if ($row['alert_nb']>0)
-		echo '<p class="nb nb_alert"><a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['alert_nb'].'</a></p>';
-	echo '<p><a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].' produits</a></p>';
-	echo '<p><a href="/fourn/commande/list.php?socid='.$id.'">'.($row['cmd_f_encours_nb'] ?$row['cmd_f_encours_nb'] :0).' cmd'.(!empty($row['cmd_f_valid_nb']) ?' +'.$row['cmd_f_valid_nb'].' à valider' :'').(!empty($row['cmd_f_draft_nb']) ?' +'.$row['cmd_f_draft_nb'].' brouillon' :'').'</a></p>';
-	//echo '<p>'.($row['cmd_encours_nb'] ?$row['cmd_encours_nb'] :0).' cmd. cli. en cours</p>';
-	echo '<div><textarea>'.$row['replenish_note'].'</textarea></div>';
+	$fourn_name = (strlen($row['nom'])>20 ?substr($row['nom'], 0, 18).'...' :$row['nom']);
+	
+	$products_link = '<a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].'</a>';
+	$cmd_link = '<a href="/fourn/commande/list.php?socid='.$id.'">'.($row['cmd_f_encours_nb'] ?$row['cmd_f_encours_nb'] :0).' cmd'.(!empty($row['cmd_f_valid_nb']) ?' +'.$row['cmd_f_valid_nb'].' à valider' :'').(!empty($row['cmd_f_draft_nb']) ?' +'.$row['cmd_f_draft_nb'].' brouillon' :'').'</a>';
+
+	$info_link = ($row['info_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['info_nb'].'</a>' :'';
+	$warn_link = ($row['warn_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['warn_nb'].'</a' :'';
+	$alert_link = ($row['alert_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['alert_nb'].'</a>' :'';
+
+	if ($vue=='list') {
+		echo '<div class="div-table-responsive-no-min">';
+		echo '<tr data-id="'.$row['rowid'].'">';
+		echo '<td>'.$fourn_name.'</td>';
+		echo '<td>'.$products_link.'</td>';
+		echo '<td>'.$cmd_link.'</td>';
+		echo '<td>'.$info_link.'</td>';
+		echo '<td>'.$warn_link.'</td>';
+		echo '<td>'.$alert_link.'</td>';
+		echo '<td>'.$row['replenish_note'].'</td>';
+		echo '<td></td>';
+		echo '</tr>';
+	}
+	else {
+		echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
+		echo '<h3>'.$fourn_name.'</h3>';
+		if (!empty($info_link))
+			echo '<p class="nb nb_info">'.$info_link.'</p>';
+		if (!empty($warn_link))
+			echo '<p class="nb nb_warn">'.$warn_link.'</p>';
+		if (!empty($alert_link))
+			echo '<p class="nb nb_alert">'.$alert_link.'</p>';
+		echo '<p>'.$products_link.' produits</p>';
+		echo '<p>'.$cmd_link.'</p>';
+		//echo '<p>'.($row['cmd_encours_nb'] ?$row['cmd_encours_nb'] :0).' cmd. cli. en cours</p>';
+		echo '<div><textarea>'.$row['replenish_note'].'</textarea></div>';
+		echo '</div>';
+	}
+}
+
+if ($vue=='list') {
+	echo '</tbody>';
+	echo '</table>';
 	echo '</div>';
 }
+
 if (!empty($row))
 	unset($row);
 ?>
