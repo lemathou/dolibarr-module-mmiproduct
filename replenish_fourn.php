@@ -129,6 +129,8 @@ $sql_suppliers = 'SELECT DISTINCT s.rowid, s.nom, COUNT(DISTINCT p2.rowid) AS pd
 	.' INNER JOIN `llx_product_extrafields` AS p2 ON p2.fk_soc_fournisseur=s.rowid'
 	.($filter_product_pro ?' LEFT JOIN `llx_categorie_product` AS kp ON kp.fk_product=p2.fk_object' :'')
 	.' WHERE 1'
+	.' AND s.fournisseur=1'
+	.($prestasync ?' AND (p2.p_active=1 AND (p2.p_decli_disabled IS NULL OR p2.p_decli_disabled=0))' :'')
 	.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.' GROUP BY s.rowid'
 	.' ORDER BY s.nom ASC';
@@ -167,6 +169,37 @@ $service_levels = [
 // Reception delay (livraison commande)
 // L = 10
 
+// Stats produit par jour (stock, devis, commandes, commandes fourn, réceptions, expéditions, etc.)
+// @todo migrer dans un script autonome @deprecated
+// Commandes
+$list_p = [];
+$sql_p_cmd = 'SELECT
+	p.rowid,
+	DATE(c.date_commande) as day,
+	COUNT(DISTINCT c.rowid) AS cmd_nb,
+	SUM(cl.qty) AS cmd_qty
+
+	FROM `llx_product` AS p
+	
+	INNER JOIN llx_commandedet AS cl
+		ON cl.fk_product = p.rowid
+	INNER JOIN llx_commande AS c
+		ON c.rowid = cl.fk_commande
+	
+	WHERE c.fk_statut IN (1,2,3)
+
+	GROUP BY p.rowid, DATE(c.date_commande)';
+$resql = $db->query($sql_p_cmd);
+//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
+if ($resql) {
+	while($row = $db->fetch_object($resql)) {
+		$list_p[$row->rowid][$row->day] = $row;
+	}
+	$db->free($resql);
+}
+//var_dump($list_p);
+
+// Grosse requête de ouf
 
 $sql = 'SELECT 
     p.rowid AS product_id,
