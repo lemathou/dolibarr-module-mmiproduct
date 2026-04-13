@@ -310,7 +310,7 @@ ON ds.day = d.day AND ds.fk_product = p.rowid
 LEFT JOIN (
     SELECT COUNT(*) AS days, c.fk_product
     FROM llx_product_stock_stats c
-    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
+    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY) AND c.stock_phy>0
 	GROUP BY c.fk_product
 ) AS dstock
 ON dstock.fk_product=p.rowid
