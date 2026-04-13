@@ -167,7 +167,7 @@ public static function conso_refresh()
  * 
  * @return void
  */
-public static function stats_refresh()
+public static function stats_refresh($options=[])
 {
 	global $db;
 
@@ -250,17 +250,19 @@ public static function stats_refresh()
 					)
 				: '	INNER JOIN `'.MAIN_DB_PREFIX.'product` AS p ON p.rowid=c.fk_product'
 			)
+			.'	INNER JOIN `'.MAIN_DB_PREFIX.'product_extrafields` AS p2 ON p2.fk_object=p.rowid'
 			.'	WHERE 1'
 			.(isset($cfg['object_status'])
 				? '	AND c.fk_statut IN ('.$cfg['object_status'].')' // Statut commande (expédiée...)
 				: ''
 			)
+			.(!empty($options['fk_soc_fournisseur']) ?'		AND p2.fk_soc_fournisseur='.$options['fk_soc_fournisseur'] :'')
 			.'		AND p.fk_product_type=0'; // Uniquement produits stockés (exclure services)
 
 		// Cumulé par jour
 		$sql = $sql_base
 			.'	GROUP BY p.rowid, DATE(c.'.$cfg['object_field_date'].')';
-		//echo $sql.'<br /><br />';
+		echo $sql.'<br /><br />';
 		$resql = $db->query($sql);
 		if ($resql) {
 			while($row = $db->fetch_assoc($resql)) {
@@ -337,20 +339,53 @@ public static function stats_refresh()
 		}
 		var_dump($list);
 	}
+	//die();
 
 	//var_dump($list);
 	foreach($list as $rowid=>&$list2) {
-		$s = 0;
-		$i = 0;
-		$n = count($list2);
 		ksort($list2);
-		foreach($list2 as $date=>&$row) {
+		$n = count($list2);
+		$i = 0;
+		$s = 0;
+		//var_dump($list2); die();
+
+		foreach($list2 as $date=>$row) {
 			$i++;
+
+			// Rien on n'enregistre rien
+			if (! (empty($row['p_nb']) && empty($row['c_nb']) && empty($row['f_nb']) && empty($row['e_nb']) && empty($row['r_nb']) && empty($row['m_nb']))) {
+				$sql_todo[] = '('.$rowid.', "'.$date.'"'
+					.', "'.(isset($row['p_nb']) ?$row['p_nb'] :'0').'", "'.(isset($row['p_qty_tot']) ?$row['p_qty_tot'] :'0').'"'
+					.', "'.(isset($row['c_nb']) ?$row['c_nb'] :'0').'", "'.(isset($row['c_qty_tot']) ?$row['c_qty_tot'] :'0').'"'
+					.', "'.(isset($row['f_nb']) ?$row['f_nb'] :'0').'", "'.(isset($row['f_qty_tot']) ?$row['f_qty_tot'] :'0').'"'
+					.', "'.(isset($row['e_nb']) ?$row['e_nb'] :'0').'", "'.(isset($row['e_qty_tot']) ?$row['e_qty_tot'] :'0').'"'
+					.', "'.(isset($row['r_nb']) ?$row['r_nb'] :'0').'", "'.(isset($row['r_qty_tot']) ?$row['r_qty_tot'] :'0').'"'
+					.', "'.(isset($row['m_nb']) ?$row['m_nb'] :'0').'", "'.(isset($row['m_qty_tot']) ?$row['m_qty_tot'] :'0').'"'
+					.')';
+			}
+
+			if (count($sql_todo)>=100 || $i==$n) {
+				$sql = 'REPLACE INTO '.MAIN_DB_PREFIX.'product_stats
+					(`fk_product`, `date`'
+					.', `propal_nb`, `propal_qty`'
+					.', `order_nb`, `order_qty`'
+					.', `invoice_nb`, `invoice_qty`'
+					.', `expe_nb`, `expe_qty`'
+					.', `recep_nb`, `recep_qty`'
+					.', `mvts_nb`, `mvts_qty`)'
+					.' VALUES '.implode(', ', $sql_todo);
+				echo $sql.'<br /><br />';
+				//continue;
+				$resql = $db->query($sql);
+				$sql_todo = [];
+			}
+
 			// Stock change
-			$s += isset($row['m_qty_tot']) ?$row['m_qty_tot'] :0;
+			$s2 = $s;
+			$s += isset($row['m_qty_tot']) ?(float)$row['m_qty_tot'] :0;
 
 			// Stop if no stock (no need to insert empty rows)
-			if ($s==0)
+			if ($s2<=0 && $s<=0)
 				continue;
 
 			$stock[$rowid][$date] = [
@@ -370,42 +405,6 @@ public static function stats_refresh()
 			}
 		}
 
-		ksort($list2);
-		$sql_todo  = [];
-		$n = count($list2);
-		$i = 0;
-		foreach($list2 as $date=>&$row) {
-			$i++;
-			// Rien on n'enregistre rien
-			if (empty($row['p_nb']) && empty($row['c_nb']) && empty($row['f_nb']) && empty($row['e_nb']) && empty($row['r_nb']) && empty($row['m_nb']))
-				continue;
-			
-			$sql_todo[] = '('.$rowid.', "'.$date.'"'
-				.', "'.(isset($row['p_nb']) ?$row['p_nb'] :'0').'", "'.(isset($row['p_qty_tot']) ?$row['p_qty_tot'] :'0').'"'
-				.', "'.(isset($row['c_nb']) ?$row['c_nb'] :'0').'", "'.(isset($row['c_qty_tot']) ?$row['c_qty_tot'] :'0').'"'
-				.', "'.(isset($row['f_nb']) ?$row['f_nb'] :'0').'", "'.(isset($row['f_qty_tot']) ?$row['f_qty_tot'] :'0').'"'
-				.', "'.(isset($row['e_nb']) ?$row['e_nb'] :'0').'", "'.(isset($row['e_qty_tot']) ?$row['e_qty_tot'] :'0').'"'
-				.', "'.(isset($row['r_nb']) ?$row['r_nb'] :'0').'", "'.(isset($row['r_qty_tot']) ?$row['r_qty_tot'] :'0').'"'
-				.', "'.(isset($row['m_nb']) ?$row['m_nb'] :'0').'", "'.(isset($row['m_qty_tot']) ?$row['m_qty_tot'] :'0').'"'
-				.')';
-			
-			if (count($sql_todo)>=100 || $i==$n) {
-				$sql = 'REPLACE INTO '.MAIN_DB_PREFIX.'product_stats
-					(`fk_product`, `date`'
-					.', `propal_nb`, `propal_qty`'
-					.', `order_nb`, `order_qty`'
-					.', `invoice_nb`, `invoice_qty`'
-					.', `expe_nb`, `expe_qty`'
-					.', `recep_nb`, `recep_qty`'
-					.', `mvts_nb`, `mvts_qty`)'
-					.' VALUES '.implode(', ', $sql_todo);
-				echo $sql.'<br /><br />';
-				//continue;
-				$resql = $db->query($sql);
-				$sql_todo = [];
-			}
-		}
-
 		// Clean... otherwise PAF!
 		unset($list[$rowid]);
 
@@ -414,8 +413,8 @@ public static function stats_refresh()
 			$sql_todo  = [];
 			$n = count($stock[$rowid]);
 			$i = 0;
-			ksort($stock[$rowid]);
-			foreach($stock[$rowid] as $date=>&$row) {
+
+			foreach($stock[$rowid] as $date=>$row) {
 				$i++;
 
 				$sql_todo[] = '('.$rowid.', "'.$date.'", "'.$row['s_phy'].'")';
