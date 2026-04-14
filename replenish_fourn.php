@@ -18,6 +18,22 @@
 
 require_once 'main_load.inc.php';
 
+// Security check
+if ($user->socid) {
+	$socid = $user->socid;
+}
+$result = restrictedArea($user, 'produit|service');
+
+// Libraries
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
+require_once '../mmicommon/lib/mmi_1.lib.php';
+
+// Translations
+$langs->loadLangs(array("errors", "admin", $modulecontext));
+
 // Config
 
 // Produits à suivre pour les clients PRO
@@ -70,34 +86,19 @@ if (!empty($sortorder))
 */
 $url_params_str = !empty($url_params) ?'?'.implode('&', $url_params) :'';
 
-$help_url = '';
-$page_name = 'MMIProductStockReplenishFournStats';
-
-// Security check
-if ($user->socid) {
-	$socid = $user->socid;
-}
-$result = restrictedArea($user, 'produit|service');
-
-// Libraries
-require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
-require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
-require_once '../mmicommon/lib/mmi_1.lib.php';
-
-// Translations
-$langs->loadLangs(array("errors", "admin", $modulecontext));
-
-// Parameters
-$action = GETPOST('action', 'aZ09');
-$backtopage = GETPOST('backtopage', 'alpha');
 
 $product_info_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_INFO_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_INFO_SEUIL/100 :0.5;
 $product_warn_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_WARN_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_WARN_SEUIL/100 :0.5;
 $product_alert_seuil = !empty($conf->global->MMI_PRODUCT_REPLENISH_ALERT_SEUIL) ?$conf->global->MMI_PRODUCT_REPLENISH_ALERT_SEUIL/100 :0.5;
 
 $prestasync = !empty($conf->mmiprestasync->enabled);
+
+$help_url = '';
+$page_name = 'MMIProductStockReplenishFournStats';
+
+// Parameters
+$action = GETPOST('action', 'aZ09');
+$backtopage = GETPOST('backtopage', 'alpha');
 
 /*
  * Actions
@@ -212,17 +213,19 @@ $sql = 'SELECT
 	p2.replenish_analysis_days,
 	p2.replenish_safety_stock,
 	p2.replenish_reorder_point,
+
+	dstock.days AS stock_days,
     
     SUM(COALESCE(ds.total_qty, 0)) AS cmd_qty,
     SUM(COALESCE(ds.total_nb, 0)) AS cmd_nb,
-    SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.' AS d,
+    SUM(COALESCE(ds.total_qty, 0)) / dstock.days AS d,
     
     STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
 
-    COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.' AS freq,
+    COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days AS freq,
 
     STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-        * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.') 
+        * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days) 
         AS sigma_corrected,
     
     IF (s2.reception_delay>0, s2.reception_delay, 10) AS L,
@@ -233,17 +236,17 @@ $sql = 'SELECT
         IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
         (
             STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
+            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
         )
     , 2) AS safety_stock,
     
     ROUND(
-        (SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * IF (s2.reception_delay>0, s2.reception_delay, 10)
+        (SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * IF (s2.reception_delay>0, s2.reception_delay, 10)
         +
         IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
         (
             STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
+            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
         )
     , 2) AS reorder_point,
     
@@ -251,12 +254,12 @@ $sql = 'SELECT
     
     ROUND(
 		(
-			(SUM(COALESCE(ds.total_qty, 0)) / '.$analyse_days_nb.') * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
+			(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
 			+
 			IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
 			(
 				STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / '.$analyse_days_nb.')
+				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
 			)
 		),
         0
@@ -295,17 +298,23 @@ CROSS JOIN (
 
 LEFT JOIN (
     SELECT 
-        DATE(c.date_commande) as day,
-        cl.fk_product,
-        COUNT(DISTINCT c.rowid) AS total_nb,
-        SUM(cl.qty) AS total_qty
-    FROM llx_commandedet cl
-    JOIN llx_commande c ON c.rowid = cl.fk_commande
-    WHERE c.date_commande >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
-      AND c.fk_statut IN (1,2,3)
-    GROUP BY day, cl.fk_product
-) AS ds 
+        c.`date` as day,
+        c.fk_product,
+        c.order_nb AS total_nb,
+        c.order_qty AS total_qty
+    FROM llx_product_stats c
+    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
+) AS ds
 ON ds.day = d.day AND ds.fk_product = p.rowid
+
+LEFT JOIN (
+    SELECT COUNT(*) AS days, c.fk_product
+    FROM llx_product_stock_stats c
+    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
+		AND c.stock_phy>0
+	GROUP BY c.fk_product
+) AS dstock
+ON dstock.fk_product=p.rowid
 
 WHERE p.fk_product_type=0'
 .(!empty($filter_supplier_id) ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
@@ -322,9 +331,10 @@ $fields = [
 	'supplier_id' => ['label'=>'Fournisseur', 'sortable'=>false],
 	'label' => ['label'=>'Nom', 'sortable'=>true],
 
+	'stock_days' => ['label'=>'days', 'desc'=>'Jours avec stock'],
 	'd' => ['label'=>'d', 'desc'=>'Vente moyenne'],
-	'sigma_d' => ['label'=>'σd', 'desc'=>'Vente moyenne'],
-	'freq' => ['label'=>'freq', 'desc'=>'Dispersion vente moyenne'],
+	'sigma_d' => ['label'=>'σd', 'desc'=>'Dispersion Vente moyenne'],
+	'freq' => ['label'=>'freq', 'desc'=>'Fréquence vente moyenne'],
 	'sigma_corrected' => ['label'=>'σfix', 'desc'=>'Dispersion Vente moyenne corrigée'],
 
 	'L' => ['label'=>'L', 'desc'=>'Délai de réception commande fournisseur', 'sortable'=>true],
@@ -389,6 +399,9 @@ if ($resql) {
 		}
 	}
 	$db->free($resql);
+}
+else {
+	echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
 }
 
 // Sort list
@@ -519,6 +532,7 @@ if (!empty($list)) {
 		echo '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.$row->supplier_id.'" target="_blank">'.$list_supplier[$row->supplier_id]->nom.'</a></td>';
 		echo '<td><a href="'.DOL_URL_ROOT.'/product/stock/product.php?id='.$row->product_id.'" target="_blank">'.$row->label.'</td>';
 
+		echo '<td align="right">'.round($row->stock_days, 2).'</td>';
 		echo '<td align="right">'.round($row->d, 2).'</td>';
 		echo '<td align="right">'.round($row->signa_d, 2).'</td>';
 		echo '<td align="right">'.round($row->freq, 2).'</td>';
