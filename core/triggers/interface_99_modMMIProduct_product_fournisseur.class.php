@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2022       MMI Mathieu Moulin      <contact@iprospective.fr>
+ * Copyright (C) 2022-2026       MMI Mathieu Moulin      <contact@iprospective.fr>
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
@@ -81,7 +81,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
-				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
+				if (getDolGlobalInt('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 0) == 0) {
 					return 0;
 				}
 				if (empty($object->product_fourn_price_id))
@@ -100,6 +100,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				if (!empty($object->product_id) && !empty($object->fourn_id)) {
 					$product->fetch($object->product_id);
 					// Créé ou modifié Fournisseur => modifie tout
+					// @todo do not replace actual default !
 					if (empty($product->array_options['options_fk_soc_fournisseur']) || $product->array_options['options_fk_soc_fournisseur'] != $object->fourn_id) {
 						$product->array_options['options_fk_soc_fournisseur'] = $object->fourn_id;
 						$update = true;
@@ -120,7 +121,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 				}
 				break;
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
-				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
+				if (getDolGlobalInt('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 0) == 0) {
 					return 0;
 				}
 				if (empty($object->product_fourn_price_id))
@@ -142,7 +143,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 								// We take the first price an set it as default product supplier & ref
 								if ($record->id != $id) {
 									$product->array_options['options_supplier_ref'] = $record->ref_fourn;
-									$product->array_options['options_supplier_packaging'] = $record->supplier_packaging;
+									$product->array_options['options_supplier_packaging'] = $record->packaging;
 									$product->array_options['options_fk_soc_fournisseur'] = $record->fk_soc;
 									$product->update($product->id, $user);
 									break;

@@ -12,8 +12,8 @@ $arrayofparameters = array(
 	'MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF'=>array('type'=>'yesno','enabled'=>1),
 
 	// Supplier price
-	'MMIPRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
-	'MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
+	'MMI_PRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
+	'MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
 
 	// Recherche
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),

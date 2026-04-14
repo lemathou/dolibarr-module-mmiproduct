@@ -38,8 +38,8 @@ MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY = Champ : Livraison direct fournisseur
 MMIPRODUCT_FIELD_CUSTOM = Champ : Produit sur mesure
 MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF = Afficher la ref fournisseur dans la tooltip produit
 
-MMIPRODUCT_SUPPLIER_UPDATE = Mise à jour des prix fournisseurs
-MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE = Mise à jour automatique du fournisseur par défaut
+MMI_PRODUCT_SUPPLIER_UPDATE = Mise à jour des prix fournisseurs
+MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE = Mise à jour automatique du fournisseur par défaut
 
 MAIN_SEARCH_PRODUCT = Recherche
 
