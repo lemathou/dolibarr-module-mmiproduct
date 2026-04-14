@@ -310,7 +310,8 @@ ON ds.day = d.day AND ds.fk_product = p.rowid
 LEFT JOIN (
     SELECT COUNT(*) AS days, c.fk_product
     FROM llx_product_stock_stats c
-    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY) AND c.stock_phy>0
+    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
+		AND c.stock_phy>0
 	GROUP BY c.fk_product
 ) AS dstock
 ON dstock.fk_product=p.rowid
@@ -332,8 +333,8 @@ $fields = [
 
 	'stock_days' => ['label'=>'days', 'desc'=>'Jours avec stock'],
 	'd' => ['label'=>'d', 'desc'=>'Vente moyenne'],
-	'sigma_d' => ['label'=>'σd', 'desc'=>'Vente moyenne'],
-	'freq' => ['label'=>'freq', 'desc'=>'Dispersion vente moyenne'],
+	'sigma_d' => ['label'=>'σd', 'desc'=>'Dispersion Vente moyenne'],
+	'freq' => ['label'=>'freq', 'desc'=>'Fréquence vente moyenne'],
 	'sigma_corrected' => ['label'=>'σfix', 'desc'=>'Dispersion Vente moyenne corrigée'],
 
 	'L' => ['label'=>'L', 'desc'=>'Délai de réception commande fournisseur', 'sortable'=>true],
