@@ -104,11 +104,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
  * Actions
  */
 
-$regen = GETPOST($regen);
-
-if ($regen) {
-
-}
+$regen = GETPOSTINT('regen');
 
 
 /*
@@ -170,36 +166,6 @@ $service_levels = [
 // Reception delay (livraison commande)
 // L = 10
 
-// Stats produit par jour (stock, devis, commandes, commandes fourn, réceptions, expéditions, etc.)
-// @todo migrer dans un script autonome @deprecated
-// Commandes
-$list_p = [];
-$sql_p_cmd = 'SELECT
-	p.rowid,
-	DATE(c.date_commande) as day,
-	COUNT(DISTINCT c.rowid) AS cmd_nb,
-	SUM(cl.qty) AS cmd_qty
-
-	FROM `llx_product` AS p
-	
-	INNER JOIN llx_commandedet AS cl
-		ON cl.fk_product = p.rowid
-	INNER JOIN llx_commande AS c
-		ON c.rowid = cl.fk_commande
-	
-	WHERE c.fk_statut IN (1,2,3)
-
-	GROUP BY p.rowid, DATE(c.date_commande)';
-$resql = $db->query($sql_p_cmd);
-//echo '<pre>'.$sql.'</pre>'; var_dump($resql, $db->lastqueryerror, $db->lasterror);
-if ($resql) {
-	while($row = $db->fetch_object($resql)) {
-		$list_p[$row->rowid][$row->day] = $row;
-	}
-	$db->free($resql);
-}
-//var_dump($list_p);
-
 // Grosse requête de ouf
 
 $sql = 'SELECT 
@@ -219,7 +185,7 @@ $sql = 'SELECT
     SUM(COALESCE(ds.total_qty, 0)) AS cmd_qty,
     SUM(COALESCE(ds.total_nb, 0)) AS cmd_nb,
     SUM(COALESCE(ds.total_qty, 0)) / dstock.days AS d,
-    
+
     STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
 
     COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days AS freq,
@@ -363,6 +329,7 @@ $resql = $db->query($sql);
 if ($resql) {
 	while($row = $db->fetch_object($resql)) {
 		// Stock théorique (moins en-cours, commandes en attente, lots périmés...)
+		// @todo calcul réel du stock théorique (étape 3 RM1444) — pour l'instant = stock réel
 		$row->stock_theo = $row->stock_current;
 
 		// Paquets à commander
@@ -486,7 +453,6 @@ echo '</form>';
 
 // Colonnes
 
-$resql = $db->query($sql);
 echo '<table class="noborder" width="100%">';
 echo '<thead>';
 echo '<tr class="liste_titre">';
@@ -513,16 +479,11 @@ if (!empty($list)) {
 			continue;
 
 		$lots = [];
-		foreach(explode("\n", $row->lots_list) as $lot) {
+		foreach(explode("\n", $row->lots_list ?? '') as $lot) {
 			if (empty($lot))
 				continue;
 			$lot = explode(';', $lot);
 			$lots[] = '<span title="'.$lot[1].'">'.$lot[0].'</span>&nbsp;:&nbsp;'.$lot[2];
-		}
-
-		// Update
-		if ($update) {
-
 		}
 
 		// Display
@@ -534,9 +495,9 @@ if (!empty($list)) {
 
 		echo '<td align="right">'.round($row->stock_days, 2).'</td>';
 		echo '<td align="right">'.round($row->d, 2).'</td>';
-		echo '<td align="right">'.round($row->signa_d, 2).'</td>';
+		echo '<td align="right">'.round($row->sigma_d, 2).'</td>';
 		echo '<td align="right">'.round($row->freq, 2).'</td>';
-		echo '<td align="right">'.round($row->signa_corrected, 2).'</td>';
+		echo '<td align="right">'.round($row->sigma_corrected, 2).'</td>';
 
 		echo '<td align="right">'.round($row->L, 2).'</td>';
 		echo '<td align="right">'.round($row->T, 2).'</td>';
@@ -554,7 +515,6 @@ if (!empty($list)) {
 		echo '<td align="right">'.round($row->order_todo, 2).'</td>';
 
 		echo '<td>'.implode('<br />', $lots).'</td>';
-		//echo '<td align="right">'.$row->cust_nb.'</td>';
 		echo '<td align="right">'.$row->cmd_qty.'</td>';
 		echo '<td align="right">'.$row->cmd_nb.'</td>';
 		echo '</tr>';

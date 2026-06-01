@@ -282,6 +282,21 @@ class modMMIProduct extends DolibarrModules
 			'target'=>'',
 			'user'=>2,				                // 0=Menu for internal users, 1=external users, 2=both
 		);
+		// Analyse réappro fournisseur (calcul EOQ : stock de sécurité, point de commande, qté à commander)
+		$this->menu[$r++]=array(
+			'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=stock',
+			'type'=>'left',
+			'titre'=>'MMIProductStockReplenishFournStats',
+			'mainmenu'=>'products',
+			'leftmenu'=>'stock',
+			'url'=>'/custom/mmiproduct/replenish_fourn.php',
+			'langs'=>'mmiproduct@mmiproduct',
+			'position'=>1000+$r,
+			'enabled'=>'$conf->mmiproduct->enabled',
+			'perms'=>'$user->rights->stock->mouvement->creer && $user->rights->fournisseur->lire',
+			'target'=>'',
+			'user'=>2,
+		);
 	}
 
 	/**
