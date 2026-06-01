@@ -171,9 +171,6 @@ public static function stats_refresh($options=[])
 {
 	global $db;
 
-	// @todo config
-	$delai = 90; // Délai en jours pour la période "avant"
-
 	$date_today = date('Y-m-d');
 
 	$documents_types = [
@@ -262,7 +259,6 @@ public static function stats_refresh($options=[])
 		// Cumulé par jour
 		$sql = $sql_base
 			.'	GROUP BY p.rowid, DATE(c.'.$cfg['object_field_date'].')';
-		echo $sql.'<br /><br />';
 		$resql = $db->query($sql);
 		if ($resql) {
 			while($row = $db->fetch_assoc($resql)) {
@@ -276,78 +272,21 @@ public static function stats_refresh($options=[])
 				}
 				else {
 					$list[$row['rowid']][$row['date']] = array_merge($list[$row['rowid']][$row['date']], $row);
-					//$list[$row['rowid']][$row['date']][$cfg['prefix'].'_nb'] = $row[$cfg['prefix'].'_nb'];
-					//$list[$row['rowid']][$row['date']][$cfg['prefix'].'_qty_tot'] = $row[$cfg['prefix'].'_qty_tot'];
 				}
 			}
 			$db->free($resql);
 		}
 		else {
-			var_dump($resql);
-			var_dump($db->error());
+			dol_syslog(__METHOD__.' SQL error: '.$db->lasterror(), LOG_ERR);
 		}
-		//var_dump($list);
-
-		// ON stoppe ici
-		continue;
-
-		// Année avant période avant (pour comparaison avec maintenant)
-		$sql = $sql_base
-			.'    AND DATEDIFF (c.'.$cfg['object_field_date'].', NOW())>=-'.(365+$delai)
-			.'    AND DATEDIFF (c.'.$cfg['object_field_date'].', NOW())<-'.(365)
-			.' 	GROUP BY p.rowid';
-		echo $sql.'<br /><br />';
-		$list = [];
-		$resql = $db->query($sql);
-		if ($resql) {
-			while($row = $db->fetch_object($resql)) {
-				$list[$row->rowid] = $row;
-			}
-			$db->free($resql);
-		}
-		var_dump($list);
-
-		
-		// Année avant période après (pour projection)
-		$sql = $sql_base
-			.'    AND DATEDIFF (c.'.$cfg['object_field_date'].', NOW())>=-'.(365)
-			.'    AND DATEDIFF (c.'.$cfg['object_field_date'].', NOW())<-'.(365-$delai)
-			.' 	GROUP BY p.rowid';
-		//echo $sql.'<br /><br />';
-		$list = [];
-		$resql = $db->query($sql);
-		if ($resql) {
-			while($row = $db->fetch_object($resql)) {
-				$list[$row->rowid] = $row;
-			}
-			$db->free($resql);
-		}
-		var_dump($list);
-
-		// Année courante période avant (pour comparaison avec avant)
-		$sql = $sql_base
-			.'    AND DATEDIFF (c.'.$cfg['object_field_date'].', NOW())>=-'.$delai
-			.' 	GROUP BY p.rowid';
-		echo $sql.'<br /><br />';
-		$list = [];
-		$resql = $db->query($sql);
-		if ($resql) {
-			while($row = $db->fetch_object($resql)) {
-				$list[$row->rowid] = $row;
-			}
-			$db->free($resql);
-		}
-		var_dump($list);
 	}
-	//die();
 
-	//var_dump($list);
 	foreach($list as $rowid=>&$list2) {
 		ksort($list2);
 		$n = count($list2);
 		$i = 0;
 		$s = 0;
-		//var_dump($list2); die();
+		$sql_todo = [];
 
 		foreach($list2 as $date=>$row) {
 			$i++;
@@ -374,8 +313,6 @@ public static function stats_refresh($options=[])
 					.', `recep_nb`, `recep_qty`'
 					.', `mvts_nb`, `mvts_qty`)'
 					.' VALUES '.implode(', ', $sql_todo);
-				echo $sql.'<br /><br />';
-				//continue;
 				$resql = $db->query($sql);
 				$sql_todo = [];
 			}
@@ -393,9 +330,10 @@ public static function stats_refresh($options=[])
 				'date' => $date,
 				's_phy' => $s,
 			];
-			// Check if next dates exists, until now
+			// Report le stock sur les jours suivants sans mouvement, jusqu'à aujourd'hui
+			// (les dates avec mouvement réel seront écrasées par l'itération suivante)
 			$nextdate = date('Y-m-d', strtotime('+1 day', strtotime($date)));
-			while(!isset($list2[$rowid][$nextdate]) && $nextdate<$date_today) {
+			while(!isset($list2[$nextdate]) && $nextdate<$date_today) {
 				$stock[$rowid][$nextdate] = [
 					'rowid' => $rowid,
 					'date' => $nextdate,
@@ -423,8 +361,6 @@ public static function stats_refresh($options=[])
 					$sql = 'REPLACE INTO '.MAIN_DB_PREFIX.'product_stock_stats
 						(`fk_product`, `date`, `stock_phy`)'
 						.' VALUES '.implode(', ', $sql_todo);
-					echo $sql.'<br /><br />';
-					//continue;
 					$resql = $db->query($sql);
 					$sql_todo = [];
 				}
