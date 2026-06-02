@@ -230,20 +230,20 @@ class modMMIProduct extends DolibarrModules
 		// Cronjobs (List of cron jobs entries to add when module is enabled)
 		// unit_frequency must be 60 for minute, 3600 for hour, 86400 for day, 604800 for week
 		$this->cronjobs = array(
-			//  0 => array(
-			//      'label' => 'MyJob label',
-			//      'jobtype' => 'method',
-			//      'class' => '/mmiproduct/class/myobject.class.php',
-			//      'objectname' => 'MyObject',
-			//      'method' => 'doScheduledJob',
-			//      'parameters' => '',
-			//      'comment' => 'Comment',
-			//      'frequency' => 2,
-			//      'unitfrequency' => 3600,
-			//      'status' => 0,
-			//      'test' => '$conf->mmiproduct->enabled',
-			//      'priority' => 50,
-			//  ),
+			0 => array(
+				'label' => 'MMIProductReplenishRefreshCron',
+				'jobtype' => 'method',
+				'class' => '/mmiproduct/class/mmi_product_replenish.class.php',
+				'objectname' => 'MMI_Product_Replenish',
+				'method' => 'cronReplenishRefresh',
+				'parameters' => '',
+				'comment' => 'Rafraîchit les stats produits et recalcule les seuils de réappro (hors override manuel)',
+				'frequency' => 1,
+				'unitfrequency' => 604800,	// hebdomadaire
+				'status' => 0,				// désactivé par défaut : à activer manuellement après validation
+				'test' => '$conf->mmiproduct->enabled',
+				'priority' => 50,
+			),
 		);
 
 		// Permissions provided by this module
@@ -394,6 +394,8 @@ class modMMIProduct extends DolibarrModules
 		// Stats
 		$extrafields->addExtraField('replenish_safety_stock', $langs->trans('Extrafield_replenish_safety_stock'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_safety_stock'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_reorder_point', $langs->trans('Extrafield_replenish_reorder_point'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_reorder_point'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Override manuel : si coché, les seuils ne sont JAMAIS écrasés par le recalcul auto (cron / régénération page)
+		$extrafields->addExtraField('replenish_manual', $langs->trans('Extrafield_replenish_manual'), 'boolean', 100, "", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_replenish_manual'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		

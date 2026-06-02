@@ -30,6 +30,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
 require_once '../mmicommon/lib/mmi_1.lib.php';
+dol_include_once('mmiproduct/class/mmi_product_replenish.class.php');
 
 // Translations
 $langs->loadLangs(array("errors", "admin", $modulecontext));
@@ -145,150 +146,14 @@ if ($resql) {
 
 $list = [];
 
-// Days
-$sql_select_days = 'SELECT 0 n';
-for($i=1;$i<=$analyse_days_nb;$i++)
-	$sql_select_days .= ' UNION ALL SELECT '.$i;
-// Fuck cannot change
-// IF(p2.replenish_analysis_days, p2.replenish_analysis_days, '.$analyse_days_nb.')
-
-// Service Level
-$service_levels = [
-	'90' => 1.28,
-	'95' => 1.65,
-	'97.5' => 1.96,
-	'99' => 2.33,
-];
-
-// Replenish delay (entre 2 commandes)
-// T = 28
-
-// Reception delay (livraison commande)
-// L = 10
-
-// Grosse requête de ouf
-
-$sql = 'SELECT 
-    p.rowid AS product_id,
-    p.ref,
-    p.label,
-    p2.supplier_ref,
-    p2.fk_soc_fournisseur AS supplier_id,
-	p2.replenish_batch_ddm_delay,
-	p2.replenish_service_level,
-	p2.replenish_analysis_days,
-	p2.replenish_safety_stock,
-	p2.replenish_reorder_point,
-
-	dstock.days AS stock_days,
-    
-    SUM(COALESCE(ds.total_qty, 0)) AS cmd_qty,
-    SUM(COALESCE(ds.total_nb, 0)) AS cmd_nb,
-    SUM(COALESCE(ds.total_qty, 0)) / dstock.days AS d,
-
-    STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
-
-    COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days AS freq,
-
-    STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-        * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days) 
-        AS sigma_corrected,
-    
-    IF (s2.reception_delay>0, s2.reception_delay, 10) AS L,
-    IF (s2.replenish_delay>0, s2.replenish_delay, 28) AS T,
-    IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) AS Z,
-    
-    ROUND(
-        IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-        (
-            STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-        )
-    , 2) AS safety_stock,
-    
-    ROUND(
-        (SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * IF (s2.reception_delay>0, s2.reception_delay, 10)
-        +
-        IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-        (
-            STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-            * SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-        )
-    , 2) AS reorder_point,
-    
-    COALESCE(ps.reel, 0) AS stock_current,
-    
-    ROUND(
-		(
-			(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
-			+
-			IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-			(
-				STDDEV_POP(COALESCE(ds.total_qty, 0)) 
-				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-			)
-		),
-        0
-    ) AS order_qty,
-
-	IF(pfp.packaging>0, pfp.packaging, 1) AS packaging
-
-FROM llx_product AS p
-
-LEFT JOIN llx_product_extrafields AS p2
-	ON p2.fk_object=p.rowid'
-
-.($filter_product_pro ?
-' LEFT JOIN llx_categorie_product AS kp
-	ON kp.fk_product=p2.fk_object'
-:'')
-
-.' LEFT JOIN llx_product_stock AS ps
-    ON ps.fk_product = p.rowid
-
-LEFT JOIN llx_societe AS s
-	ON s.rowid=p2.fk_soc_fournisseur
-
-LEFT JOIN llx_product_fournisseur_price AS pfp
-	ON pfp.fk_product=p.rowid AND pfp.fk_soc=s.rowid
-
-LEFT JOIN llx_societe_extrafields AS s2
-	ON s2.fk_object=s.rowid
-
-CROSS JOIN (
-    SELECT DATE_SUB(CURDATE(), INTERVAL n DAY) AS day
-    FROM (
-       '.$sql_select_days.'
-    ) AS days
-) AS d
-
-LEFT JOIN (
-    SELECT 
-        c.`date` as day,
-        c.fk_product,
-        c.order_nb AS total_nb,
-        c.order_qty AS total_qty
-    FROM llx_product_stats c
-    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
-) AS ds
-ON ds.day = d.day AND ds.fk_product = p.rowid
-
-LEFT JOIN (
-    SELECT COUNT(*) AS days, c.fk_product
-    FROM llx_product_stock_stats c
-    WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
-		AND c.stock_phy>0
-	GROUP BY c.fk_product
-) AS dstock
-ON dstock.fk_product=p.rowid
-
-WHERE p.fk_product_type=0'
-.(!empty($filter_supplier_id) ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
-.($filter_product_pro ?' AND kp.fk_categorie='.$fk_product_categorie :'')
-
-.' GROUP BY p.rowid
-
-HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
+// Requête EOQ de calcul des seuils, factorisée et partagée avec le cron
+// (MMI_Product_Replenish::seuils_refresh). Voir buildSeuilsQuery() pour le détail.
+$sql = MMI_Product_Replenish::buildSeuilsQuery([
+	'analyse_days_nb' => $analyse_days_nb,
+	'filter_supplier_id' => $filter_supplier_id,
+	'filter_product_pro' => $filter_product_pro,
+	'fk_product_categorie' => $fk_product_categorie,
+]);
 
 // Fields list
 $fields = [
@@ -351,16 +216,17 @@ if ($resql) {
 		}
 		$list[$row->product_id] = $row;
 
-		// Regen
-		if ($regen) {
+		// Regen : on écrase les seuils calculés, SAUF pour les produits
+		// marqués « ajusté manuellement » (extrafield replenish_manual).
+		if ($regen && empty($row->replenish_manual)) {
 			$sql = 'UPDATE `llx_product` AS p'
 				.' INNER JOIN `llx_product_extrafields` AS p2 ON p2.fk_object=p.rowid'
 				.' SET'
-				.' p.seuil_stock_alerte="'.ceil($row->reorder_point).'",'
-				.' p.desiredstock="'.ceil($row->order_qty).'",'
-				.' p2.replenish_safety_stock="'.ceil($row->safety_stock).'",'
-				.' p2.replenish_reorder_point="'.ceil($row->reorder_point).'"'
-				.' WHERE p.rowid='.$row->product_id;
+				.' p.seuil_stock_alerte='.(int) ceil($row->reorder_point).','
+				.' p.desiredstock='.(int) ceil($row->order_qty).','
+				.' p2.replenish_safety_stock='.(float) $row->safety_stock.','
+				.' p2.replenish_reorder_point='.(float) $row->reorder_point
+				.' WHERE p.rowid='.(int) $row->product_id;
 			$q = $db->query($sql);
 			//echo '<p>'.$sql.'</p>'; var_dump($q);
 		}

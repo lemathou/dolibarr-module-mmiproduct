@@ -163,6 +163,8 @@ Extrafield_garantie = Garantie
 # Replenish
 Extrafield_replenish_safety_stock = Stock de sécurité
 Extrafield_replenish_reorder_point = Point de commande (reorder point)
+Extrafield_replenish_manual = Seuils réappro ajustés manuellement
+ExtrafieldToolTip_replenish_manual = Si coché, le recalcul automatique (cron hebdomadaire / régénération) n'écrase jamais le seuil d'alerte ni le stock désiré de ce produit.
 Extrafield_replenish_batch_ddm_delay = Délai moyen (en jours) entre la date de péremption la plus proche et la date de réception
 Extrafield_replenish_service_level = Qualité de service (%) seuil de reappro
 Extrafield_replenish_delay = Délai de réappro souhaité/théorique (entre deux commandes)
@@ -186,6 +188,7 @@ MMIProductPriceMarginConfig = Paramétrer marge et prix de vente
 
 MMIProductStockReplenishPRO = Réappro produits pour les PRO
 MMIProductStockReplenishFournStats = Stats réappro produits fournisseurs
+MMIProductReplenishRefreshCron = Réappro : recalcul automatique des stats et seuils
 
 MMIProductsAddAllProducts = Ajouter toute une famille de produits
 
