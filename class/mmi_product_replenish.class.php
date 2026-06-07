@@ -56,6 +56,24 @@ public static function buildSeuilsQuery($options = [])
 	// Traitement par paquets : restreint le calcul à une liste d'IDs produit (batch AJAX)
 	$product_ids = self::sanitizeProductIds($options['product_ids'] ?? null);
 
+	// Niveau de service (coeff Z) différencié par segment produit (RM1854).
+	// Le produit prend le Z LE PLUS ÉLEVÉ applicable (le plus prudent) parmi :
+	// son Z propre (extrafield), le Z du segment PRO, le Z du segment StockCheck ; défaut 1.28 (90%).
+	$seg_pro_cat = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
+	$seg_sc_cat = getDolGlobalInt('MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY');
+	if (!$seg_sc_cat) $seg_sc_cat = 7; // défaut connu : catégorie « StockCheck »
+	$pro_sl = (float) getDolGlobalString('MMIPRODUCT_PRO_SERVICE_LEVEL');
+	if ($pro_sl <= 0) $pro_sl = 1.65; // 95%
+	$sc_sl = (float) getDolGlobalString('MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL');
+	if ($sc_sl <= 0) $sc_sl = 1.96; // 97.5%
+	// Liste des catégories-segment à détecter (sous-requête seg, 1 ligne/produit -> pas de multiplication des lignes agrégées)
+	$seg_cats = array_values(array_unique(array_filter([$seg_pro_cat, $seg_sc_cat])));
+	$z_expr = 'GREATEST('
+		.'IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28)'
+		.($seg_pro_cat ? ', IF (COALESCE(seg.is_pro, 0)=1, '.$pro_sl.', 0)' : '')
+		.($seg_sc_cat ? ', IF (COALESCE(seg.is_sc, 0)=1, '.$sc_sl.', 0)' : '')
+		.')';
+
 	// Génération des jours de la fenêtre d'analyse
 	$sql_select_days = 'SELECT 0 n';
 	for ($i = 1; $i <= $analyse_days_nb; $i++)
@@ -90,10 +108,10 @@ public static function buildSeuilsQuery($options = [])
 
 		IF (s2.reception_delay>0, s2.reception_delay, 10) AS L,
 		IF (s2.replenish_delay>0, s2.replenish_delay, 28) AS T,
-		IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) AS Z,
+		'.$z_expr.' AS Z,
 
 		ROUND(
-			IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
+			'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
 			(
 				STDDEV_POP(COALESCE(ds.total_qty, 0))
 				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
@@ -103,7 +121,7 @@ public static function buildSeuilsQuery($options = [])
 		ROUND(
 			(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * IF (s2.reception_delay>0, s2.reception_delay, 10)
 			+
-			IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
+			'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
 			(
 				STDDEV_POP(COALESCE(ds.total_qty, 0))
 				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
@@ -116,7 +134,7 @@ public static function buildSeuilsQuery($options = [])
 			(
 				(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
 				+
-				IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28) * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
+				'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
 				(
 					STDDEV_POP(COALESCE(ds.total_qty, 0))
 					* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
@@ -174,9 +192,20 @@ public static function buildSeuilsQuery($options = [])
 			AND c.stock_phy>0
 		GROUP BY c.fk_product
 	) AS dstock
-	ON dstock.fk_product=p.rowid
+	ON dstock.fk_product=p.rowid'
 
-	WHERE p.fk_product_type=0'
+	.($seg_cats ? '
+	LEFT JOIN (
+		SELECT fk_product,
+			MAX(CASE WHEN fk_categorie='.$seg_pro_cat.' THEN 1 ELSE 0 END) AS is_pro,
+			MAX(CASE WHEN fk_categorie='.$seg_sc_cat.' THEN 1 ELSE 0 END) AS is_sc
+		FROM '.MAIN_DB_PREFIX.'categorie_product
+		WHERE fk_categorie IN ('.implode(',', $seg_cats).')
+		GROUP BY fk_product
+	) AS seg
+	ON seg.fk_product=p.rowid' : '')
+
+	.' WHERE p.fk_product_type=0'
 	.($filter_supplier_id ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
 	.($filter_product_pro ? ' AND kp.fk_categorie='.$fk_product_categorie :'')
 	.($product_ids !== null ? ' AND p.rowid IN ('.implode(',', $product_ids).')' :'')

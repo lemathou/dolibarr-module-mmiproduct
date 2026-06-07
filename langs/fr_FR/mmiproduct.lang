@@ -97,6 +97,9 @@ MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX = Nombre de jours maximum pour l'utilisatio
 MMIPRODUCT_PRO = Suivi des clients/Produits PRO
 MMIPRODUCT_PRO_PRODUCT_CATEGORY = Catégorie de produit spécifique pour les clients PRO
 MMIPRODUCT_PRO_CUSTOMER_CATEGORY = Catégorie de client PRO
+MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY = Catégorie de produit StockCheck (suivi de stock rapproché)
+MMIPRODUCT_PRO_SERVICE_LEVEL = Niveau de service (coeff Z) des produits PRO pour la réappro (ex. 1.65 = 95%)
+MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL = Niveau de service (coeff Z) des produits StockCheck pour la réappro (ex. 1.96 = 97.5%)
 
 #
 # About page
