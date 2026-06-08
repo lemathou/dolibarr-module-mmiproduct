@@ -92,9 +92,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 
 		// Calc new price
 		$res = $object->updatePrice($options['sell_price'], 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL);
-		//var_dump($object, $res);
 		if($res < 0) {
-			var_dump($object->errors);
 			static::$error++;
 			static::$errors[] = $object->errors;
 
@@ -103,9 +101,7 @@ public static function product_calc_type_update($object, $margin_calc_type, $opt
 	}
 
 	$res = $object->update($object->id, $user);
-	var_dump($object, $res);
 	if($res < 0) {
-		var_dump($object->errors);
 		static::$error++;
 		static::$errors[] = $object->errors;
 
@@ -338,9 +334,7 @@ public static function product_price_update(Product $object, $cascade=true)
 
 	// Update object
 	$res = $object->update($object->id, $user, ! $cascade);
-	//var_dump($object, $res);
 	if($res < 0) {
-		var_dump($object->errors);
 		static::$error++;
 		static::$errors[] = $object->errors;
 
@@ -356,9 +350,7 @@ public static function product_price_update(Product $object, $cascade=true)
 	
 	// Price update
 	$res = $object->updatePrice($sell_price, 'HT', $user, $object->tva_tx, isset($sell_min_price) ?$sell_min_price :NULL); //, 0, 0, 0, 0, [], '', ! $cascade
-	//var_dump($object, $res);
 	if($res < 0) {
-		var_dump($object->errors);
 		static::$error++;
 		static::$errors[] = $object->errors;
 
