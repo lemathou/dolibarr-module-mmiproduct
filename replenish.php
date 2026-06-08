@@ -79,7 +79,11 @@ print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
 echo '<div id="altmenu">';
 echo '<p id="refresh"><a href="?refresh">Actualiser</a></p>';
-echo '<p id="list"><a href="?vue=list">Vue liste</a></p>';
+if ($vue=='list') {
+	echo '<p id="list"><a href="?vue=bloc">Vue carte</a></p>';
+} else {
+	echo '<p id="list"><a href="?vue=list">Vue liste</a></p>';
+}
 echo '</div>';
 
 // Configuration header
