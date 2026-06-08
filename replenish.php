@@ -21,9 +21,9 @@
  */
 
 /**
- *   \file       htdocs/product/note.php
- *   \brief      Tab for notes on products
- *   \ingroup    societe
+ *   \file       htdocs/custom/mmiproduct/replenish.php
+ *   \brief      Tableau de bord réappro fournisseurs (vue d'ensemble « où commander »)
+ *   \ingroup    mmiproduct
  */
 
 require_once 'main_load.inc.php';
@@ -141,18 +141,17 @@ echo '</div>';
 
 <script>
 $(document).ready(function(){
-	$('#fournisseurs .fourn').each(function(){
-		var id = $(this).data('id');
-		$('textarea', this).change(function(){
-			var note = $(this).val();
-			$.post('replenish_note_ajax.php', {id: id, note: note}, function(r){
-				if (r=="1")
-					alert("Mis à jour OK")
-				else
-					alert("Message : "+r)
-			});
+	// Édition de la note fournisseur, valable pour les deux vues (carte .fourn et ligne <tr data-id>)
+	$('#fournisseurs').on('change', '[data-id] textarea', function(){
+		var id = $(this).closest('[data-id]').data('id');
+		var note = $(this).val();
+		$.post('replenish_note_ajax.php', {id: id, note: note}, function(r){
+			if (r=="1")
+				alert("Mis à jour OK")
+			else
+				alert("Message : "+r)
 		});
-	})
+	});
 });
 </script>
 
@@ -174,7 +173,7 @@ $sql = 'SELECT s2.*, s.*, COUNT(DISTINCT p.rowid) product_nb
 	ORDER BY s.nom';
 $q = $db->query($sql);
 while($row=$q->fetch_assoc()) {
-	$l[$row['rowid']] = array_merge($row, ['alert_nb'=>0, 'warn_nb'=>0, 'info_nb'=>0]);
+	$l[$row['rowid']] = array_merge($row, ['alert_nb'=>0, 'warn_nb'=>0, 'info_nb'=>0, 'products'=>[]]);
 }
 
 // Produits
@@ -206,7 +205,8 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cd.qty > 0, cd.qty, 0)) cmd_qty
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
-	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
+		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
 }
 // Commandes client en cours (pour info)
 $sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
@@ -242,7 +242,8 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cdd.qty > 0, IF(cdd.qty>=cd.qty, cd.qt
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
-	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
+		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
 }
 
 // Commandes fournisseur en cours (pour calcul stock produi)
@@ -259,7 +260,8 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scd.qty > 0, scd.qty, 0)) fcmd_qty
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
-	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
+		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
 }
 // Commandes fournisseur en cours (pour affichage infoirmatif)
 $sql = 'SELECT sc.fk_soc,
@@ -292,7 +294,8 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scdd.qty > 0, IF(scdd.qty>=scd.qty, sc
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
-	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
+	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
+		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
 }
 
 // @todo calculer à la mano !
@@ -300,69 +303,21 @@ while($row=$q->fetch_assoc()) {
 foreach($l as &$row) {
 	//var_dump($row);
 	foreach($row['products'] as &$rowp) {
-		$rowp['stock'] = $rowp['qty'] - $rowp['cmd_qty'] + $rowp['cmd_expe_qty'] - $rowp['fcmd_qty'] + $rowp['fcmd_recpt_qty'];
+		// Stock projeté = stock physique − (commandes client restant à expédier) + (commandes fournisseur restant à recevoir)
+		$rowp['stock'] = $rowp['qty'] - $rowp['cmd_qty'] + $rowp['cmd_expe_qty'] + $rowp['fcmd_qty'] - $rowp['fcmd_recpt_qty'];
 		if ($rowp['stock'] <= 0)
 			$row['alert_nb']++;
 		elseif (empty($rowp['seuil_stock_alerte']) || $rowp['stock'] <= $rowp['seuil_stock_alerte'])
 			$row['warn_nb']++;
-		elseif (empty($rowp['seuil_stock_alerte']) || empty($rowp['desiredstock']) || $rowp['stock'] <= ($rowp['seuil_stock_alerte']+$rowp['desiredstock'])/2)
+		elseif (!empty($rowp['desiredstock']) && $rowp['stock'] <= ($rowp['seuil_stock_alerte']+$rowp['desiredstock'])/2)
 			$row['info_nb']++;
 	}
 }
 if (!empty($row))
 	unset($row);
 
-if (false) {
-	// ALERT : rupture de stock
-	$sql = 'SELECT s.rowid, COUNT(DISTINCT p.rowid) product_alert_nb
-		FROM '.MAIN_DB_PREFIX.'societe s
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
-		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
-		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
-			AND (p.seuil_stock_alerte IS NOT NULL AND p.stock <= 0)
-			AND (p.desiredstock=0 OR p.desiredstock>0)
-		GROUP BY s.rowid';
-	$q = $db->query($sql);
-	while($row=$q->fetch_assoc()) {
-		$l[$row['rowid']] = array_merge($l[$row['rowid']], $row);
-	}
-
-	// WARN : sous le seuil de réappro
-	$sql = 'SELECT s.rowid, COUNT(DISTINCT p.rowid) product_warn_nb
-		FROM '.MAIN_DB_PREFIX.'societe s
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
-		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
-		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
-			AND (p.seuil_stock_alerte IS NOT NULL AND p.stock > 0 AND p.stock <= p.seuil_stock_alerte)
-			AND (p.desiredstock=0 OR p.desiredstock>0)
-		GROUP BY s.rowid';
-	$q = $db->query($sql);
-	while($row=$q->fetch_assoc()) {
-		$l[$row['rowid']] = array_merge($l[$row['rowid']], $row);
-	}
-
-	// INFO : sous la médiane entre seuil de réappro et seuil de remplissage
-	$sql = 'SELECT s.rowid, COUNT(DISTINCT p.rowid) product_info_nb
-		FROM '.MAIN_DB_PREFIX.'societe s
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
-		LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
-		LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
-		WHERE s.fournisseur=1
-			'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
-			AND (p.seuil_stock_alerte IS NOT NULL AND p.desiredstock>0)
-			AND (p.stock > p.seuil_stock_alerte AND p.stock < (p.desiredstock+p.seuil_stock_alerte)/2)
-		GROUP BY s.rowid';
-	$q = $db->query($sql);
-	while($row=$q->fetch_assoc()) {
-		$l[$row['rowid']] = array_merge($l[$row['rowid']], $row);
-	}
-}
-
 if ($vue=='list') {
+	echo '<div class="div-table-responsive-no-min">';
 	echo '<table class="noborder">';
 	echo '<thead>';
 	echo '<tr class="liste_titre">';
@@ -380,16 +335,16 @@ if ($vue=='list') {
 
 foreach($l as $id=>$row) {
 	$fourn_name = (strlen($row['nom'])>20 ?substr($row['nom'], 0, 18).'...' :$row['nom']);
-	
+	$pnb = max(1, (int) $row['product_nb']); // garde anti division par zéro (fournisseurs sans produit)
+
 	$products_link = '<a href="/product/list.php?search_options_fk_soc_fournisseur='.$id.'">'.$row['product_nb'].'</a>';
 	$cmd_link = '<a href="/fourn/commande/list.php?socid='.$id.'">'.($row['cmd_f_encours_nb'] ?$row['cmd_f_encours_nb'] :0).' cmd'.(!empty($row['cmd_f_valid_nb']) ?' +'.$row['cmd_f_valid_nb'].' à valider' :'').(!empty($row['cmd_f_draft_nb']) ?' +'.$row['cmd_f_draft_nb'].' brouillon' :'').'</a>';
 
 	$info_link = ($row['info_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['info_nb'].'</a>' :'';
-	$warn_link = ($row['warn_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['warn_nb'].'</a' :'';
+	$warn_link = ($row['warn_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['warn_nb'].'</a>' :'';
 	$alert_link = ($row['alert_nb']>0) ?'<a href="/product/stock/replenish.php?fk_supplier='.$id.($prestasync ?'&p_active=1&useddm30asstock&stockalertzero=1&includeproductswithoutdesiredqty=on' :'').'">'.$row['alert_nb'].'</a>' :'';
 
 	if ($vue=='list') {
-		echo '<div class="div-table-responsive-no-min">';
 		echo '<tr data-id="'.$row['rowid'].'">';
 		echo '<td>'.$fourn_name.'</td>';
 		echo '<td>'.$products_link.'</td>';
@@ -397,12 +352,12 @@ foreach($l as $id=>$row) {
 		echo '<td>'.$info_link.'</td>';
 		echo '<td>'.$warn_link.'</td>';
 		echo '<td>'.$alert_link.'</td>';
-		echo '<td>'.$row['replenish_note'].'</td>';
+		echo '<td><textarea rows="2">'.dol_escape_htmltag($row['replenish_note']).'</textarea></td>';
 		echo '<td></td>';
 		echo '</tr>';
 	}
 	else {
-		echo '<div class="fourn'.($row['alert_nb']/$row['product_nb']>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$row['product_nb']>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$row['product_nb']>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
+		echo '<div class="fourn'.($row['alert_nb']/$pnb>=$product_alert_seuil ?' nb_alert' : '').(($row['alert_nb']+$row['warn_nb'])/$pnb>=$product_warn_seuil ?' nb_warn' : '').(($row['alert_nb']+$row['warn_nb']+$row['info_nb'])/$pnb>=$product_info_seuil ?' nb_info' : '').'" data-id="'.$row['rowid'].'">';
 		echo '<h3>'.$fourn_name.'</h3>';
 		if (!empty($info_link))
 			echo '<p class="nb nb_info">'.$info_link.'</p>';
@@ -413,7 +368,7 @@ foreach($l as $id=>$row) {
 		echo '<p>'.$products_link.' produits</p>';
 		echo '<p>'.$cmd_link.'</p>';
 		//echo '<p>'.($row['cmd_encours_nb'] ?$row['cmd_encours_nb'] :0).' cmd. cli. en cours</p>';
-		echo '<div><textarea>'.$row['replenish_note'].'</textarea></div>';
+		echo '<div><textarea>'.dol_escape_htmltag($row['replenish_note']).'</textarea></div>';
 		echo '</div>';
 	}
 }
