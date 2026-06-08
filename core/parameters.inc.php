@@ -53,8 +53,13 @@ $arrayofparameters = array(
 	'MMIPRODUCT_PRICE_CONCURRENT'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX'=>array('type'=>'int','enabled'=>1),
 
-	// Produits PRO
+	// Segments produit (réappro : niveau de service par segment)
 	'MMIPRODUCT_PRO'=>array('type'=>'separator', 'enabled'=>1),
 	'MMIPRODUCT_PRO_PRODUCT_CATEGORY'=>array('type'=>'int', 'enabled'=>1),
 	//'MMIPRODUCT_PRO_CUSTOMER_CATEGORY'=>array('type'=>'int', 'enabled'=>1), // Use extrafield pro in soc
+	'MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY'=>array('type'=>'int', 'enabled'=>1),
+	// Niveau de service (coeff Z) appliqué aux produits du segment pour le calcul du stock de sécurité réappro.
+	// Valeurs usuelles : 1.28=90%, 1.65=95%, 1.96=97.5%, 2.33=99%. Le produit prend le Z le plus élevé applicable.
+	'MMIPRODUCT_PRO_SERVICE_LEVEL'=>array('type'=>'string', 'enabled'=>1),
+	'MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL'=>array('type'=>'string', 'enabled'=>1),
 );
