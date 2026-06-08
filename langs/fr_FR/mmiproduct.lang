@@ -109,17 +109,6 @@ MMIProductAbout = About MMIProduct
 MMIProductAboutPage = MMIProduct about page
 
 #
-# Sample page
-#
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description
-
-#
 # Champs supplémentaires
 #
 Extrafield_fk_soc_fournisseur = Fournisseur
@@ -136,20 +125,21 @@ ExtrafieldToolTip_product_custom =
 Extrafield_supplier_direct_delivery = Livraison directe par fournisseur
 ExtrafieldToolTip_supplier_direct_delivery = 
 Extrafield_replenish_note = Information complémentaire concernant les commandes fournisseur, ou celle en cours
-Extrafield_competitor = Comcurrent (pour comparatif prix)
+Extrafield_competitor = Concurrent (pour comparatif prix)
 Extrafield_competitor_avg_price = Prix concurrent moyen
 Extrafield_margin_effective_tx = Taux de marge effectif
 Extrafield_margin_effective_coeff = Coeff de marge effectif
 Extrafield_margin_desired_coeff = Coeff de marge désiré
 Extrafield_margin_desired_tx = Taux de marque désiré
-Extrafield_competitor_note = Commenaire concurrents
-ExtrafieldToolTip_competitor_note = Informations complémentaire sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
-Extrafield_product_supplier_shipping_price = Frais d'acheminement
+Extrafield_competitor_note = Commentaire concurrents
+ExtrafieldToolTip_competitor_note = Informations complémentaires sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
+Extrafield_product_supplier_shipping_price = Frais d'acheminement fournisseur (saisi)
 ExtrafieldTooltip_product_supplier_shipping_price = Frais d'acheminement par unité de produit
-Extrafield_product_shipping_cost_price = Frais d'acheminement
+Extrafield_product_shipping_cost_price = Frais d'acheminement (produit)
 Extrafield_product_logistic_cost_price = Frais logistiques
 Extrafield_product_misc_cost_price = Frais divers
-Extrafield_commande_fournisseur_shipping_price = Frais d'acheminement
+Extrafield_product_packaging_cost_price = Frais d'emballage
+Extrafield_commande_fournisseur_shipping_price = Frais d'acheminement (commande fournisseur)
 ExtrafieldTooltip_commande_fournisseur_shipping_price = Frais d'acheminement pour l'ensemble de la commande (en considérant d'éventuels frais supplémentaires)
 Extrafield_commande_fournisseur_fk_entrepot = Entrepôt réception
 ExtrafieldTooltip_commande_fournisseur_fk_entrepot = Entrepôt de réception de la marchandise, lorsque tout est reçu dans le même entrepôt de la société

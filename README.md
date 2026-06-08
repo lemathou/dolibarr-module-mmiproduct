@@ -1,86 +1,64 @@
-# MMIPRODUCT FOR [DOLIBARR ERP CRM](https://www.dolibarr.org)
+# MMIProduct — « MMI Gestion produit avancée »
 
-## Features
+Module Dolibarr (éditeur **iProspective / Mathieu Moulin**, GPL v3) qui étend la gestion produit : calcul de marge et de prix de vente, empilement des coûts de revient, veille concurrentielle, réapprovisionnement (EOQ / niveau de service), mouvements de stock et inventaire.
 
-Description of the module...
+- **Famille** : products · **Version** : 1.1.2 · **Dolibarr** : ≥ 11 · **PHP** : ≥ 5.6
+- **Dépend de** : `modMMICommon`, `modProduct`
 
-<!--
-![Screenshot mmiproduct](img/screenshot_mmiproduct.png?raw=true "MMIProduct"){imgmd}
--->
+## Domaines fonctionnels
 
-Other external modules are available on [Dolistore.com](https://www.dolistore.com).
+### 1. Prix & marge (onglet produit « Calcul Prix et Marge »)
+- Onglet `pricemargin.php` (vue `actions/pricemargin.inc.php` + `tpl/pricemargin.tpl.php`), classe `class/mmiproduct_price.class.php`.
+- Extrafields de **marge** sur `product`, `categorie` et `societe` (gated par `MMIPRODUCT_PRICEMARGIN`) : `margin_coeff`, `margin_tx_marque`, `margin_min_coeff`, `margin_min_tx_marque`, `margin_effective_tx`, `margin_effective_coeff`, `margin_desired_coeff`, `margin_desired_tx`, `margin_calc_type` (`sell_price` / `public_price` / `concurrent` / `category_margin`), `margin_calc_options`.
+- Méthodes de calcul du prix de vente selon `margin_calc_type` (prix final fixé, prix public fournisseur, alignement concurrence, marge de la catégorie) ; précision pilotée par `MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL`.
+- Trigger `InterfaceProduct_PriceMargin` (`interface_99_modMMIProduct_product_pricemargin.class.php`) : recalcul marge / prix de vente, alerte e-mail si le coefficient de marge passe sous la limite.
 
-## Translations
+### 2. Empilement des coûts de revient (consommé par `mmifournisseurprice`)
+- Extrafields `price` sur `product` : `logistic_cost_price`, `packaging_cost_price`, `shipping_cost_price`, `misc_cost_price` (toujours créés quand le module est actif).
+- Extrafield `shipping_price` sur `product_fournisseur_price` (frais d'acheminement fournisseur saisi) et sur `commande_fournisseur` (frais d'acheminement de la commande).
+- ⚠️ **Couplage inter-modules** : ces champs alimentent le calcul du `cost_price` réalisé par le trigger de `mmifournisseurprice`. Ne pas renommer / supprimer sans synchroniser les deux modules.
 
-Translations can be completed manually by editing files into directories *langs*.
+### 3. Veille concurrentielle (onglet produit « Prix concurrents »)
+- Onglet `concurrents.php` (vue `actions/concurrents.inc.php` + `tpl/concurrents.tpl.php`).
+- Tables `sql/llx_product_competitor.sql` : `llx_product_competitor` (fk_product, fk_soc, url) + `llx_product_competitor_price` (historique daté). Un concurrent = `societe` avec l'extrafield `competitor = 1`.
+- Extrafields produit : `competitor_avg_price`, `competitor_note`. Réglages `MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX`.
+- `competitor_import.php` : import CSV → tables. **⚠️ Actuellement neutralisé** (`die()` ligne 7) — fonctionnalité commencée, non finie. **À conserver** (ne pas supprimer).
+- 🟥 **Limitation connue** : selon l'historique de déploiement, les tables `llx_product_competitor*` peuvent ne pas être créées en base si la migration SQL n'a pas tourné.
 
-<!--
-This module contains also a sample configuration for Transifex, under the hidden directory [.tx](.tx), so it is possible to manage translation using this service.
+### 4. Réapprovisionnement (menu Produits ▸ Stock)
+- Pages : `replenish.php` (liste de réappro + alertes), `replenish_fourn.php` (analyse réappro par fournisseur — calcul EOQ : stock de sécurité, point de commande, quantité à commander), `replenish_product_pro.php`, `replenish_refresh.php`, `replenish_note_ajax.php`, `product_reappro.php`. Logique dans `class/mmi_product_replenish.class.php`.
+- Extrafields produit : `replenish_batch_ddm_delay`, `replenish_service_level` (90/95/97.5/99 %), `replenish_analysis_days`, `replenish_safety_stock` (+ `supplier_ref`, `fk_soc_fournisseur`, `supplier_packaging`, `replenish_note` sur `societe`).
+- Recalcul auto hebdo des stats + override manuel ; niveau de service différencié par segment.
+- Hooks `stockreplenishlist`, `stockmovementlist`.
 
-For more informations, see the [translator's documentation](https://wiki.dolibarr.org/index.php/Translator_documentation).
+### 5. Stock & inventaire
+- `stockmvt.php` : régularisation (ajoute un mouvement manquant pour que le stock = somme des mouvements).
+- `inventory_maj.php` : mise à jour d'inventaire depuis CSV.
+- Trigger `InterfaceProduct_Stock_Composed` : stock des produits composés (box/kit).
+- Hook `stockatdate` (stock à une date donnée, limité aux produits à historique réel).
 
-There is a [Transifex project](https://transifex.com/projects/p/dolibarr-module-template) for this module.
--->
+### 6. Divers
+- Trigger `InterfaceProduct_Fournisseur` (`interface_99_modMMIProduct_product_fournisseur.class.php`) : logique prix fournisseur (réf, remise, fournisseur par défaut via `MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE`).
+- Extrafields produit : `public_price`, `compose`, `custom`, `supplier_direct_delivery`, `garantie`, `season_date_begin/end`, `fk_categorie_default`.
+- Catégorie « univers » par défaut du produit ; suivi des produits clients PRO (`MMIPRODUCT_PRO_PRODUCT_CATEGORY`).
+- `class/api_mmiproduct.class.php` : endpoints API REST.
+- Hook `formAddProductToDocumentCard` : affichage du stock (DDM/DLC) à l'ajout d'un produit sur une commande fournisseur.
 
-<!--
+## Configuration (constantes principales)
+`MMIPRODUCT_PRICEMARGIN` (active la famille marge / concurrent), `MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL`, `MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE`, `MMIPRODUCT_FIELD_PUBLIC_PRICE`, `MMIPRODUCT_FIELD_COMPOSED`, `MMIPRODUCT_FIELD_CUSTOM`, `MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY`, `MMIPRODUCT_FIELD_SEASON_DATE`, `MMIPRODUCT_PRO_PRODUCT_CATEGORY`, `MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX`.
 
-## Installation
+## Hooks
+`stockreplenishlist`, `stockmovementlist`, `productservicelist`, `stockatdate`, `productcard`, `propalcard`, `ordercard`, `invoicecard`, `ordersuppliercard`, `supplier_proposalcard`, `pricesuppliercard`.
 
-### From the ZIP file and GUI interface
+## Permissions
+`pricemargin/view` (voir l'onglet Calcul Prix et Marge), `pricemargin/admin` (administrer).
 
-- If you get the module in a zip file (like when downloading it from the market place [Dolistore](https://www.dolistore.com)), go into
-menu ```Home - Setup - Modules - Deploy external module``` and upload the zip file.
+## Limitations connues / à traiter
+- Tables `llx_product_competitor*` potentiellement non créées en base ; `competitor_import.php` neutralisé (`die()`).
+- Beaucoup d'extrafields de la famille marge / concurrent ne sont créés que si `MMIPRODUCT_PRICEMARGIN` est activé.
+- Libellés anglais (en_US) incomplets.
+- Quelques traces de debug (`var_dump`) subsistent dans des pages encore en évolution (réappro, import concurrents) — à nettoyer une fois ces fonctionnalités stabilisées.
+- Code en cours de normalisation et de mise en compatibilité **Dolibarr v19 → v22** (branche `1653-dolibarr-19-to-22-clean-migration`).
 
-Note: If this screen tell you there is no custom directory, check your setup is correct:
-
-- In your Dolibarr installation directory, edit the ```htdocs/conf/conf.php``` file and check that following lines are not commented:
-
-    ```php
-    //$dolibarr_main_url_root_alt ...
-    //$dolibarr_main_document_root_alt ...
-    ```
-
-- Uncomment them if necessary (delete the leading ```//```) and assign a sensible value according to your Dolibarr installation
-
-    For example :
-
-    - UNIX:
-        ```php
-        $dolibarr_main_url_root_alt = '/custom';
-        $dolibarr_main_document_root_alt = '/var/www/Dolibarr/htdocs/custom';
-        ```
-
-    - Windows:
-        ```php
-        $dolibarr_main_url_root_alt = '/custom';
-        $dolibarr_main_document_root_alt = 'C:/My Web Sites/Dolibarr/htdocs/custom';
-        ```
-
-### From a GIT repository
-
-- Clone the repository in ```$dolibarr_main_document_root_alt/mmiproduct```
-
-```sh
-cd ....../custom
-git clone git@github.com:gitlogin/mmiproduct.git mmiproduct
-```
-
-### <a name="final_steps"></a>Final steps
-
-From your browser:
-
-  - Log into Dolibarr as a super-administrator
-  - Go to "Setup" -> "Modules"
-  - You should now be able to find and enable the module
-
--->
-
-## Licenses
-
-### Main code
-
-GPLv3 or (at your option) any later version. See file COPYING for more information.
-
-### Documentation
-
-All texts and readmes are licensed under GFDL.
+## Licence
+Code : GPL v3 (`COPYING`). Documentation : GFDL.

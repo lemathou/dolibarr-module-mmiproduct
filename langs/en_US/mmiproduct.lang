@@ -42,12 +42,11 @@ MMIProductAbout = About MMIProduct
 MMIProductAboutPage = MMIProduct about page
 
 #
-# Sample page
+# Extrafields (cost build-up)
 #
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description
+Extrafield_product_logistic_cost_price = Logistic costs
+Extrafield_product_misc_cost_price = Miscellaneous costs
+Extrafield_product_packaging_cost_price = Packaging costs (product)
+Extrafield_product_shipping_cost_price = Shipping costs (product)
+Extrafield_product_supplier_shipping_price = Supplier shipping costs (manual)
+Extrafield_commande_fournisseur_shipping_price = Shipping costs (supplier order)
