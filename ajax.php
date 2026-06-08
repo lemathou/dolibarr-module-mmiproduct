@@ -146,3 +146,73 @@ if ($action == "supplierproductinfo") {
 		],
 	]);
 }
+
+if ($action == "replenish_refresh") {
+	// Recalcul réappro par paquets (un paquet d'IDs produit par appel), piloté en
+	// AJAX par replenish_fourn.php. Deux étapes successives : step=stats puis step=seuils,
+	// dans le même ordre que le cron cronReplenishRefresh().
+	if (!$user->hasRight('produit', 'read'))
+		die(json_encode(['r'=>false, 'msg'=>'Unauthorized']));
+
+	dol_include_once('mmiproduct/class/mmi_product_replenish.class.php');
+
+	$step = GETPOST('step', 'aZ09') == 'seuils' ? 'seuils' : 'stats';
+	$offset = GETPOSTINT('offset');
+	if ($offset < 0)
+		$offset = 0;
+	$size = GETPOSTINT('size');
+	if ($size < 1)
+		$size = 50;
+	if ($size > 500)
+		$size = 500;
+
+	// Filtres (alignés sur replenish_fourn.php)
+	$options = [];
+	$supplier_id = GETPOSTINT('fk_soc_fournisseur');
+	if ($supplier_id) {
+		$options['fk_soc_fournisseur'] = $supplier_id; // utilisé par stats_refresh + todo-list
+		$options['filter_supplier_id'] = $supplier_id; // utilisé par buildSeuilsQuery
+	}
+	if (GETPOSTINT('filter_product_pro')) {
+		$options['filter_product_pro'] = 1;
+		$options['fk_product_categorie'] = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
+	}
+	$analyse_days_nb = GETPOSTINT('analyse_days_nb');
+	if ($analyse_days_nb)
+		$options['analyse_days_nb'] = $analyse_days_nb;
+
+	// Todo-list stable (ordonnée par rowid) -> total + découpage offset/size
+	$ids = MMI_Product_Replenish::getProductIdsToProcess($options);
+	if ($ids === null)
+		die(json_encode(['r'=>false, 'msg'=>'SQL error building product list']));
+	$total = count($ids);
+	$batch = array_slice($ids, $offset, $size);
+	$processed = count($batch);
+
+	@set_time_limit(0);
+	$t0 = microtime(true);
+	$updated = null;
+	if (!empty($batch)) {
+		$options['product_ids'] = $batch;
+		if ($step == 'seuils')
+			$updated = MMI_Product_Replenish::seuils_refresh($options);
+		else
+			MMI_Product_Replenish::stats_refresh($options);
+	}
+
+	$next = $offset + $size;
+	$done = ($next >= $total);
+
+	echo json_encode([
+		'r' => true,
+		'step' => $step,
+		'offset' => $offset,
+		'size' => $size,
+		'processed' => $processed,
+		'updated' => $updated, // nb produits écrits (étape seuils), null pour stats
+		'total' => $total,
+		'next_offset' => $done ? null : $next,
+		'done' => $done,
+		'duration' => round(microtime(true) - $t0, 3),
+	]);
+}

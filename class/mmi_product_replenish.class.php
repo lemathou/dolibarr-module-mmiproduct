@@ -53,6 +53,8 @@ public static function buildSeuilsQuery($options = [])
 	$filter_supplier_id = !empty($options['filter_supplier_id']) ? (int) $options['filter_supplier_id'] : 0;
 	$filter_product_pro = !empty($options['filter_product_pro']);
 	$fk_product_categorie = !empty($options['fk_product_categorie']) ? (int) $options['fk_product_categorie'] : 0;
+	// Traitement par paquets : restreint le calcul à une liste d'IDs produit (batch AJAX)
+	$product_ids = self::sanitizeProductIds($options['product_ids'] ?? null);
 
 	// Génération des jours de la fenêtre d'analyse
 	$sql_select_days = 'SELECT 0 n';
@@ -177,12 +179,75 @@ public static function buildSeuilsQuery($options = [])
 	WHERE p.fk_product_type=0'
 	.($filter_supplier_id ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
 	.($filter_product_pro ? ' AND kp.fk_categorie='.$fk_product_categorie :'')
+	.($product_ids !== null ? ' AND p.rowid IN ('.implode(',', $product_ids).')' :'')
 
 	.' GROUP BY p.rowid
 
 	HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
 
 	return $sql;
+}
+
+/**
+ * Normalise une liste d'IDs produit en tableau d'entiers > 0 (dédoublonné).
+ *
+ * @param mixed $ids  Tableau d'IDs, ou null si pas de restriction par paquet
+ * @return int[]|null  Tableau d'IDs entiers, [] si liste fournie mais vide, null si pas de restriction
+ */
+public static function sanitizeProductIds($ids)
+{
+	if ($ids === null)
+		return null;
+	if (!is_array($ids))
+		$ids = [$ids];
+	$out = [];
+	foreach ($ids as $id) {
+		$id = (int) $id;
+		if ($id > 0)
+			$out[$id] = $id;
+	}
+	return array_values($out);
+}
+
+/**
+ * Liste ordonnée et stable des IDs produit à traiter pour le recalcul réappro.
+ *
+ * Sert de « todo-list » pour le traitement par paquets (batch AJAX) : son
+ * cardinal donne le total à traiter, et l'ordre (rowid ASC) garantit un
+ * découpage offset/size cohérent entre les appels successifs.
+ *
+ * @param array $options  fk_soc_fournisseur|filter_supplier_id, filter_product_pro, fk_product_categorie
+ * @return int[]|null     IDs produit (type stocké), ou null si erreur SQL
+ */
+public static function getProductIdsToProcess($options = [])
+{
+	global $db;
+
+	$filter_supplier_id = !empty($options['fk_soc_fournisseur']) ? (int) $options['fk_soc_fournisseur']
+		: (!empty($options['filter_supplier_id']) ? (int) $options['filter_supplier_id'] : 0);
+	$filter_product_pro = !empty($options['filter_product_pro']);
+	$fk_product_categorie = !empty($options['fk_product_categorie']) ? (int) $options['fk_product_categorie'] : 0;
+
+	$sql = 'SELECT DISTINCT p.rowid'
+		.' FROM '.MAIN_DB_PREFIX.'product AS p'
+		.' INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields AS p2 ON p2.fk_object=p.rowid'
+		.($filter_product_pro ? ' LEFT JOIN '.MAIN_DB_PREFIX.'categorie_product AS kp ON kp.fk_product=p2.fk_object' :'')
+		.' WHERE p.fk_product_type=0'
+		.($filter_supplier_id ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
+		.($filter_product_pro ? ' AND kp.fk_categorie='.$fk_product_categorie :'')
+		.' ORDER BY p.rowid ASC';
+
+	$resql = $db->query($sql);
+	if (!$resql) {
+		dol_syslog(__METHOD__.' SQL error: '.$db->lasterror(), LOG_ERR);
+		return null;
+	}
+	$ids = [];
+	while ($row = $db->fetch_object($resql))
+		$ids[] = (int) $row->rowid;
+	$db->free($resql);
+
+	return $ids;
 }
 
 /**
@@ -355,6 +420,9 @@ public static function stats_refresh($options=[])
 
 	$date_today = date('Y-m-d');
 
+	// Traitement par paquets : restreint le recalcul à une liste d'IDs produit (batch AJAX)
+	$product_ids = self::sanitizeProductIds($options['product_ids'] ?? null);
+
 	$documents_types = [
 		'propal' => [
 			'prefix' => 'd',
@@ -435,7 +503,8 @@ public static function stats_refresh($options=[])
 				? '	AND c.fk_statut IN ('.$cfg['object_status'].')' // Statut commande (expédiée...)
 				: ''
 			)
-			.(!empty($options['fk_soc_fournisseur']) ?'		AND p2.fk_soc_fournisseur='.$options['fk_soc_fournisseur'] :'')
+			.(!empty($options['fk_soc_fournisseur']) ?'		AND p2.fk_soc_fournisseur='.(int) $options['fk_soc_fournisseur'] :'')
+			.($product_ids !== null ?'		AND p.rowid IN ('.implode(',', $product_ids).')' :'')
 			.'		AND p.fk_product_type=0'; // Uniquement produits stockés (exclure services)
 
 		// Cumulé par jour

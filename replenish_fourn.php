@@ -120,6 +120,74 @@ print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
 
 echo '<div style="float: right;"><p><a href="'.$url_params_str.'&sort='.$sort.'&sortorder='.$sortorder.'&regen=1">Régénérer les stats en base de donnée</a></p></div>';
 
+// Recalcul complet (stats + seuils) par paquets en AJAX, avec barre de progression.
+// Évite les timeouts web sur l'ensemble du catalogue (RM1864).
+$ajax_url = dol_buildpath('/custom/mmiproduct/ajax.php', 1);
+echo '<div id="replenish-batch" style="clear: right; float: right; text-align: right; margin: 4px 0;">';
+echo '<button type="button" id="replenish-batch-btn" class="button">Recalculer stats + seuils (par paquets)</button>';
+echo '<div id="replenish-batch-progress" style="display: none; margin-top: 6px;">';
+echo '<div id="replenish-batch-phase"></div>';
+echo '<progress id="replenish-batch-bar" value="0" max="100" style="width: 260px; vertical-align: middle;"></progress> ';
+echo '<span id="replenish-batch-text"></span>';
+echo '</div>';
+echo '</div>';
+
+echo "\n<script>\n"
+	.'(function(){'."\n"
+	.'	var btn = document.getElementById("replenish-batch-btn"); if (!btn) return;'."\n"
+	.'	var url = "'.dol_escape_js($ajax_url).'";'."\n"
+	.'	var size = 50;'."\n"
+	.'	var params = {'
+		.' fk_soc_fournisseur: '.(int) $filter_supplier_id.','
+		.' filter_product_pro: '.($filter_product_pro ? 1 : 0).','
+		.' analyse_days_nb: '.(int) $analyse_days_nb
+	.' };'."\n"
+	.'	var box = document.getElementById("replenish-batch-progress");'."\n"
+	.'	var phaseEl = document.getElementById("replenish-batch-phase");'."\n"
+	.'	var bar = document.getElementById("replenish-batch-bar");'."\n"
+	.'	var txt = document.getElementById("replenish-batch-text");'."\n"
+	.'	function call(step, offset){'."\n"
+	.'		var body = new URLSearchParams();'."\n"
+	.'		body.set("action", "replenish_refresh");'."\n"
+	.'		body.set("step", step);'."\n"
+	.'		body.set("offset", offset);'."\n"
+	.'		body.set("size", size);'."\n"
+	.'		body.set("fk_soc_fournisseur", params.fk_soc_fournisseur);'."\n"
+	.'		body.set("filter_product_pro", params.filter_product_pro);'."\n"
+	.'		body.set("analyse_days_nb", params.analyse_days_nb);'."\n"
+	.'		return fetch(url, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: body.toString()}).then(function(r){ return r.json(); });'."\n"
+	.'	}'."\n"
+	.'	function runPhase(step, label, baseFrac, spanFrac){'."\n"
+	.'		return new Promise(function(resolve, reject){'."\n"
+	.'			var offset = 0;'."\n"
+	.'			(function nextBatch(){'."\n"
+	.'				call(step, offset).then(function(res){'."\n"
+	.'					if (!res || !res.r){ reject((res && res.msg) ? res.msg : "Erreur serveur"); return; }'."\n"
+	.'					var doneCount = Math.min(res.offset + res.processed, res.total);'."\n"
+	.'					var frac = res.total ? (doneCount / res.total) : 1;'."\n"
+	.'					bar.value = Math.round((baseFrac + spanFrac * frac) * 100);'."\n"
+	.'					phaseEl.textContent = label;'."\n"
+	.'					txt.textContent = " " + doneCount + " / " + res.total;'."\n"
+	.'					if (res.done){ resolve(res); } else { offset = res.next_offset; nextBatch(); }'."\n"
+	.'				}).catch(reject);'."\n"
+	.'			})();'."\n"
+	.'		});'."\n"
+	.'	}'."\n"
+	.'	btn.addEventListener("click", function(){'."\n"
+	.'		btn.disabled = true; box.style.display = "block"; bar.value = 0;'."\n"
+	.'		runPhase("stats", "Étape 1/2 : recalcul des stats…", 0, 0.5)'."\n"
+	.'			.then(function(){ return runPhase("seuils", "Étape 2/2 : recalcul des seuils…", 0.5, 0.5); })'."\n"
+	.'			.then(function(res){'."\n"
+	.'				bar.value = 100; txt.textContent = "";'."\n"
+	.'				phaseEl.textContent = "Terminé ✓" + (res.updated !== null ? " (" + res.updated + " seuils mis à jour)" : "");'."\n"
+	.'				var a = document.createElement("a"); a.href = window.location.href; a.textContent = "Recharger la page"; a.style.marginLeft = "8px";'."\n"
+	.'				phaseEl.appendChild(a); btn.disabled = false;'."\n"
+	.'			})'."\n"
+	.'			.catch(function(err){ phaseEl.textContent = "Erreur : " + err; btn.disabled = false; });'."\n"
+	.'	});'."\n"
+	.'})();'."\n"
+	."</script>\n";
+
 // Suppliers
 $list_supplier = [];
 $sql_suppliers = 'SELECT DISTINCT s.rowid, s.nom, COUNT(DISTINCT p2.rowid) AS pdt_nb'
