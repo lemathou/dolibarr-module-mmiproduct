@@ -59,6 +59,29 @@ $prestasync = !empty($conf->mmiprestasync->enabled);
 
 $vue = GETPOST('vue') ?: 'bloc';
 
+// Rattachement produit → fournisseur (RM1566)
+// En mode prestasync, le fournisseur d'un produit est celui DÉSIGNÉ par l'extrafield
+// product_extrafields.fk_soc_fournisseur. La table product_fournisseur_price, elle,
+// conserve les lignes de prix anciennes ou secondaires : s'en servir seule fait
+// apparaître dans le réappro des fournisseurs qui ne fournissent plus rien (cas
+// consenza) et gonfle le nombre de produits des autres.
+// On substitue donc à la table des prix une vue « fournisseur effectif » : le
+// fournisseur désigné quand il est renseigné et bien fournisseur, à défaut les
+// fournisseurs des lignes de prix (produits sans désignation exploitable).
+// Colonnes exposées : fk_product, fk_soc — les seules utilisées par les requêtes.
+$table_prod_fourn = MAIN_DB_PREFIX.'product_fournisseur_price';
+if ($prestasync) {
+	$table_prod_fourn = '(SELECT pfe.fk_object fk_product, pfe.fk_soc_fournisseur fk_soc
+			FROM '.MAIN_DB_PREFIX.'product_extrafields pfe
+			INNER JOIN '.MAIN_DB_PREFIX.'societe pfs ON pfs.rowid=pfe.fk_soc_fournisseur AND pfs.fournisseur=1
+		UNION
+		SELECT pfp.fk_product, pfp.fk_soc
+			FROM '.MAIN_DB_PREFIX.'product_fournisseur_price pfp
+			INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields pfe ON pfe.fk_object=pfp.fk_product
+			LEFT JOIN '.MAIN_DB_PREFIX.'societe pfs ON pfs.rowid=pfe.fk_soc_fournisseur AND pfs.fournisseur=1
+			WHERE pfs.rowid IS NULL)';
+}
+
 /*
  * Actions
  */
@@ -168,12 +191,13 @@ $l = [];
 $sql = 'SELECT s2.*, s.*, COUNT(DISTINCT p.rowid) product_nb
 	FROM '.MAIN_DB_PREFIX.'societe s
 	LEFT JOIN '.MAIN_DB_PREFIX.'societe_extrafields s2 ON s2.fk_object=s.rowid
-	LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
+	LEFT JOIN '.$table_prod_fourn.' ps ON ps.fk_soc=s.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	WHERE s.fournisseur=1
 		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND  p2.p_decli_disabled IS NULL))' :'').'
 	GROUP BY s.rowid
+	'.($prestasync ?'HAVING product_nb > 0' :'').'
 	ORDER BY s.nom';
 $q = $db->query($sql);
 while($row=$q->fetch_assoc()) {
@@ -184,7 +208,7 @@ while($row=$q->fetch_assoc()) {
 $sql = 'SELECT DISTINCT ps.fk_soc, p.rowid, p.seuil_stock_alerte, p.desiredstock, p.stock qty
 	FROM '.MAIN_DB_PREFIX.'societe s
 	LEFT JOIN '.MAIN_DB_PREFIX.'societe_extrafields s2 ON s2.fk_object=s.rowid
-	LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price ps ON ps.fk_soc=s.rowid
+	LEFT JOIN '.$table_prod_fourn.' ps ON ps.fk_soc=s.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	WHERE s.fournisseur=1
@@ -192,12 +216,16 @@ $sql = 'SELECT DISTINCT ps.fk_soc, p.rowid, p.seuil_stock_alerte, p.desiredstock
 	GROUP BY p.rowid';
 $q = $db->query($sql);
 while($row=$q->fetch_assoc()) {
+	// Garde : le LEFT JOIN produit une ligne fk_soc/rowid à NULL pour les fournisseurs
+	// sans produit — sans elle, une entrée fantôme sans nom se crée dans la liste (RM1566)
+	if (!isset($l[$row['fk_soc']]) || $row['rowid']===null)
+		continue;
 	$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($row, ['cmd_qty'=>0, 'cmd_expe_qty'=>0, 'fcmd_qty'=>0, 'fcmd_recpt_qty'=>0]);
 }
 
 // Commandes client en cours (pour calcul stock)
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cd.qty > 0, cd.qty, 0)) cmd_qty
-	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	FROM '.$table_prod_fourn.' ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commande c
@@ -214,7 +242,7 @@ while($row=$q->fetch_assoc()) {
 }
 // Commandes client en cours (pour info)
 $sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
-	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	FROM '.$table_prod_fourn.' ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commande c
@@ -228,12 +256,15 @@ $sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
-	$l[$row['fk_soc']]['cmd_encours_nb'] = $row['cmd_encours_nb'];
+	// Garde : ne jamais créer une entrée fournisseur absente de la liste construite
+	// plus haut (sinon carte vide affichée pour un fournisseur sans produit — RM1566)
+	if (isset($l[$row['fk_soc']]))
+		$l[$row['fk_soc']]['cmd_encours_nb'] = $row['cmd_encours_nb'];
 }
 
 // Expé Commandes client en cours
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cdd.qty > 0, IF(cdd.qty>=cd.qty, cd.qty, cdd.qty), 0)) cmd_expe_qty
-	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	FROM '.$table_prod_fourn.' ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commande c
@@ -252,7 +283,7 @@ while($row=$q->fetch_assoc()) {
 
 // Commandes fournisseur en cours (pour calcul stock produi)
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scd.qty > 0, scd.qty, 0)) fcmd_qty
-	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	FROM '.$table_prod_fourn.' ps
 	INNER JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commande_fournisseur sc ON sc.fk_soc=ps.fk_soc
@@ -278,6 +309,10 @@ $sql = 'SELECT sc.fk_soc,
 $q = $db->query($sql);
 //var_dump($db);
 while($row=$q->fetch_assoc()) {
+	// Garde : cette requête ne filtre pas sur les produits, elle peut donc remonter
+	// un fournisseur absent de la liste affichée (RM1566)
+	if (!isset($l[$row['fk_soc']]))
+		continue;
 	$l[$row['fk_soc']]['cmd_f_encours_nb'] = $row['cmd_f_encours_nb'];
 	$l[$row['fk_soc']]['cmd_f_valid_nb'] = $row['cmd_f_valid_nb'];
 	$l[$row['fk_soc']]['cmd_f_draft_nb'] = $row['cmd_f_draft_nb'];
@@ -285,7 +320,7 @@ while($row=$q->fetch_assoc()) {
 
 // Réceptions commandes fournisseur en cours
 $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scdd.qty > 0, IF(scdd.qty>=scd.qty, scd.qty, scdd.qty), 0)) fcmd_recpt_qty
-	FROM '.MAIN_DB_PREFIX.'product_fournisseur_price ps
+	FROM '.$table_prod_fourn.' ps
 	LEFT JOIN '.MAIN_DB_PREFIX.'product p ON p.rowid=ps.fk_product
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseur sc ON sc.fk_soc=ps.fk_soc
