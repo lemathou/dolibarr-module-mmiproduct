@@ -136,7 +136,7 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 					$product = new Product($this->db);
 					$product->fetch($productfournisseurprice->fk_product);
 					if ($product->array_options['options_fk_soc_fournisseur'] == $productfournisseurprice->fk_soc) {
-						$records = $pfp->fetchAll('', '', 0, 0, ['fk_product' => $product->id]);
+						$records = $pfp->fetchAll('', '', 0, 0, '(fk_product:=:'.((int) $product->id).')');
 						// Check if there us still a product supplier price
 						if (count($records) > 1) {
 							foreach($records as $record) {

@@ -269,7 +269,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cdd.qty > 0, IF(cdd.qty>=cd.qty, cd.qt
 	INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	INNER JOIN '.MAIN_DB_PREFIX.'commande c
 	INNER JOIN '.MAIN_DB_PREFIX.'commandedet cd ON cd.fk_commande=c.rowid AND cd.fk_product=p.rowid
-	INNER JOIN '.MAIN_DB_PREFIX.'expeditiondet cdd ON cdd.fk_origin_line=cd.rowid
+	INNER JOIN '.MAIN_DB_PREFIX.'expeditiondet cdd ON cdd.fk_elementdet=cd.rowid
 	WHERE 1
 		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
@@ -325,7 +325,7 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scdd.qty > 0, IF(scdd.qty>=scd.qty, sc
 	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
 	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseur sc ON sc.fk_soc=ps.fk_soc
 	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseurdet scd ON scd.fk_commande=sc.rowid AND scd.fk_product=p.rowid
-	LEFT JOIN '.MAIN_DB_PREFIX.'commande_fournisseur_dispatch scdd ON scdd.fk_commandefourndet=scd.rowid
+	LEFT JOIN '.MAIN_DB_PREFIX.'receptiondet_batch scdd ON scdd.fk_elementdet=scd.rowid
 	WHERE 1
 		'.($prestasync ?'AND (p2.rowid IS NULL OR (p2.p_active=1 AND p2.p_decli_disabled IS NULL))' :'').'
 		AND sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
