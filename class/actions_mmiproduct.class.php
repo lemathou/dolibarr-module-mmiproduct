@@ -543,8 +543,15 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 			}
         }
         elseif ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
-            $print = '<input type="hidden" name="categ" value="'.$this->categ.'" />';
+            // RM2869 — ligne de FILTRES : autant de <td> que de colonnes rendues par
+            // printFieldListTitle, qui n'ajoute « Emballage » que si un fournisseur est
+            // filtré. Le <input hidden> vit dans la cellule quand elle existe ; sinon il
+            // reste nu (le parseur le sort de la table, mais il part avec le formulaire —
+            // poser un <td> sans colonne correspondante recréerait le décalage à l'envers).
+            $hidden = '<input type="hidden" name="categ" value="'.$this->categ.'" />';
+            $print = $this->fk_supplier
+                ? '<td class="liste_titre">'.$hidden.'</td>'
+                : $hidden;
         }
     
         if (! $error) {
