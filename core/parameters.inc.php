@@ -28,6 +28,10 @@ $arrayofparameters = array(
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_ALERT_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_AUTOCALC'=>array('type'=>'int','enabled'=>1),
+	// Colonnes optionnelles de la page de réappro du coeur (/product/stock/replenish.php) — RM2865
+	'MMIPRODUCT_REPLENISH_HIDE_DESIREDSTOCK'=>array('type'=>'yesno','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_HIDE_STOCKLIMIT'=>array('type'=>'yesno','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_SHOW_EAN'=>array('type'=>'yesno','enabled'=>1),
 
 	'MMI_PROPAL_CLONE_USE_NEW_COST_PRICE'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_STOCK_COMPOSED_AUTO'=>array('type'=>'yesno','enabled'=>1),
