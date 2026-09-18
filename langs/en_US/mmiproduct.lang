@@ -51,3 +51,6 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE = Automatic default supplier update (only changes when the default supplier has no purchase price left)
+MMIPRODUCT_DEFAULT_SUPPLIER_ALERT_EMAIL_TO = Recipient email for default supplier replacement alerts (empty = product alerts email)
