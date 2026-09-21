@@ -28,3 +28,7 @@ Default supplier (RM3233) : the default supplier (fk_soc_fournisseur, supplier_r
 # 1.1.3
 
 Bascule fournisseur (RM3235) : nouveau bouton « Basculer les produits » sur la fiche d'un fournisseur. Les prix d'achat du fournisseur source passent au fournisseur choisi, réf fournisseur comprise, et le fournisseur par défaut des produits suit (via le trigger de RM3233). Le tiers source n'est jamais supprimé — son historique reste — et peut être désactivé s'il n'a plus aucun produit. Refus explicite en cas de réf fournisseur déjà présente chez la cible. Logique dans mmi_supplier_switch (aperçu + exécution en transaction), partagée d'intention avec l'option de fusion du coeur (RM3234). Nouveau contexte de hook thirdpartycard : rafraîchir MAIN_MODULE_MMIPRODUCT_HOOKS au déploiement. Tests dans test/functional.
+
+# 1.1.4
+
+Bascule fournisseur en ligne de commande (RM3224) : scripts/supplier_switch.php, même traitement que le bouton de la fiche fournisseur, pour basculer plusieurs fournisseurs d'un coup et garder une trace rejouable de l'opération. Simulation par défaut (--confirm pour exécuter), refus si une réf fournisseur existe déjà chez la cible, fichier SQL de restauration écrit avant toute modification, contrôle des compteurs en fin de course.
