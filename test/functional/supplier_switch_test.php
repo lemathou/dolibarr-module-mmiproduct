@@ -111,6 +111,18 @@ function soc_status($socid)
 	return $o ? (int) $o->status : -1;
 }
 
+// La file de synchro Presta (_sync) est écrite par mmiprestasync sur une AUTRE connexion :
+// elle échappe à notre transaction et à son instantané de lecture.
+$sync_db = new mysqli($GLOBALS['dolibarr_main_db_host'], $GLOBALS['dolibarr_main_db_user'], $GLOBALS['dolibarr_main_db_pass'], $GLOBALS['dolibarr_main_db_name']);
+function sync_count($sql)
+{
+	global $sync_db;
+	$r = $sync_db->query($sql);
+	$row = $r ? $r->fetch_row() : null;
+	return $row ? (int) $row[0] : 0;
+}
+$sync_max_id = sync_count('SELECT IFNULL(MAX(id),0) FROM `_sync`');
+
 $db->begin();
 
 // --- 1. Aperçu
@@ -169,6 +181,32 @@ check('bascule avec désactivation réussie', !empty($res['ok']), $res['error'])
 check('source désactivée', soc_status($from3->id) === 0 && !empty($res['deactivated']));
 check('cible toujours active', soc_status($to3->id) === 1);
 
+// --- 4bis. Produit dont la source est le fournisseur par défaut SANS ligne de prix (RM3289).
+//      Il doit suivre la bascule ET déclencher une notification de synchro : sans cela il
+//      restait chez l'ancien fournisseur côté PrestaShop.
+$from4 = mk_supplier('FROM4');
+$to4 = mk_supplier('TO4');
+$p5 = mk_product('P5');   // avec prix chez la source
+$p6 = mk_product('P6');   // fournisseur par défaut = source, mais AUCUN prix
+add_price($p5->id, $from4, 'REF-5', 10);
+// Un produit neuf n'a pas encore de ligne d'extrafields : on passe par l'objet, qui la crée.
+$p6->array_options['options_fk_soc_fournisseur'] = (int) $from4->id;
+$p6->update($p6->id, $user);
+check('préparation : produit sans prix rattaché à la source', state($p6->id)['fk_soc'] === (int) $from4->id, json_encode(state($p6->id)));
+
+// La préparation ci-dessus a pu notifier : on repère la file JUSTE avant la bascule.
+$conf->global->MMIPRESTASYNC_SYNC = 1;
+$sync_mark = sync_count('SELECT IFNULL(MAX(id),0) FROM `_sync`');
+
+$res = mmi_supplier_switch::run($db, $user, $from4->id, $to4->id, false);
+check('bascule réussie', !empty($res['ok']), $res['error']);
+check('produit AVEC prix → cible', state($p5->id)['fk_soc'] === (int) $to4->id);
+check('produit SANS prix → cible', state($p6->id)['fk_soc'] === (int) $to4->id, json_encode(state($p6->id)));
+check('produit sans prix compté dans le rapport', $res['products'] >= 2, json_encode($res));
+check('produit sans prix → synchro notifiée', sync_count('SELECT COUNT(*) FROM `_sync` WHERE id>'.$sync_mark.' AND type="product" AND t_oid='.((int) $p6->id)) > 0);
+check('produit avec prix → synchro notifiée', sync_count('SELECT COUNT(*) FROM `_sync` WHERE id>'.$sync_mark.' AND type="product" AND t_oid='.((int) $p5->id)) > 0);
+$conf->global->MMIPRESTASYNC_SYNC = 0;
+
 // --- 5. Cas réel : un fournisseur de la base (NT FOOD, le cas du chantier Morato) vers une cible de test.
 //     Objectif : vérifier que l'historique (commandes, factures) ne bouge pas.
 $resql = $db->query('SELECT rowid, nom FROM '.MAIN_DB_PREFIX.'societe WHERE nom LIKE "%NUTRIFREE%" AND fournisseur=1 LIMIT 1');
@@ -208,6 +246,10 @@ check('cible absente → refus', mmi_supplier_switch::run($db, $user, $from->id,
 check('cible = source → refus', mmi_supplier_switch::run($db, $user, $to->id, $to->id)['error'] !== '');
 
 $db->rollback();
+
+// La file de synchro échappe à la transaction : on retire nos propres lignes.
+$sync_db->query('DELETE FROM `_sync` WHERE id>'.$sync_max_id);
+check('file de synchro nettoyée', sync_count('SELECT COUNT(*) FROM `_sync` WHERE id>'.$sync_max_id) === 0);
 
 $nb = (int) $db->fetch_object($db->query('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'societe WHERE nom LIKE "TEST-RM3235-%"'))->nb;
 $nb += (int) $db->fetch_object($db->query('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product WHERE ref LIKE "TEST-RM3235-%"'))->nb;

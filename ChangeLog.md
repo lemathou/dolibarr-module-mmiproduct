@@ -32,3 +32,7 @@ Bascule fournisseur (RM3235) : nouveau bouton « Basculer les produits » sur la
 # 1.1.4
 
 Bascule fournisseur en ligne de commande (RM3224) : scripts/supplier_switch.php, même traitement que le bouton de la fiche fournisseur, pour basculer plusieurs fournisseurs d'un coup et garder une trace rejouable de l'opération. Simulation par défaut (--confirm pour exécuter), refus si une réf fournisseur existe déjà chez la cible, fichier SQL de restauration écrit avant toute modification, contrôle des compteurs en fin de course.
+
+# 1.1.5
+
+Bascule fournisseur (RM3289) : les produits dont la source est le fournisseur par défaut SANS ligne de prix d'achat étaient rattachés à la cible par un UPDATE SQL direct, qui ne déclenche aucun trigger — ils n'étaient donc jamais notifiés à la synchro et restaient chez l'ancien fournisseur côté PrestaShop. Ils passent désormais par l'objet Product, ce qui déclenche PRODUCT_MODIFY et la notification. Constaté en réel sur la bascule Clearspring → OTIEC (1 produit sur 33).
