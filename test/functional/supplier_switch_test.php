@@ -169,7 +169,41 @@ check('bascule avec désactivation réussie', !empty($res['ok']), $res['error'])
 check('source désactivée', soc_status($from3->id) === 0 && !empty($res['deactivated']));
 check('cible toujours active', soc_status($to3->id) === 1);
 
-// --- 5. Cibles invalides
+// --- 5. Cas réel : un fournisseur de la base (NT FOOD, le cas du chantier Morato) vers une cible de test.
+//     Objectif : vérifier que l'historique (commandes, factures) ne bouge pas.
+$resql = $db->query('SELECT rowid, nom FROM '.MAIN_DB_PREFIX.'societe WHERE nom LIKE "%NUTRIFREE%" AND fournisseur=1 LIMIT 1');
+$real = $db->fetch_object($resql);
+if (!empty($real)) {
+	$realid = (int) $real->rowid;
+	$cible = mk_supplier('MORATO');
+	$cnt = function ($sql) use ($db) {
+		return (int) $db->fetch_object($db->query($sql))->nb;
+	};
+	$cmd_avant = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'commande_fournisseur WHERE fk_soc='.$realid);
+	$fac_avant = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'facture_fourn WHERE fk_soc='.$realid);
+	$prix_avant = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_fournisseur_price WHERE fk_soc='.$realid);
+	$def_avant = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_extrafields WHERE fk_soc_fournisseur='.$realid);
+
+	$res = mmi_supplier_switch::run($db, $user, $realid, $cible->id, false);
+	check('cas réel ('.$real->nom.', '.$prix_avant.' prix) : bascule réussie', !empty($res['ok']), $res['error']);
+	check('cas réel : tous les prix transférés', $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_fournisseur_price WHERE fk_soc='.$realid) === 0
+		&& $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_fournisseur_price WHERE fk_soc='.((int) $cible->id)) === $prix_avant);
+	$def_apres_src = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_extrafields WHERE fk_soc_fournisseur='.$realid);
+	$def_apres_cible = $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'product_extrafields WHERE fk_soc_fournisseur='.((int) $cible->id));
+	check('cas réel : plus aucun produit rattaché à la source', $def_apres_src === 0, "restant=$def_apres_src");
+	// La cible peut en recevoir DAVANTAGE que la source n'en avait : un produit dont le
+	// fournisseur par défaut était un tiers sans prix d'achat (situation héritée) se voit
+	// rattaché à la cible par le trigger, puisqu'elle devient son seul fournisseur.
+	check('cas réel : tous les produits de la source rattachés à la cible', $def_apres_cible >= $def_avant, "avant=$def_avant apres=$def_apres_cible");
+	echo '     (défauts : source '.$def_avant.' -> 0 ; cible '.$def_apres_cible.' ; prix '.$prix_avant.')'."\n";
+	check('cas réel : commandes fournisseur inchangées sur la source', $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'commande_fournisseur WHERE fk_soc='.$realid) === $cmd_avant, "avant=$cmd_avant");
+	check('cas réel : factures fournisseur inchangées sur la source', $cnt('SELECT COUNT(*) as nb FROM '.MAIN_DB_PREFIX.'facture_fourn WHERE fk_soc='.$realid) === $fac_avant);
+	check('cas réel : le tiers source existe toujours', soc_status($realid) >= 0);
+} else {
+	echo "(cas réel ignoré : fournisseur NUTRIFREE absent de cette base)\n";
+}
+
+// --- 6. Cibles invalides
 check('cible absente → refus', mmi_supplier_switch::run($db, $user, $from->id, 0)['error'] !== '');
 check('cible = source → refus', mmi_supplier_switch::run($db, $user, $to->id, $to->id)['error'] !== '');
 
