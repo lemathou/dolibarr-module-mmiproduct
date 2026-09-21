@@ -84,6 +84,7 @@ class mmi_supplier_switch
 	{
 		require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
 		require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 		$res = array('ok'=>false, 'moved'=>0, 'products'=>0, 'deactivated'=>false, 'error'=>'');
 		$from = (int) $from;
@@ -148,13 +149,34 @@ class mmi_supplier_switch
 			$products[$line['fk_product']] = true;
 		}
 
-		// Filet : un produit dont le fournisseur par défaut serait resté sur la source
-		// (trigger désactivé par la constante, par exemple) est rattaché à la cible.
-		$sql = 'UPDATE '.MAIN_DB_PREFIX.'product_extrafields SET fk_soc_fournisseur='.$to.' WHERE fk_soc_fournisseur='.$from;
-		if (!$db->query($sql)) {
+		// Filet : les produits dont la source reste le fournisseur par défaut — ceux qui n'ont
+		// aucune ligne de prix chez elle, et ceux qu'un trigger désactivé aurait laissés de
+		// côté. On passe par l'objet Product et NON par un UPDATE direct : c'est ce qui
+		// déclenche PRODUCT_MODIFY, donc la notification de synchro Presta (RM3289 — sans
+		// cela le produit restait chez l'ancien fournisseur côté PrestaShop).
+		$orphelins = array();
+		$sql = 'SELECT fk_object FROM '.MAIN_DB_PREFIX.'product_extrafields WHERE fk_soc_fournisseur='.$from;
+		$resql = $db->query($sql);
+		if (!$resql) {
 			$res['error'] = $db->lasterror();
 			$db->rollback();
 			return $res;
+		}
+		while ($obj = $db->fetch_object($resql)) {
+			$orphelins[] = (int) $obj->fk_object;
+		}
+		foreach ($orphelins as $fk_product) {
+			$product = new Product($db);
+			if ($product->fetch($fk_product) <= 0) {
+				continue;
+			}
+			$product->array_options['options_fk_soc_fournisseur'] = $to;
+			if ($product->update($product->id, $user) < 0) {
+				$res['error'] = $product->error ? $product->error : 'Erreur de mise à jour du produit '.$fk_product;
+				$db->rollback();
+				return $res;
+			}
+			$products[$fk_product] = true;
 		}
 
 		if ($deactivate && static::is_empty($db, $from)) {
