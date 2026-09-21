@@ -54,3 +54,9 @@ MyWidgetDescription = My widget description
 
 MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE = Automatic default supplier update (only changes when the default supplier has no purchase price left)
 MMIPRODUCT_DEFAULT_SUPPLIER_ALERT_EMAIL_TO = Recipient email for default supplier replacement alerts (empty = product alerts email)
+
+MMIProductSwitchSupplier = Switch products
+MMIProductSwitchSupplierTitle = Switch products to another supplier
+MMIProductSwitchSupplierTarget = Target supplier
+MMIProductSwitchSupplierDeactivate = Disable this supplier if it has no product left after the switch
+MMIProductSwitchSupplierConfirm = Buying prices of this supplier (%s line(s), %s product(s), including %s product(s) where it is the default supplier) will be moved to the selected supplier, supplier reference included. History (orders, invoices) stays on this thirdparty, which is not deleted.

@@ -203,3 +203,9 @@ MMIProductsAddAllProducts = Ajouter toute une famille de produits
 # Infos
 #
 DiscountPriceQtyMin = Prix quantité min. remisé
+
+MMIProductSwitchSupplier = Basculer les produits
+MMIProductSwitchSupplierTitle = Basculer les produits vers un autre fournisseur
+MMIProductSwitchSupplierTarget = Fournisseur cible
+MMIProductSwitchSupplierDeactivate = Désactiver ce fournisseur s'il n'a plus aucun produit après la bascule
+MMIProductSwitchSupplierConfirm = Les prix d'achat de ce fournisseur (%s ligne(s), %s produit(s), dont %s produit(s) dont il est le fournisseur par défaut) seront transférés au fournisseur choisi, réf fournisseur comprise. L'historique (commandes, factures) reste sur ce tiers, qui n'est pas supprimé.

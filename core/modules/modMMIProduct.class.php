@@ -126,6 +126,7 @@ class modMMIProduct extends DolibarrModules
 				'ordersuppliercard',
 				'supplier_proposalcard',
 				'pricesuppliercard',
+				'thirdpartycard', // RM3235 : bouton « Basculer les produits » sur la fiche fournisseur
 			),
 			// Set this to 1 if features of module are opened to external users
 			'moduleforexternal' => 0,

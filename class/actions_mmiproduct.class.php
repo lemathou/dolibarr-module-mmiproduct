@@ -20,6 +20,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcategory.class.php';
 dol_include_once('custom/mmicommon/class/mmi_actions.class.php');
 dol_include_once('custom/mmiproduct/class/mmiproduct_price.class.php');
 dol_include_once('custom/mmiproduct/class/mmiproduct_margin.class.php');
+dol_include_once('custom/mmiproduct/class/mmi_supplier_switch.class.php');
 
 /**
  * Class ActionsSfyCustom
@@ -272,6 +273,28 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             }
         }
 
+		// Bascule des produits d'un fournisseur vers un autre — RM3235
+		if ($this->in_context($parameters, 'thirdpartycard') && $action == 'confirm_mmi_switch_supplier' && GETPOST('confirm') == 'yes') {
+			if (!$user->hasRight('produit', 'creer')) {
+				accessforbidden();
+			}
+			$to = GETPOSTINT('mmi_switch_to');
+			$deactivate = GETPOST('mmi_switch_deactivate') ? true : false;
+			$res = mmi_supplier_switch::run($this->db, $user, $object->id, $to, $deactivate);
+			if (empty($res['ok'])) {
+				setEventMessages($res['error'], null, 'errors');
+			} else {
+				$soc = new Societe($this->db);
+				$soc->fetch($to);
+				$msg = 'Bascule effectuée : '.$res['moved'].' prix d\'achat sur '.$res['products'].' produit(s) transférés vers '.$soc->name.'.';
+				if (!empty($res['deactivated'])) {
+					$msg .= ' Le fournisseur source, désormais sans produit, a été désactivé.';
+				}
+				setEventMessages($msg, null, 'mesgs');
+			}
+			$action = '';
+		}
+
 		if (!$error) {
 			return 0; // or return 1 to replace standard code
 		} else {
@@ -290,6 +313,12 @@ class ActionsMMIProduct extends MMI_Actions_1_0
             $link = '?id='.$object->id.'&action=products_add';
             echo "<a class='butAction' href='".$link."'>".$langs->trans("MMIProductsAddAllProducts")."</a>";;
         }
+
+		// Bascule des produits vers un autre fournisseur — RM3235
+		if ($this->in_context($parameters, 'thirdpartycard') && !empty($object->fournisseur) && $object->id > 0) {
+			$url = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&action=mmi_switch_supplier&token='.newToken();
+			echo dolGetButtonAction($langs->trans('MMIProductSwitchSupplierTitle'), $langs->trans('MMIProductSwitchSupplier'), 'default', $url, '', $user->hasRight('produit', 'creer'));
+		}
     
 		if (! $error) {
 			$this->resprints = $print;
@@ -719,6 +748,33 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
 		$error = 0; // Error counter
 		$print = '';
+
+		// Bascule des produits d'un fournisseur vers un autre — RM3235
+		if ($this->in_context($parameters, 'thirdpartycard') && $action == 'mmi_switch_supplier' && !empty($object->fournisseur)) {
+			global $form, $user;
+			if (empty($form)) {
+				require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
+				$form = new Form($this->db);
+			}
+			$p = mmi_supplier_switch::preview($this->db, $object->id, -1); // -1 : pas de cible => juste les compteurs
+			$question = array(
+				array(
+					'type' => 'other',
+					'name' => 'mmi_switch_to',
+					'label' => $langs->trans('MMIProductSwitchSupplierTarget'),
+					'value' => $form->select_company('', 'mmi_switch_to', 's.fournisseur = 1', 'SelectThirdParty', 0, 0, array(), 0, 'minwidth200', '', '', 1, null, false, array($object->id)),
+				),
+				array(
+					'type' => 'checkbox',
+					'name' => 'mmi_switch_deactivate',
+					'label' => $langs->trans('MMIProductSwitchSupplierDeactivate'),
+					'value' => 0,
+				),
+			);
+			$texte = $langs->trans('MMIProductSwitchSupplierConfirm', $p['lines'], $p['products'], $p['defaults']);
+			$this->resprints = $form->formconfirm($_SERVER["PHP_SELF"].'?socid='.$object->id, $langs->trans('MMIProductSwitchSupplierTitle'), $texte, 'confirm_mmi_switch_supplier', $question, 'no', 1, 300, 500);
+			return 0;
+		}
 
         if (! getDolGlobalString('MMI_PRODUCT_PRICEMARGIN_CONTROL_CONFIRM_POPUP'))
             return 0;
