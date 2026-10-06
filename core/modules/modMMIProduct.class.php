@@ -274,7 +274,7 @@ class modMMIProduct extends DolibarrModules
 			'titre'=>'MMIProductStockReplenish',
 			//'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
 			'mainmenu'=>'products',
-			'leftmenu'=>'stock',
+			'leftmenu'=>'mmiproduct_replenish',	// RM3411 : jamais le leftmenu du parent (stock), sinon Menubase rattache les entrées suivantes sous celle-ci
 			'url'=>'/custom/mmiproduct/replenish.php',
 			'langs'=>'mmiproduct@mmiproduct',
 			'position'=>1000+$r,
@@ -289,7 +289,7 @@ class modMMIProduct extends DolibarrModules
 			'type'=>'left',
 			'titre'=>'MMIProductStockReplenishFournStats',
 			'mainmenu'=>'products',
-			'leftmenu'=>'stock',
+			'leftmenu'=>'mmiproduct_replenish_stats',	// RM3411 : jamais le leftmenu du parent (stock), sinon Menubase rattache les entrées suivantes sous celle-ci
 			'url'=>'/custom/mmiproduct/replenish_fourn.php',
 			'langs'=>'mmiproduct@mmiproduct',
 			'position'=>1000+$r,
