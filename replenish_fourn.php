@@ -107,6 +107,37 @@ $backtopage = GETPOST('backtopage', 'alpha');
 
 $regen = GETPOSTINT('regen');
 
+// Fraîcheur des stats : le calcul ne voit que les ventes présentes dans llx_product_stats.
+// Si le cron ne tourne pas, la fenêtre d'analyse se vide et la régénération n'écrit rien (RM3491).
+$stats_last_date = MMI_Product_Replenish::statsLastDate();
+$stats_stale = MMI_Product_Replenish::statsAreStale();
+
+// Régénération des seuils : même méthode que le cron et le recalcul par paquets
+// (plus de boucle UPDATE dupliquée dans la page — RM3491). Respecte l'override manuel,
+// ignore les quantités NULL et remet à zéro les produits sans vente (sauf stats périmées).
+if ($regen) {
+	$regen_n = MMI_Product_Replenish::seuils_refresh([
+		'analyse_days_nb' => $analyse_days_nb,
+		'filter_supplier_id' => $filter_supplier_id,
+		'filter_product_pro' => $filter_product_pro,
+		'fk_product_categorie' => $fk_product_categorie,
+	]);
+	$r = MMI_Product_Replenish::$last_refresh;
+	if ($regen_n < 0) {
+		setEventMessages('Erreur SQL lors du recalcul des seuils (voir syslog)', null, 'errors');
+	}
+	elseif (empty($r['computed'])) {
+		setEventMessages('Aucun produit vendu sur la fenêtre d\'analyse : aucun seuil recalculé. Dernières stats connues : '
+			.($r['stats_last_date'] ? dol_print_date(strtotime($r['stats_last_date']), 'day') : 'aucune')
+			.' — lancez « Recalculer stats + seuils (par paquets) ».', null, 'warnings');
+	}
+	else {
+		setEventMessages('Seuils recalculés : '.(int) $r['updated'].' produit(s) mis à jour, '.(int) $r['reset'].' produit(s) sans vente remis à zéro, '
+			.(int) $r['skipped_manual'].' exclu(s) (ajustés manuellement), '.(int) $r['skipped_null'].' ignoré(s) (calcul impossible)'
+			.(!empty($r['stale']) ? ' — stats périmées : remise à zéro des produits sans vente sautée' : ''), null, 'mesgs');
+	}
+}
+
 
 /*
  * View
@@ -117,6 +148,13 @@ $form = new Form($db);
 llxHeader('', $langs->trans($page_name), $help_url);
 
 print load_fiche_titre($langs->trans($page_name), '', 'title_setup');
+
+// Bandeau de fraîcheur des stats (RM3491)
+echo '<div class="'.($stats_stale ? 'warning' : 'info').'" style="margin-bottom: 6px;">'
+	.'Ventes connues jusqu\'au <b>'.($stats_last_date ? dol_print_date(strtotime($stats_last_date), 'day') : 'aucune').'</b>'
+	.($stats_stale ? ' — <b>stats périmées</b> : le calcul des seuils ne voit pas les ventes récentes. Lancez « Recalculer stats + seuils (par paquets) » et vérifiez que le cron « '.$langs->trans('MMIProductReplenishRefreshCron').' » est actif.' : '')
+	.' · plancher demande : '.MMI_Product_Replenish::minStockDays().' jours de stock'
+	.'</div>';
 
 echo '<div style="float: right;"><p><a href="'.$url_params_str.'&sort='.$sort.'&sortorder='.$sortorder.'&regen=1">Régénérer les stats en base de donnée</a></p></div>';
 
@@ -137,6 +175,7 @@ echo "\n<script>\n"
 	.'	var btn = document.getElementById("replenish-batch-btn"); if (!btn) return;'."\n"
 	.'	var url = "'.dol_escape_js($ajax_url).'";'."\n"
 	.'	var size = 50;'."\n"
+	.'	var acc = {updated: 0, reset: 0, skipped_manual: 0};'."\n"
 	.'	var params = {'
 		.' fk_soc_fournisseur: '.(int) $filter_supplier_id.','
 		.' filter_product_pro: '.($filter_product_pro ? 1 : 0).','
@@ -155,6 +194,7 @@ echo "\n<script>\n"
 	.'		body.set("fk_soc_fournisseur", params.fk_soc_fournisseur);'."\n"
 	.'		body.set("filter_product_pro", params.filter_product_pro);'."\n"
 	.'		body.set("analyse_days_nb", params.analyse_days_nb);'."\n"
+	.'		body.set("acc_updated", acc.updated); body.set("acc_reset", acc.reset); body.set("acc_skipped_manual", acc.skipped_manual);'."\n"
 	.'		return fetch(url, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: body.toString()}).then(function(r){ return r.json(); });'."\n"
 	.'	}'."\n"
 	.'	function runPhase(step, label, baseFrac, spanFrac){'."\n"
@@ -163,6 +203,7 @@ echo "\n<script>\n"
 	.'			(function nextBatch(){'."\n"
 	.'				call(step, offset).then(function(res){'."\n"
 	.'					if (!res || !res.r){ reject((res && res.msg) ? res.msg : "Erreur serveur"); return; }'."\n"
+	.'					if (res.refresh){ acc.updated = res.refresh.updated_total; acc.reset = res.refresh.reset_total; acc.skipped_manual = res.refresh.skipped_manual_total; }'."\n"
 	.'					var doneCount = Math.min(res.offset + res.processed, res.total);'."\n"
 	.'					var frac = res.total ? (doneCount / res.total) : 1;'."\n"
 	.'					bar.value = Math.round((baseFrac + spanFrac * frac) * 100);'."\n"
@@ -179,7 +220,7 @@ echo "\n<script>\n"
 	.'			.then(function(){ return runPhase("seuils", "Étape 2/2 : recalcul des seuils…", 0.5, 0.5); })'."\n"
 	.'			.then(function(res){'."\n"
 	.'				bar.value = 100; txt.textContent = "";'."\n"
-	.'				phaseEl.textContent = "Terminé ✓" + (res.updated !== null ? " (" + res.updated + " seuils mis à jour)" : "");'."\n"
+	.'				var rf = res.refresh || {}; phaseEl.textContent = "Terminé ✓" + (res.updated !== null ? " (" + (rf.updated_total || res.updated) + " seuils mis à jour, " + (rf.reset_total || 0) + " produits sans vente remis à zéro, " + (rf.skipped_manual_total || 0) + " exclus manuels)" : "");'."\n"
 	.'				var a = document.createElement("a"); a.href = window.location.href; a.textContent = "Recharger la page"; a.style.marginLeft = "8px";'."\n"
 	.'				phaseEl.appendChild(a); btn.disabled = false;'."\n"
 	.'			})'."\n"
@@ -230,7 +271,8 @@ $fields = [
 	'supplier_id' => ['label'=>'Fournisseur', 'sortable'=>false],
 	'label' => ['label'=>'Nom', 'sortable'=>true],
 
-	'stock_days' => ['label'=>'days', 'desc'=>'Jours avec stock'],
+	'stock_days' => ['label'=>'days', 'desc'=>'Jours avec stock sur la fenêtre'],
+	'calc_days' => ['label'=>'calc', 'desc'=>'Jours retenus pour la demande (plancher '.MMI_Product_Replenish::minStockDays().' j, ou fenêtre entière si jamais en stock)'],
 	'd' => ['label'=>'d', 'desc'=>'Vente moyenne'],
 	'sigma_d' => ['label'=>'σd', 'desc'=>'Dispersion Vente moyenne'],
 	'freq' => ['label'=>'freq', 'desc'=>'Fréquence vente moyenne'],
@@ -284,20 +326,6 @@ if ($resql) {
 		}
 		$list[$row->product_id] = $row;
 
-		// Regen : on écrase les seuils calculés, SAUF pour les produits
-		// marqués « ajusté manuellement » (extrafield replenish_manual).
-		if ($regen && empty($row->replenish_manual)) {
-			$sql = 'UPDATE `llx_product` AS p'
-				.' INNER JOIN `llx_product_extrafields` AS p2 ON p2.fk_object=p.rowid'
-				.' SET'
-				.' p.seuil_stock_alerte='.(int) ceil($row->reorder_point).','
-				.' p.desiredstock='.(int) ceil($row->order_qty).','
-				.' p2.replenish_safety_stock='.(float) $row->safety_stock.','
-				.' p2.replenish_reorder_point='.(float) $row->reorder_point
-				.' WHERE p.rowid='.(int) $row->product_id;
-			$q = $db->query($sql);
-			//echo '<p>'.$sql.'</p>'; var_dump($q);
-		}
 	}
 	$db->free($resql);
 }

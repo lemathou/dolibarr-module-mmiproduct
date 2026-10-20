@@ -209,3 +209,6 @@ MMIProductSwitchSupplierTitle = Basculer les produits vers un autre fournisseur
 MMIProductSwitchSupplierTarget = Fournisseur cible
 MMIProductSwitchSupplierDeactivate = Désactiver ce fournisseur s'il n'a plus aucun produit après la bascule
 MMIProductSwitchSupplierConfirm = Les prix d'achat de ce fournisseur (%s ligne(s), %s produit(s), dont %s produit(s) dont il est le fournisseur par défaut) seront transférés au fournisseur choisi, réf fournisseur comprise. L'historique (commandes, factures) reste sur ce tiers, qui n'est pas supprimé.
+MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS = Réappro : plancher (jours) du dénominateur de la demande journalière (défaut 30) — évite d'extrapoler la demande d'un produit en rupture
+MMIPRODUCT_REPLENISH_RESET_NO_SALES = Réappro : remettre à zéro les seuils des produits sans vente sur la fenêtre d'analyse (hors « ajustés manuellement » ; sauté si les stats ont plus de 7 jours)
+
