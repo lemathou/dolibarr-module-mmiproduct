@@ -30,6 +30,10 @@ $arrayofparameters = array(
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_ALERT_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_AUTOCALC'=>array('type'=>'int','enabled'=>1),
+	// Calcul des seuils (RM3491) : plancher (jours) du dénominateur de la demande journalière (défaut 30) ;
+	// remise à zéro des seuils des produits sans vente sur la fenêtre (défaut oui, sautée si stats périmées)
+	'MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS'=>array('type'=>'int','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_RESET_NO_SALES'=>array('type'=>'yesno','enabled'=>1),
 	// Colonnes optionnelles de la page de réappro du coeur (/product/stock/replenish.php) — RM2865
 	'MMIPRODUCT_REPLENISH_HIDE_DESIREDSTOCK'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_REPLENISH_HIDE_STOCKLIMIT'=>array('type'=>'yesno','enabled'=>1),

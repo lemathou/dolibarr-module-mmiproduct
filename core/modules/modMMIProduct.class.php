@@ -167,7 +167,10 @@ class modMMIProduct extends DolibarrModules
 		// );
 		$this->const = array(
 			1 => array('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 'int', '1', 'Automatically update default supplier price (set or delete if none)', 0),
-			1 => array('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL', 'int', '2', '', 0),
+			2 => array('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL', 'int', '2', '', 0),
+			// RM3491 — calcul des seuils réappro
+			3 => array('MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS', 'int', '30', 'Replenish: minimum number of stock days used as denominator of the daily demand', 0),
+			4 => array('MMIPRODUCT_REPLENISH_RESET_NO_SALES', 'int', '1', 'Replenish: reset thresholds of products without sales on the analysis window (skipped when stats are stale)', 0),
 			// 2 => array('MMIPRODUCT_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		);
 

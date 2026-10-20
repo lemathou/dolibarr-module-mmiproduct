@@ -192,10 +192,17 @@ if ($action == "replenish_refresh") {
 	@set_time_limit(0);
 	$t0 = microtime(true);
 	$updated = null;
+	$refresh = null;
 	if (!empty($batch)) {
 		$options['product_ids'] = $batch;
-		if ($step == 'seuils')
+		if ($step == 'seuils') {
 			$updated = MMI_Product_Replenish::seuils_refresh($options);
+			$refresh = MMI_Product_Replenish::$last_refresh;
+			// Cumuls sur l'ensemble des paquets, renvoyés par le client (RM3491)
+			$refresh['updated_total'] = GETPOSTINT('acc_updated') + max(0, (int) $updated);
+			$refresh['reset_total'] = GETPOSTINT('acc_reset') + (int) $refresh['reset'];
+			$refresh['skipped_manual_total'] = GETPOSTINT('acc_skipped_manual') + (int) $refresh['skipped_manual'];
+		}
 		else
 			MMI_Product_Replenish::stats_refresh($options);
 	}
@@ -210,6 +217,7 @@ if ($action == "replenish_refresh") {
 		'size' => $size,
 		'processed' => $processed,
 		'updated' => $updated, // nb produits écrits (étape seuils), null pour stats
+		'refresh' => $refresh, // détail seuils_refresh + cumuls (RM3491)
 		'total' => $total,
 		'next_offset' => $done ? null : $next,
 		'done' => $done,
