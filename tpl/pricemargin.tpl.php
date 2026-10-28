@@ -266,7 +266,6 @@ $margin_calc_type = $object->array_options['options_margin_calc_type'];
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
 $product_fourn_static = new ProductFournisseur($db);
 $product_fourn_list = $product_fourn_static->list_product_fournisseur_price($object->id, '', '');
-//var_dump($product_fourn_list);
 $fourn_list = [];
 $product_fourn = NULL;
 $product_fourn_extra = NULL;
@@ -276,15 +275,12 @@ foreach($product_fourn_list as $pf) {
 		$fourn_list[$pf->fourn_id] = new Fournisseur($db);
 		$fourn_list[$pf->fourn_id]->fetch($pf->fourn_id);
 	}
-	//var_dump($product_fourn);
 	$sql = 'SELECT *';
 	$sql .= " FROM ".MAIN_DB_PREFIX."product_fournisseur_price_extrafields";
 	$sql .= " WHERE fk_object = ".((int) $pf->product_fourn_price_id);
 	$q = $db->query($sql);
 	if($pfe=$db->fetch_object($q))
 		$product_fourn_list_extra[$pf->product_fourn_price_id] = $pfe;
-	//var_dump($product_fourn_extra);
-	//var_dump($object->array_options['options_fk_soc_fournisseur'], $pf);
 	if (!empty($product_fourn))
 		continue;
 	if (!empty($object->array_options['options_fk_soc_fournisseur']) && $pf->fourn_id != $object->array_options['options_fk_soc_fournisseur'])
@@ -295,7 +291,6 @@ foreach($product_fourn_list as $pf) {
 }
 $revient = $product_fourn->fourn_unitprice*(1-$product_fourn->fourn_remise_percent/100) + $product_fourn_list_extra[$product_fourn->product_fourn_price_id]->shipping_price;
 
-//var_dump($object);
 ?>
 <h3>Assistance calcul de marge</h3>
 <form method="POST" action="">

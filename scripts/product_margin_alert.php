@@ -36,7 +36,6 @@ while($r=$q->fetch_assoc()) {
 	$email_msg .= '* '.$r['ref'].' - '.$r['label'].' - Vente : '.$r['sell_price'].' - Achat : '.$r['fourn_price'].' - Coeff : '.$r['coeff_marge']."\n";
 }
 
-//var_dump($msg);
 
 mail($email_to, $email_subject, $email_msg, $email_headers);
 

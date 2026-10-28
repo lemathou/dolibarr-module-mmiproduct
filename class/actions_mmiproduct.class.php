@@ -70,7 +70,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 		$error = 0; // Error counter
         $this->resprints = '';
 
-        //var_dump($parameters); die();
 		if ($this->in_context($parameters, 'productservicelist')) {
 			$this->resprints .= '<option value="margin_config">'.$langs->trans("MMIProductPriceMarginConfig").'</option>';
 			//$this->resprints .= '<option value="margin_config">'.$langs->trans("MMIProductPriceMarginConfig").'</option>';
@@ -171,17 +170,13 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 
 		if ($this->in_context($parameters, 'productservicelist')) {
 			if ($action == 'confirm_margin_config') {
-                //var_dump($_POST);
                 // Default Category
                 $list_categorie_default = GETPOST('search_category_product_list', 'array');
                 $fk_categorie_default = !empty($list_categorie_default) ?$list_categorie_default[0] :NULL;
-                //var_dump($list_categorie_default, $fk_categorie_default); die();
                 $cat = new Categorie($this->db);
                 if (!empty($fk_categorie_default))
                     $cat->fetch($fk_categorie_default);
                 //$cat->fetch_optionals();
-                //var_dump($cat);
-                //var_dump($_POST); die();
                 $fk_soc_fournisseur = GETPOST('fk_soc_fournisseur');
                 $fourn = new Fournisseur($this->db);
                 if (!empty($fk_soc_fournisseur))
@@ -222,7 +217,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                             $ret = MMIProduct_Price::product_calc_type_update($object, $margin_calc_type, $options);
                             if ($ret < 0) {
                                 if (!empty($errors = MMIProduct_Price::_errors_get())) {
-                                    //var_dump($errors);
                                     $error += MMIProduct_Price::_error_get();
                                     $this->errors = array_merge($this->errors, $errors);
                                 }
@@ -259,7 +253,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 		$print = '';
 
 		if ($this->in_context($parameters, 'supplier_proposalcard') && $action=='products_add') {
-            //var_dump($object);
 
             $sql = 'SELECT p.label, p.description, p.price_base_type, p.fk_unit, pf.*
                 FROM '.MAIN_DB_PREFIX.'product AS p
@@ -268,7 +261,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
                 WHERE pf.fk_soc='.$object->socid;
             $q = $this->db->query($sql);
             while($row=$q->fetch_assoc()) {
-                //var_dump($row);
                 $object->addline($row['description'], $row['unitprice'], 1, $row['tva_tx'], $row['txlocaltax1_tx'], $row['txlocaltax2_tx'], $row['fk_product'], $row['remise_percent'], $row['price_base_type'], 0, 0, $type = 0, -1, 0, 0, $row['rowid'], 0, '', 0, $row['ref_fourn'], $row['fk_unit']);
             }
         }
@@ -383,7 +375,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $print = '';
     
         if ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
             if ($this->categ)
 				$print = ' LEFT JOIN '.MAIN_DB_PREFIX.'categorie_product as cp ON cp.fk_product = p.rowid';
             if ($this->fk_supplier)
@@ -415,7 +406,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
 				$print = ' AND pfp.fk_soc='.$this->fk_supplier;
         }
         elseif ($this->in_context($parameters, 'stockatdate')) {
-            //var_dump($parameters);
             $notnull = GETPOST('notnull');
             if ($notnull)
                 $print .= ' AND (ps.rowid IS NOT NULL AND ps.reel <> 0)';
@@ -464,18 +454,15 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $print = '';
 
         if ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
             $print .= '<div class="inlin-block">Catégorie <input type="text" name="categ" value="'.$this->categ.'" /></div>';
         }
         elseif ($this->in_context($parameters, 'stockatdate')) {
-            //var_dump($parameters);
             $notnull = GETPOST('notnull');
             $print .= '<div class="inlin-block"><b>N\'afficher que les produits avec du stock actuellement</b> : <input type="checkbox" name="notnull" value="1"'.($notnull ?' checked' :'').' /></div>';
             $notnullatdate = GETPOST('notnullatdate');
             $print .= '<div class="inlin-block"><b>N\'afficher que les produits avec du stock à date</b> : <input type="checkbox" name="notnullatdate" value="1"'.($notnullatdate ?' checked' :'').' /></div>';
         }
         elseif ($this->in_context($parameters, 'productservicelist')) {
-            //var_dump($parameters);
             if (getDolGlobalInt('MMI_PRODUCT_CATSEARCH_SUBCAT')) {
                 $includeinsubcat = GETPOST('includeinsubcat');
                 $print .= '<input type="checkbox" id="includeinsubcat" name="includeinsubcat" value="1"'.($includeinsubcat ?' checked' :'').' /> <label for="includeinsubcat">Inclure sous-catégories</label>';
@@ -503,12 +490,10 @@ class ActionsMMIProduct extends MMI_Actions_1_0
         $print = '';
     
         if ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
             if ($this->categ)
                 $print .= '&categ='.$this->categ;
         }
         elseif ($this->in_context($parameters, 'stockatdate')) {
-            //var_dump($parameters);
             $notnull = GETPOST('notnull');
             if ($notnull)
                 $print .= '&notnull=1';
@@ -567,7 +552,6 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     
         if ($this->in_context($parameters, 'stockmovementlist')) {
 			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
-				//var_dump($parameters);
 				$print = '<td class="liste_titre">&nbsp;</td>';
 			}
         }
@@ -605,12 +589,10 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     
         if ($this->in_context($parameters, 'stockmovementlist')) {
 			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
-				//var_dump($parameters);
 				$print = '<td>Stock réel</td>';
 			}
         }
         elseif ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
 			if ($this->fk_supplier) {
             	$print = '<td>Emballage</td>';
 			}
@@ -640,15 +622,12 @@ class ActionsMMIProduct extends MMI_Actions_1_0
     
         if ($this->in_context($parameters, 'stockmovementlist')) {
 			if ($conf->global->MMIPRODUCT_STOCKMOVEMENTLIST_STOCK) {
-				//var_dump($parameters);
 				$obj = $parameters['obj'];
-				//var_dump($obj->entrepot_id, $obj->rowid, $obj->batch, $obj); die();
 				$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch] += $obj->qty;
 				$print = '<td class="right">'.$stocks[$obj->entrepot_id][$obj->rowid][$obj->batch].'</td>';
 			}
         }
         elseif ($this->in_context($parameters, 'stockreplenishlist')) {
-            //var_dump($parameters);
 			if ($this->fk_supplier) {
 				$objp = $parameters['objp'];
 				$print = '<td class="right">'.$objp->packaging.'</td>';

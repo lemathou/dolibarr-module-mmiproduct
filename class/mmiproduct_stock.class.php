@@ -45,7 +45,6 @@ public function stock_calculate($fk_product)
 	//echo '<pre>'.$sql.'</pre>'; die();
 	$q = $this->db->query($sql);
 	foreach($q as $row) {
-		//var_dump($row);
 		// @todo choper le premier emplacement de stock qui vient !
 		if (empty($fk_product_stock)) {
 			$fk_product_stock = $row['rowid'];
@@ -64,7 +63,6 @@ public function stock_calculate($fk_product)
 	}
 	if (empty($fk_entrepot))
 		$fk_entrepot = 1;
-	//var_dump($fk_entrepot);
 	//trigger_error($fk_entrepot);
 
 	// sync associated product_stock after update
@@ -88,7 +86,6 @@ public function stock_calculate($fk_product)
 
 	// Le plus petit
 	foreach($q as $row) {
-		//var_dump($row);
 		//trigger_error($row);
 		// Prise en compte du stock réservé (commandes en cours) par produit
 		$row['qty_reserved'] = $this->reserved_qty($row['rowid']);
@@ -176,7 +173,6 @@ public function reserved_qty($fk_product)
 		$qty -= $row['qty'] ?: 0;
 	}
 
-	//var_dump($row);
 
 	return $qty;
 }
