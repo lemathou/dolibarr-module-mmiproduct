@@ -14,6 +14,8 @@ $arrayofparameters = array(
 	// Supplier price
 	'MMI_PRODUCT_SUPPLIER_UPDATE'=>array('type'=>'separator', 'enabled'=>1),
 	'MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE'=>array('type'=>'yesno', 'enabled'=>1),
+	// Destinataire des alertes de remplacement du fournisseur par défaut (défaut : MMIPRODUCT_ALERT_EMAIL_TO) — RM3233
+	'MMIPRODUCT_DEFAULT_SUPPLIER_ALERT_EMAIL_TO'=>array('type'=>'string', 'enabled'=>1),
 
 	// Recherche
 	'MAIN_SEARCH_PRODUCT'=>array('type'=>'separator', 'enabled'=>1),
@@ -28,6 +30,14 @@ $arrayofparameters = array(
 	'MMI_PRODUCT_REPLENISH_WARN_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_ALERT_SEUIL'=>array('type'=>'int','enabled'=>1),
 	'MMI_PRODUCT_REPLENISH_AUTOCALC'=>array('type'=>'int','enabled'=>1),
+	// Calcul des seuils (RM3491) : plancher (jours) du dénominateur de la demande journalière (défaut 30) ;
+	// remise à zéro des seuils des produits sans vente sur la fenêtre (défaut oui, sautée si stats périmées)
+	'MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS'=>array('type'=>'int','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_RESET_NO_SALES'=>array('type'=>'yesno','enabled'=>1),
+	// Colonnes optionnelles de la page de réappro du coeur (/product/stock/replenish.php) — RM2865
+	'MMIPRODUCT_REPLENISH_HIDE_DESIREDSTOCK'=>array('type'=>'yesno','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_HIDE_STOCKLIMIT'=>array('type'=>'yesno','enabled'=>1),
+	'MMIPRODUCT_REPLENISH_SHOW_EAN'=>array('type'=>'yesno','enabled'=>1),
 
 	'MMI_PROPAL_CLONE_USE_NEW_COST_PRICE'=>array('type'=>'yesno','enabled'=>1),
 	'MMIPRODUCT_STOCK_COMPOSED_AUTO'=>array('type'=>'yesno','enabled'=>1),

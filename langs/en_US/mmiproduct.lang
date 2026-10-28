@@ -42,7 +42,7 @@ MMIProductAbout = About MMIProduct
 MMIProductAboutPage = MMIProduct about page
 
 #
-# Sample page
+# Extrafields (cost build-up)
 #
 MyPageName = My page name
 
@@ -51,3 +51,19 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE = Automatic default supplier update (only changes when the default supplier has no purchase price left)
+MMIPRODUCT_DEFAULT_SUPPLIER_ALERT_EMAIL_TO = Recipient email for default supplier replacement alerts (empty = product alerts email)
+
+MMIProductSwitchSupplier = Switch products
+MMIProductSwitchSupplierTitle = Switch products to another supplier
+MMIProductSwitchSupplierTarget = Target supplier
+MMIProductSwitchSupplierDeactivate = Disable this supplier if it has no product left after the switch
+MMIProductSwitchSupplierConfirm = Buying prices of this supplier (%s line(s), %s product(s), including %s product(s) where it is the default supplier) will be moved to the selected supplier, supplier reference included. History (orders, invoices) stays on this thirdparty, which is not deleted.
+
+Extrafield_product_logistic_cost_price = Logistic costs
+Extrafield_product_misc_cost_price = Miscellaneous costs
+Extrafield_product_packaging_cost_price = Packaging costs (product)
+Extrafield_product_shipping_cost_price = Shipping costs (product)
+Extrafield_product_supplier_shipping_price = Supplier shipping costs (manual)
+Extrafield_commande_fournisseur_shipping_price = Shipping costs (supplier order)

@@ -3,6 +3,7 @@
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 dol_include_once('custom/mmicommon/class/mmi_generic.class.php');
+require_once __DIR__.'/mmi_replenish_query.class.php';
 
 class MMI_Product_Replenish extends MMI_Generic
 {
@@ -37,184 +38,90 @@ public $output = '';
 /** @var int Code d'erreur pour le cron Dolibarr */
 public $error = 0;
 
+/** @var array Détail du dernier seuils_refresh() : updated, reset, skipped_manual, skipped_null, computed, stale, stats_last_date */
+public static $last_refresh = [];
+
+/**
+ * Plancher (jours) du dénominateur de la demande journalière — constante
+ * MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS, défaut 30 (RM3491).
+ *
+ * @return int
+ */
+public static function minStockDays()
+{
+	$v = getDolGlobalInt('MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS', mmi_replenish_query::DEFAULT_MIN_STOCK_DAYS);
+	return $v > 0 ? $v : mmi_replenish_query::DEFAULT_MIN_STOCK_DAYS;
+}
+
+/**
+ * Date (Y-m-d) de la dernière journée de ventes connue des stats (llx_product_stats),
+ * null si la table est vide. C'est la fraîcheur réelle du calcul : si le cron ne tourne
+ * pas, cette date recule et la fenêtre d'analyse finit par ne plus rien contenir (RM3491).
+ *
+ * @return string|null
+ */
+public static function statsLastDate()
+{
+	global $db;
+	$resql = $db->query('SELECT MAX(`date`) AS d FROM '.MAIN_DB_PREFIX.'product_stats');
+	if (!$resql)
+		return null;
+	$row = $db->fetch_object($resql);
+	$db->free($resql);
+	return (!empty($row->d) && $row->d !== '0000-00-00') ? $row->d : null;
+}
+
+/**
+ * Les stats sont-elles périmées (plus de $max_age_days jours, ou absentes) ?
+ *
+ * @param int $max_age_days
+ * @return bool
+ */
+public static function statsAreStale($max_age_days = 7)
+{
+	$d = self::statsLastDate();
+	if ($d === null)
+		return true;
+	return (strtotime($d) < strtotime('-'.(int) $max_age_days.' days'));
+}
+
 /**
  * Construit la requête EOQ de calcul des seuils de réappro
  * (stock de sécurité, point de commande, quantité à commander) par produit.
  *
- * Partagée entre la page d'analyse (replenish_fourn.php) et le recalcul
- * automatique (seuils_refresh / cron) pour garantir un calcul identique.
+ * Partagée entre la page d'analyse (replenish_fourn.php), le recalcul
+ * automatique (seuils_refresh / cron) et l'audit (scripts/replenish_audit.php)
+ * pour garantir un calcul identique. Résout les constantes Dolibarr puis délègue
+ * la construction SQL à mmi_replenish_query (testable sans Dolibarr).
  *
- * @param array $options  analyse_days_nb, filter_supplier_id, filter_product_pro, fk_product_categorie
+ * @param array $options  analyse_days_nb, filter_supplier_id, filter_product_pro,
+ *                        fk_product_categorie, product_ids, min_stock_days (défaut : constante)
  * @return string         Requête SQL
  */
 public static function buildSeuilsQuery($options = [])
 {
-	$analyse_days_nb = !empty($options['analyse_days_nb']) ? (int) $options['analyse_days_nb'] : self::DEFAULT_ANALYSE_DAYS;
-	$filter_supplier_id = !empty($options['filter_supplier_id']) ? (int) $options['filter_supplier_id'] : 0;
-	$filter_product_pro = !empty($options['filter_product_pro']);
-	$fk_product_categorie = !empty($options['fk_product_categorie']) ? (int) $options['fk_product_categorie'] : 0;
-	// Traitement par paquets : restreint le calcul à une liste d'IDs produit (batch AJAX)
-	$product_ids = self::sanitizeProductIds($options['product_ids'] ?? null);
+	global $db;
 
-	// Niveau de service (coeff Z) différencié par segment produit (RM1854).
-	// Le produit prend le Z LE PLUS ÉLEVÉ applicable (le plus prudent) parmi :
-	// son Z propre (extrafield), le Z du segment PRO, le Z du segment StockCheck ; défaut 1.28 (90%).
-	$seg_pro_cat = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
-	$seg_sc_cat = getDolGlobalInt('MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY');
-	if (!$seg_sc_cat) $seg_sc_cat = 7; // défaut connu : catégorie « StockCheck »
-	$pro_sl = (float) getDolGlobalString('MMIPRODUCT_PRO_SERVICE_LEVEL');
-	if ($pro_sl <= 0) $pro_sl = 1.65; // 95%
-	$sc_sl = (float) getDolGlobalString('MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL');
-	if ($sc_sl <= 0) $sc_sl = 1.96; // 97.5%
-	// Liste des catégories-segment à détecter (sous-requête seg, 1 ligne/produit -> pas de multiplication des lignes agrégées)
-	$seg_cats = array_values(array_unique(array_filter([$seg_pro_cat, $seg_sc_cat])));
-	$z_expr = 'GREATEST('
-		.'IF (p2.replenish_service_level>0, p2.replenish_service_level, 1.28)'
-		.($seg_pro_cat ? ', IF (COALESCE(seg.is_pro, 0)=1, '.$pro_sl.', 0)' : '')
-		.($seg_sc_cat ? ', IF (COALESCE(seg.is_sc, 0)=1, '.$sc_sl.', 0)' : '')
-		.')';
+	$options = is_array($options) ? $options : [];
+	$options['prefix'] = MAIN_DB_PREFIX;
+	if (!isset($options['min_stock_days']))
+		$options['min_stock_days'] = self::minStockDays();
+	// Niveau de service (coeff Z) différencié par segment produit (RM1854)
+	$options['seg_pro_cat'] = getDolGlobalInt('MMIPRODUCT_PRO_PRODUCT_CATEGORY');
+	$options['seg_sc_cat'] = getDolGlobalInt('MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY');
+	$options['pro_sl'] = (float) getDolGlobalString('MMIPRODUCT_PRO_SERVICE_LEVEL');
+	$options['sc_sl'] = (float) getDolGlobalString('MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL');
+	// Fenêtre par produit (extrafield replenish_analysis_days) : le calendrier généré doit couvrir la plus grande
+	if (!isset($options['max_window_days'])) {
+		$resql = $db->query('SELECT MAX(replenish_analysis_days) AS m FROM '.MAIN_DB_PREFIX.'product_extrafields');
+		if ($resql) {
+			$row = $db->fetch_object($resql);
+			$options['max_window_days'] = (int) $row->m;
+			$db->free($resql);
+		}
+	}
 
-	// Génération des jours de la fenêtre d'analyse
-	$sql_select_days = 'SELECT 0 n';
-	for ($i = 1; $i <= $analyse_days_nb; $i++)
-		$sql_select_days .= ' UNION ALL SELECT '.$i;
-
-	$sql = 'SELECT
-		p.rowid AS product_id,
-		p.ref,
-		p.label,
-		p2.supplier_ref,
-		p2.fk_soc_fournisseur AS supplier_id,
-		p2.replenish_batch_ddm_delay,
-		p2.replenish_service_level,
-		p2.replenish_analysis_days,
-		p2.replenish_safety_stock,
-		p2.replenish_reorder_point,
-		p2.replenish_manual,
-
-		dstock.days AS stock_days,
-
-		SUM(COALESCE(ds.total_qty, 0)) AS cmd_qty,
-		SUM(COALESCE(ds.total_nb, 0)) AS cmd_nb,
-		SUM(COALESCE(ds.total_qty, 0)) / dstock.days AS d,
-
-		STDDEV_POP(COALESCE(ds.total_qty, 0)) AS sigma_d,
-
-		COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days AS freq,
-
-		STDDEV_POP(COALESCE(ds.total_qty, 0))
-			* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-			AS sigma_corrected,
-
-		IF (s2.reception_delay>0, s2.reception_delay, 10) AS L,
-		IF (s2.replenish_delay>0, s2.replenish_delay, 28) AS T,
-		'.$z_expr.' AS Z,
-
-		ROUND(
-			'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-			(
-				STDDEV_POP(COALESCE(ds.total_qty, 0))
-				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-			)
-		, 2) AS safety_stock,
-
-		ROUND(
-			(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * IF (s2.reception_delay>0, s2.reception_delay, 10)
-			+
-			'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-			(
-				STDDEV_POP(COALESCE(ds.total_qty, 0))
-				* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-			)
-		, 2) AS reorder_point,
-
-		COALESCE(ps.reel, 0) AS stock_current,
-
-		ROUND(
-			(
-				(SUM(COALESCE(ds.total_qty, 0)) / dstock.days) * (IF (s2.reception_delay>0, s2.reception_delay, 10) + IF (s2.replenish_delay>0, s2.replenish_delay, 28))
-				+
-				'.$z_expr.' * SQRT(IF (s2.reception_delay>0, s2.reception_delay, 10)) *
-				(
-					STDDEV_POP(COALESCE(ds.total_qty, 0))
-					* SQRT(COUNT(CASE WHEN COALESCE(ds.total_qty, 0) > 0 THEN 1 END) / dstock.days)
-				)
-			),
-			0
-		) AS order_qty,
-
-		IF(pfp.packaging>0, pfp.packaging, 1) AS packaging
-
-	FROM '.MAIN_DB_PREFIX.'product AS p
-
-	LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields AS p2
-		ON p2.fk_object=p.rowid'
-
-	.($filter_product_pro ?
-	' LEFT JOIN '.MAIN_DB_PREFIX.'categorie_product AS kp
-		ON kp.fk_product=p2.fk_object'
-	:'')
-
-	.' LEFT JOIN '.MAIN_DB_PREFIX.'product_stock AS ps
-		ON ps.fk_product = p.rowid
-
-	LEFT JOIN '.MAIN_DB_PREFIX.'societe AS s
-		ON s.rowid=p2.fk_soc_fournisseur
-
-	LEFT JOIN '.MAIN_DB_PREFIX.'product_fournisseur_price AS pfp
-		ON pfp.fk_product=p.rowid AND pfp.fk_soc=s.rowid
-
-	LEFT JOIN '.MAIN_DB_PREFIX.'societe_extrafields AS s2
-		ON s2.fk_object=s.rowid
-
-	CROSS JOIN (
-		SELECT DATE_SUB(CURDATE(), INTERVAL n DAY) AS day
-		FROM (
-		   '.$sql_select_days.'
-		) AS days
-	) AS d
-
-	LEFT JOIN (
-		SELECT
-			c.`date` as day,
-			c.fk_product,
-			c.order_nb AS total_nb,
-			c.order_qty AS total_qty
-		FROM '.MAIN_DB_PREFIX.'product_stats c
-		WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
-	) AS ds
-	ON ds.day = d.day AND ds.fk_product = p.rowid
-
-	LEFT JOIN (
-		SELECT COUNT(*) AS days, c.fk_product
-		FROM '.MAIN_DB_PREFIX.'product_stock_stats c
-		WHERE c.`date` >= DATE_SUB(CURDATE(), INTERVAL '.$analyse_days_nb.' DAY)
-			AND c.stock_phy>0
-		GROUP BY c.fk_product
-	) AS dstock
-	ON dstock.fk_product=p.rowid'
-
-	.($seg_cats ? '
-	LEFT JOIN (
-		SELECT fk_product,
-			MAX(CASE WHEN fk_categorie='.$seg_pro_cat.' THEN 1 ELSE 0 END) AS is_pro,
-			MAX(CASE WHEN fk_categorie='.$seg_sc_cat.' THEN 1 ELSE 0 END) AS is_sc
-		FROM '.MAIN_DB_PREFIX.'categorie_product
-		WHERE fk_categorie IN ('.implode(',', $seg_cats).')
-		GROUP BY fk_product
-	) AS seg
-	ON seg.fk_product=p.rowid' : '')
-
-	.' WHERE p.fk_product_type=0'
-	.($filter_supplier_id ? ' AND p2.fk_soc_fournisseur='.$filter_supplier_id :'')
-	.($filter_product_pro ? ' AND kp.fk_categorie='.$fk_product_categorie :'')
-	.($product_ids !== null ? ' AND p.rowid IN ('.implode(',', $product_ids).')' :'')
-
-	.' GROUP BY p.rowid
-
-	HAVING SUM(COALESCE(ds.total_qty, 0)) > 0';
-
-	return $sql;
+	return mmi_replenish_query::build($options);
 }
 
 /**
@@ -225,17 +132,7 @@ public static function buildSeuilsQuery($options = [])
  */
 public static function sanitizeProductIds($ids)
 {
-	if ($ids === null)
-		return null;
-	if (!is_array($ids))
-		$ids = [$ids];
-	$out = [];
-	foreach ($ids as $id) {
-		$id = (int) $id;
-		if ($id > 0)
-			$out[$id] = $id;
-	}
-	return array_values($out);
+	return mmi_replenish_query::sanitizeProductIds($ids);
 }
 
 /**
@@ -283,15 +180,31 @@ public static function getProductIdsToProcess($options = [])
  * Recalcule et écrit les seuils de réappro (seuil d'alerte = point de commande,
  * stock désiré = quantité max) sur les produits, à partir du calcul EOQ.
  *
- * Les produits marqués « ajustés manuellement » (extrafield replenish_manual)
- * sont **exclus** : leurs seuils ne sont jamais écrasés par le recalcul auto.
+ * - Les produits marqués « ajustés manuellement » (extrafield replenish_manual)
+ *   sont exclus : leurs seuils ne sont jamais écrasés (ni remis à zéro).
+ * - Une ligne dont la quantité est NULL (calcul impossible) est ignorée et comptée,
+ *   au lieu d'être écrite en 0 (RM3491).
+ * - Les produits candidats SANS vente sur leur fenêtre (absents du calcul) sont remis
+ *   à zéro (seuil, stock désiré, extrafields calculés), hors override manuel, si la
+ *   constante MMIPRODUCT_REPLENISH_RESET_NO_SALES n'est pas à 0 (RM3491 : 382 produits
+ *   sans vente gardaient des seuils > 0 et encombraient la réappro). Garde-fou : la remise
+ *   à zéro est SAUTÉE quand les stats sont périmées (> 7 j), sinon des stats figées
+ *   videraient tous les seuils.
+ * Le détail (updated, reset, skipped_manual, skipped_null, computed, stale) est dans
+ * self::$last_refresh.
  *
- * @param array $options  Voir buildSeuilsQuery() (filtre fournisseur, fenêtre, etc.)
+ * @param array $options  Voir buildSeuilsQuery() (filtre fournisseur, fenêtre, product_ids…)
  * @return int            Nombre de produits mis à jour (-1 si erreur SQL)
  */
 public static function seuils_refresh($options = [])
 {
 	global $db;
+
+	$options = is_array($options) ? $options : [];
+	$stats_last = self::statsLastDate();
+	$stale = self::statsAreStale();
+	self::$last_refresh = ['updated'=>0, 'reset'=>0, 'skipped_manual'=>0, 'skipped_null'=>0, 'computed'=>0,
+		'stale'=>$stale, 'stats_last_date'=>$stats_last, 'reset_enabled'=>(getDolGlobalInt('MMIPRODUCT_REPLENISH_RESET_NO_SALES', 1) ? 1 : 0)];
 
 	$sql = self::buildSeuilsQuery($options);
 	$resql = $db->query($sql);
@@ -300,30 +213,59 @@ public static function seuils_refresh($options = [])
 		return -1;
 	}
 
-	$n = 0;
-	$skipped = 0;
+	$computed_ids = [];
 	while ($row = $db->fetch_object($resql)) {
+		self::$last_refresh['computed']++;
+		$computed_ids[] = (int) $row->product_id;
+
 		// Override manuel : on ne touche pas aux seuils de ce produit
 		if (!empty($row->replenish_manual)) {
-			$skipped++;
+			self::$last_refresh['skipped_manual']++;
+			continue;
+		}
+		// Calcul impossible : ne jamais écrire 0 par accident
+		if ($row->order_qty === null || $row->reorder_point === null) {
+			self::$last_refresh['skipped_null']++;
+			dol_syslog(__METHOD__.': produit '.$row->product_id.' ('.$row->ref.') quantité NULL, ignoré', LOG_WARNING);
 			continue;
 		}
 
+		// Stock désiré jamais inférieur au point de commande (sinon la page cœur affiche un
+		// « désiré » à 0 pour un produit dont le seuil vaut 1 — 60 cas constatés, RM3491)
+		$seuil = (int) ceil($row->reorder_point);
+		$desired = max((int) ceil($row->order_qty), $seuil);
 		$usql = 'UPDATE '.MAIN_DB_PREFIX.'product AS p'
 			.' INNER JOIN '.MAIN_DB_PREFIX.'product_extrafields AS p2 ON p2.fk_object=p.rowid'
 			.' SET'
-			.' p.seuil_stock_alerte='.(int) ceil($row->reorder_point)
-			.', p.desiredstock='.(int) ceil($row->order_qty)
+			.' p.seuil_stock_alerte='.$seuil
+			.', p.desiredstock='.$desired
 			.', p2.replenish_safety_stock='.(float) $row->safety_stock
 			.', p2.replenish_reorder_point='.(float) $row->reorder_point
 			.' WHERE p.rowid='.(int) $row->product_id;
 		if ($db->query($usql))
-			$n++;
+			self::$last_refresh['updated']++;
 	}
 	$db->free($resql);
 
-	dol_syslog(__METHOD__.': '.$n.' produits mis à jour, '.$skipped.' exclus (override manuel)', LOG_INFO);
-	return $n;
+	// Remise à zéro des produits sans vente sur la fenêtre (hors override manuel)
+	if (self::$last_refresh['reset_enabled']) {
+		if ($stale) {
+			dol_syslog(__METHOD__.': stats périmées ('.($stats_last ?: 'aucune').'), remise à zéro des produits sans vente SAUTÉE', LOG_WARNING);
+		}
+		else {
+			$options['prefix'] = MAIN_DB_PREFIX;
+			$rsql = mmi_replenish_query::buildResetQuery($options, $computed_ids);
+			$rres = $db->query($rsql);
+			if ($rres)
+				self::$last_refresh['reset'] = (int) $db->affected_rows($rres);
+			else
+				dol_syslog(__METHOD__.' SQL error (reset): '.$db->lasterror(), LOG_ERR);
+		}
+	}
+
+	dol_syslog(__METHOD__.': '.self::$last_refresh['updated'].' produits mis à jour, '.self::$last_refresh['reset'].' remis à zéro, '
+		.self::$last_refresh['skipped_manual'].' exclus (override manuel), '.self::$last_refresh['skipped_null'].' ignorés (NULL)', LOG_INFO);
+	return self::$last_refresh['updated'];
 }
 
 public static function supplier_infos()
@@ -683,7 +625,9 @@ public function cronReplenishRefresh($params = '', $user = null)
 		return -1;
 	}
 
-	$this->output = 'Réappro : stats rafraîchies et seuils recalculés pour '.$n.' produit(s).';
+	$r = self::$last_refresh;
+	$this->output = 'Réappro : stats rafraîchies (ventes jusqu\'au '.($r['stats_last_date'] ?: '?').'), seuils recalculés pour '.$n.' produit(s), '
+		.(int) $r['reset'].' produit(s) sans vente remis à zéro, '.(int) $r['skipped_manual'].' exclu(s) (manuel), '.(int) $r['skipped_null'].' ignoré(s).';
 	dol_syslog(__METHOD__.' done: '.$n.' produits', LOG_INFO);
 	return 0;
 }
