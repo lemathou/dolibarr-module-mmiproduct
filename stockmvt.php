@@ -51,7 +51,6 @@ if ($type=="all") {
 			OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
 
 	echo '<pre>'.$sql.'</pre>';
-	//var_dump($db);
 }
 elseif ($type=="simple") {
 	// Produits sans lots
@@ -70,7 +69,6 @@ elseif ($type=="simple") {
 			OR (s.reel IS NOT NULL AND SUM(m.value) IS NOT NULL AND s.reel != SUM(m.value));';
 
 	echo '<pre>'.$sql.'</pre>';
-	//var_dump($db);
 }
 elseif ($type=="batch") {
 	// Produits avec lots
@@ -93,17 +91,14 @@ elseif ($type=="batch") {
 			OR (ls.qty IS NOT NULL AND SUM(m.value) IS NOT NULL AND ls.qty != SUM(m.value));';
 
 	echo '<pre>'.$sql.'</pre>';
-	//var_dump($db);
 }
 else {
 	die();
 }
 
 $q = $db->query($sql);
-var_dump($q);
 $rec = $l = [];
 while($row=$q->fetch_assoc()) {
-	echo '<hr />'; var_dump($row);
 	$nb = (($row['reel'] ?$row['reel'] :0)-($row['mvt_reel'] ?$row['mvt_reel'] :0));
 	if ($nb==0)
 		continue;

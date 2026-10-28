@@ -117,7 +117,6 @@ public static function product_price_update(Product $object, $cascade=true)
 
 	$db = static::$db;
 	$margin_calc_type = $object->array_options['options_margin_calc_type'];
-	//var_dump($object);
 
 	if ($margin_calc_type == 'category_margin') {
 		if (!empty($object->array_options['options_fk_categorie_default'])) {
@@ -270,7 +269,6 @@ public static function product_price_update(Product $object, $cascade=true)
 
 			return -1;
 		}
-		//var_dump($pcp_list);
 
 		//$pcp_f_nb = count($pcp_values_f);
 		$pcp_values_ok = $pcp_values_f;

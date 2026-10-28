@@ -235,7 +235,6 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cd.qty > 0, cd.qty, 0)) cmd_qty
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
 		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
@@ -254,7 +253,6 @@ $sql = 'SELECT ps.fk_soc, COUNT(DISTINCT c.rowid) as cmd_encours_nb
 		AND (c2.rowid IS NULL OR c2.expe_ok=1)
 	GROUP BY ps.fk_soc';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	// Garde : ne jamais créer une entrée fournisseur absente de la liste construite
 	// plus haut (sinon carte vide affichée pour un fournisseur sans produit — RM1566)
@@ -275,7 +273,6 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(cdd.qty > 0, IF(cdd.qty>=cd.qty, cd.qt
 		AND c.fk_statut IN ('.implode(',', [Commande::STATUS_VALIDATED, Commande::STATUS_SHIPMENTONPROCESS]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
 		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
@@ -293,7 +290,6 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scd.qty > 0, scd.qty, 0)) fcmd_qty
 		AND sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
 		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
@@ -307,7 +303,6 @@ $sql = 'SELECT sc.fk_soc,
 	WHERE sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_DRAFT, CommandeFournisseur::STATUS_VALIDATED, CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
 	GROUP BY sc.fk_soc';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	// Garde : cette requête ne filtre pas sur les produits, elle peut donc remonter
 	// un fournisseur absent de la liste affichée (RM1566)
@@ -331,7 +326,6 @@ $sql = 'SELECT ps.fk_soc, p.rowid, SUM(IF(scdd.qty > 0, IF(scdd.qty>=scd.qty, sc
 		AND sc.fk_statut IN ('.implode(',', [CommandeFournisseur::STATUS_ACCEPTED, CommandeFournisseur::STATUS_ORDERSENT, CommandeFournisseur::STATUS_RECEIVED_PARTIALLY]).')
 	GROUP BY p.rowid';
 $q = $db->query($sql);
-//var_dump($db);
 while($row=$q->fetch_assoc()) {
 	if (isset($l[$row['fk_soc']]['products'][$row['rowid']]))
 		$l[$row['fk_soc']]['products'][$row['rowid']] = array_merge($l[$row['fk_soc']]['products'][$row['rowid']], $row);
@@ -340,7 +334,6 @@ while($row=$q->fetch_assoc()) {
 // @todo calculer à la mano !
 
 foreach($l as &$row) {
-	//var_dump($row);
 	foreach($row['products'] as &$rowp) {
 		// Stock projeté = stock physique − (commandes client restant à expédier) + (commandes fournisseur restant à recevoir)
 		$rowp['stock'] = $rowp['qty'] - $rowp['cmd_qty'] + $rowp['cmd_expe_qty'] + $rowp['fcmd_qty'] - $rowp['fcmd_recpt_qty'];

@@ -30,8 +30,6 @@ while($r=$q->fetch_assoc()) {
 	$r['namee'] = $se;
 	$s_list[$r['rowid']] = $r;
 }
-var_dump($s_list_url);
-//var_dump($s_list);
 
 $domains = [];
 $l = [];
@@ -41,7 +39,6 @@ $n = 0;
 $handle = fopen('../../../documents/competitor/competitor.csv','r');
 while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 	//process
-	//var_dump($data);
 	if (empty($cols)) {
 		$cols = $data;
 		continue;
@@ -85,9 +82,7 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 		if (!empty($r[3]['host'])) {
 			$domain = $r[3]['host'];
 			if(empty($s_id = array_search($domain, $domains))) {
-				var_dump($domain);
 				if (isset($s_list_url[$domain])) {
-					var_dump($s_list_url[$domain]);
 					$s_id = $s_list_url[$domain];
 				}
 				else {
@@ -97,7 +92,6 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 						if (in_array($k, $keywords_bl))
 							unset($de[$j]);
 					}
-					var_dump($de);
 					$s = NULL;
 					foreach($s_list as $s) {
 						$ok = true;
@@ -124,11 +118,9 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 						if ($ok) {
 							break;
 						}
-						//var_dump($se);
 					}
 					// Trouvé
 					if ($ok) {
-						var_dump($s, $r[3]);
 						$s_id = $s['rowid'];
 						$sql = 'UPDATE `'.MAIN_DB_PREFIX.'societe`
 							SET `url`="'.$r[3]['scheme'].'://'.$domain.'"
@@ -144,7 +136,6 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 						echo '<pre>'.$sql.'</pre>';
 						$db->query($sql);
 						$s_id = $db->last_insert_id(MAIN_DB_PREFIX.'societe');
-						//var_dump($s_id); die();
 					}
 					// Extrafield to create
 					if (empty($ok) || empty($s_list[$s_id]['extra_rowid'])) {
@@ -161,7 +152,6 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 						echo '<pre>'.$sql.'</pre>';
 						$db->query($sql);
 					}
-					//var_dump($de);
 				}
 				$domains[$s_id] = $domain;
 			}
@@ -171,17 +161,13 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 				WHERE url="'.$r[1].'"';
 			echo '<pre>'.$sql.'</pre>';
 			$q = $db->query($sql);
-			var_dump($q);
 			if (empty($q->fetch_row())) {
 				$sql = 'INSERT INTO `'.MAIN_DB_PREFIX.'product_competitor`
 					(`fk_product`, `fk_soc`, `url`)
 					VALUES ('.$id.', '.$s_id.', "'.$r[1].'")';
 				echo '<pre>'.$sql.'</pre>';
 				$q = $db->query($sql);
-				//var_dump($db);
-				var_dump($q);
 				$url_id = $db->last_insert_id(MAIN_DB_PREFIX.'product_competitor');
-				var_dump($url_id);
 			}
 			$sql = 'SELECT 1
 				FROM `'.MAIN_DB_PREFIX.'product_competitor_price`
@@ -200,13 +186,10 @@ while ( ($data = fgetcsv($handle) ) !== FALSE ) {
 				$db->query($sql);
 			}
 		}
-		//var_dump($r); die();
 		$l[$n]['d'][$i] = $r;
 	}
 }
 sort($domains);
-var_dump($n, count($domains));
-//var_dump($domains);
 
 foreach($domains as $domain) {
 	if (!isset($s_list_url[$domain])) {

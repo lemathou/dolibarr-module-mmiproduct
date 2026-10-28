@@ -10,7 +10,6 @@ dol_include_once('custom/mmicommon/class/mmi_stats.class.php');
 // Calcul de marge
 
 if ($action=='margin_calc_update') {
-	//var_dump($_POST);
 
 	// Default Supplier price & Supplier
 	$product_fourn_price_id = GETPOST('product_fourn_price_id', 'int');
@@ -24,7 +23,6 @@ if ($action=='margin_calc_update') {
 			$product_fourn = $r;
 			$object->array_options['options_fk_soc_fournisseur'] = $product_fourn['fk_soc'];
 		}
-		//var_dump($r);
 	}
 	if (empty($product_fourn)) {
 		$object->array_options['options_fk_soc_fournisseur'] = NULL;
@@ -42,7 +40,6 @@ if ($action=='margin_calc_update') {
 	// Price update
 	$cost_price = GETPOST('revient_price');
 	$object->cost_price = $cost_price;
-	//var_dump($cost_price);
 	$sell_price = GETPOST('sell_price');
 	$price_vat_tx = 20;
 	$sell_coeff = GETPOST('sell_coeff'); // @todo
@@ -85,7 +82,6 @@ while($r=$q->fetch_assoc()) {
 	if(!isset($pcp_values_f[$r['fk_soc']]) && (!$date_min || $r['date']>=$date_min))
 		$pcp_values_f[$r['fk_soc']] = $r['price'];
 }
-//var_dump($pcp_list);
 
 $pcp_f_nb = count($pcp_values_f);
 $pcp_values_ok = $pcp_values_f;
@@ -94,7 +90,6 @@ $pcp_avg = $pcp_f_nb>0 ?round(array_sum($pcp_values_f)/$pcp_f_nb, 2) :'-';
 $pcp_median = mmi_stats::Median($pcp_values_ok);
 $pcp_quartile_25 = mmi_stats::Quartile_25($pcp_values_ok);
 $pcp_quartile_75 = mmi_stats::Quartile_75($pcp_values_ok);
-//var_dump($pcp_list);
 
 // Prix fournisseur
 $pfp_list = [];
@@ -106,7 +101,6 @@ $sql = 'SELECT pfp.*, s.nom, s2.margin_min_coeff
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$pfp_list[$r['rowid']] = $r;
-//var_dump($pcp_list);
 
 // Catégories
 $categ_list = [];

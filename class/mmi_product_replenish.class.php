@@ -333,7 +333,6 @@ public static function conso_refresh()
 		.'    AND DATEDIFF (c.date_commande, NOW())<-'.(365)
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '=2', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -342,7 +341,6 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 	
 	// Année avant période après (pour projection)
@@ -351,7 +349,6 @@ public static function conso_refresh()
 		.'    AND DATEDIFF (c.date_commande, NOW())<-'.(365-$delai)
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '=2', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -360,14 +357,12 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 	// Année courante période avant (pour comparaison avec avant)
 	$sql = $sql_base
 		.'    AND DATEDIFF (c.date_commande, NOW())>=-'.$delai
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '>=1', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -376,7 +371,6 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 }
 

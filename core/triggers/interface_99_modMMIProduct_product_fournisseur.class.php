@@ -77,10 +77,8 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 
 		$langs->loadLangs(array("mmiproduct@mmiproduct"));
 
-		//var_dump($action); var_dump($object);
 		switch($action) {
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
-			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
 				if (getDolGlobalInt('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 0) == 0)

@@ -174,7 +174,6 @@ foreach($pfp_list as $pfp) {
 	<tbody>
 	<?php
 	foreach($pcp_list as $row) {
-		//var_dump($s_list[$row['fk_soc']]);
 		$margin_coeff = $pachat ?round($row['price']/$pachat, 2) :'-';
 		$margin_taux = $pachat ?round(100*($row['price']-$pachat)/$row['price'], 2).'%' :'-';
 		echo '<tr>';
