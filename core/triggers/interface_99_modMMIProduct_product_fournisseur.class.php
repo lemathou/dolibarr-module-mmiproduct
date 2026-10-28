@@ -1,9 +1,10 @@
 <?php
 /**
- * Copyright (C) 2022       MMI Mathieu Moulin      <contact@iprospective.fr>
+ * Copyright (C) 2022-2026       MMI Mathieu Moulin      <contact@iprospective.fr>
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/triggers/dolibarrtriggers.class.php';
+dol_include_once('custom/mmiproduct/class/mmi_default_supplier.class.php');
 
 /**
  *  Class of triggers for MyModule module
@@ -81,84 +82,18 @@ class InterfaceProduct_Fournisseur extends DolibarrTriggers
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
-				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
-					return 0;
-				}
-				if (empty($object->product_fourn_price_id))
-					return 0;
-
-				//var_dump($object); die();
-				/** @var ProductFournisseur $object */
-				$id = $object->product_fourn_price_id;
-				$product = new Product($this->db);
-				$pfp = new ProductFournisseurPrice($this->db);
-				$pfp->fetch($id);
-				// S'il manque l'un des deux il faut tout mettre à jour, sinon on aura des infos inconsistantes
-				if (empty($object->fourn_id) && !empty($object->product_fourn_price_id)) {
-					$object->fetch_product_fournisseur_price($object->product_fourn_price_id);
-				}
-				if (!empty($object->product_id) && !empty($object->fourn_id)) {
-					$product->fetch($object->product_id);
-					// Créé ou modifié Fournisseur => modifie tout
-					if (empty($product->array_options['options_fk_soc_fournisseur']) || $product->array_options['options_fk_soc_fournisseur'] != $object->fourn_id) {
-						$product->array_options['options_fk_soc_fournisseur'] = $object->fourn_id;
-						$update = true;
-						$update_all = true;
-					}
-					// Modif réf fourn
-					if ($update_all || $product->array_options['options_supplier_ref'] != $pfp->ref_fourn) {
-						$product->array_options['options_supplier_ref'] = $pfp->ref_fourn;
-						$update = true;
-					}
-					// Modif conditionnement
-					if ($update_all || $product->array_options['options_supplier_packaging'] != $pfp->packaging) {
-						$product->array_options['options_supplier_packaging'] = $pfp->packaging;
-						$update = true;
-					}
-					if ($update)
-						$ret = $product->update($product->id, $user);
-				}
-				break;
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
-				if (getDolGlobalInt('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 0) == 0) {
+				if (getDolGlobalInt('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 0) == 0)
 					return 0;
-				}
+				/** @var ProductFournisseur $object */
 				if (empty($object->product_fourn_price_id))
 					return 0;
-				
-				/** @var ProductFournisseur $object */
-				$id = $object->product_fourn_price_id;
-				$pfp = new ProductFournisseurPrice($this->db);
-				$productfournisseurprice = new ProductFournisseurPrice($this->db);
-				$res = $productfournisseurprice->fetch($object->product_fourn_price_id);
-				if ($res > 0) {
-					$product = new Product($this->db);
-					$product->fetch($productfournisseurprice->fk_product);
-					if ($product->array_options['options_fk_soc_fournisseur'] == $productfournisseurprice->fk_soc) {
-						$records = $pfp->fetchAll('', '', 0, 0, ['fk_product' => $product->id]);
-						// Check if there us still a product supplier price
-						if (count($records) > 1) {
-							foreach($records as $record) {
-								// We take the first price an set it as default product supplier & ref
-								if ($record->id != $id) {
-									$product->array_options['options_supplier_ref'] = $record->ref_fourn;
-									$product->array_options['options_supplier_packaging'] = $record->supplier_packaging;
-									$product->array_options['options_fk_soc_fournisseur'] = $record->fk_soc;
-									$product->update($product->id, $user);
-									break;
-								}
-							}
-						}
-						// Otherwise, we should remove the supplier & ref from the product
-						else {
-							$product->array_options['options_supplier_ref'] = '';
-							$product->array_options['options_supplier_packaging'] = NULL;
-							$product->array_options['options_fk_soc_fournisseur'] = NULL;
-							$product->update($product->id, $user);
-						}
-					}
-				}
-				break;
+				// Règle RM3233 : le fournisseur par défaut ne change que s'il n'a plus de prix.
+				// DELETE est appelé avant le DELETE SQL : la ligne est exclue du calcul.
+				// Un échec ici ne doit pas annuler l'enregistrement du prix : on journalise seulement.
+				if (mmi_default_supplier::apply($this->db, $user, $object->product_fourn_price_id, $action == 'SUPPLIER_PRODUCT_BUYPRICE_DELETE') < 0)
+					dol_syslog(__METHOD__.' '.$action.' pfp='.$object->product_fourn_price_id.' : échec de la mise à jour du fournisseur par défaut', LOG_ERR);
+				return 0;
 		}
 		
 		return 0;

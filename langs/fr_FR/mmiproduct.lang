@@ -38,8 +38,9 @@ MMIPRODUCT_FIELD_SUPPLIER_DIRECT_DELIVERY = Champ : Livraison direct fournisseur
 MMIPRODUCT_FIELD_CUSTOM = Champ : Produit sur mesure
 MMIPRODUCT_TOOLTIP_SHOW_SUPPLIER_REF = Afficher la ref fournisseur dans la tooltip produit
 
-MMIPRODUCT_SUPPLIER_UPDATE = Mise à jour des prix fournisseurs
-MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE = Mise à jour automatique du fournisseur par défaut
+MMI_PRODUCT_SUPPLIER_UPDATE = Mise à jour des prix fournisseurs
+MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE = Mise à jour automatique du fournisseur par défaut (ne change que si le fournisseur par défaut n'a plus de prix d'achat)
+MMIPRODUCT_DEFAULT_SUPPLIER_ALERT_EMAIL_TO = Email destinataire des alertes de remplacement du fournisseur par défaut (vide = email des alertes produit)
 
 MAIN_SEARCH_PRODUCT = Recherche
 
@@ -70,6 +71,9 @@ MMIPRODUCT_FIELD_SEASON_DATE = Gestion de la saisonnalité produit
 MMI_PRODUCT_REPLENISH_INFO_SEUIL = Seuil/ratio (pourcentage de produits) de notification INFO (dépassement de la médiane entre le seuil réappro et seuil remplissage)
 MMI_PRODUCT_REPLENISH_WARN_SEUIL = Seuil/ratio (pourcentage de produits) de notification WARN (dépassement du seuil de réappro)
 MMI_PRODUCT_REPLENISH_ALERT_SEUIL = Seuil/ratio (pourcentage de produits) de notification ALERT (rupture de stock)
+MMIPRODUCT_REPLENISH_HIDE_DESIREDSTOCK = Page de réappro : masquer la colonne « Stock désiré » (la valeur reste utilisée pour le calcul de la quantité à commander ; le filtre « Inclure stock désiré vide » remonte au-dessus de la colonne Réf.)
+MMIPRODUCT_REPLENISH_HIDE_STOCKLIMIT = Page de réappro : masquer la colonne « Limite » (seuil d'alerte) — la valeur reste utilisée pour le calcul de la quantité à commander
+MMIPRODUCT_REPLENISH_SHOW_EAN = Page de réappro : afficher la colonne code-barres / EAN
 MMI_PROPAL_CLONE_USE_NEW_COST_PRICE = Lors d'un clonage de devis avec préservation des prix, utiliser le nouveau prix d'achat
 MAIN_SEARCH_PRODUCT_BY_FOURN_SHOW_MULTIPLE = Afficher une ligne produit par prix fournisseur lors de la recherche de produit à ajouter à un document
 MMIPRODUCT_STOCK_COMPOSED_AUTO = Recalculer automatiquement le stock d'un produit composé à partir du stock de ses composant à chaque mouvement de stock d'un composant
@@ -97,6 +101,9 @@ MMIPRODUCT_PRICE_CONCURRENT_DAYS_MAX = Nombre de jours maximum pour l'utilisatio
 MMIPRODUCT_PRO = Suivi des clients/Produits PRO
 MMIPRODUCT_PRO_PRODUCT_CATEGORY = Catégorie de produit spécifique pour les clients PRO
 MMIPRODUCT_PRO_CUSTOMER_CATEGORY = Catégorie de client PRO
+MMIPRODUCT_STOCKCHECK_PRODUCT_CATEGORY = Catégorie de produit StockCheck (suivi de stock rapproché)
+MMIPRODUCT_PRO_SERVICE_LEVEL = Niveau de service (coeff Z) des produits PRO pour la réappro (ex. 1.65 = 95%)
+MMIPRODUCT_STOCKCHECK_SERVICE_LEVEL = Niveau de service (coeff Z) des produits StockCheck pour la réappro (ex. 1.96 = 97.5%)
 
 #
 # About page
@@ -104,17 +111,6 @@ MMIPRODUCT_PRO_CUSTOMER_CATEGORY = Catégorie de client PRO
 About = About
 MMIProductAbout = About MMIProduct
 MMIProductAboutPage = MMIProduct about page
-
-#
-# Sample page
-#
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description
 
 #
 # Champs supplémentaires
@@ -133,20 +129,21 @@ ExtrafieldToolTip_product_custom =
 Extrafield_supplier_direct_delivery = Livraison directe par fournisseur
 ExtrafieldToolTip_supplier_direct_delivery = 
 Extrafield_replenish_note = Information complémentaire concernant les commandes fournisseur, ou celle en cours
-Extrafield_competitor = Comcurrent (pour comparatif prix)
+Extrafield_competitor = Concurrent (pour comparatif prix)
 Extrafield_competitor_avg_price = Prix concurrent moyen
 Extrafield_margin_effective_tx = Taux de marge effectif
 Extrafield_margin_effective_coeff = Coeff de marge effectif
 Extrafield_margin_desired_coeff = Coeff de marge désiré
 Extrafield_margin_desired_tx = Taux de marque désiré
-Extrafield_competitor_note = Commenaire concurrents
-ExtrafieldToolTip_competitor_note = Informations complémentaire sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
-Extrafield_product_supplier_shipping_price = Frais d'acheminement
+Extrafield_competitor_note = Commentaire concurrents
+ExtrafieldToolTip_competitor_note = Informations complémentaires sur les prix concurrents, comme le fait que ce ne soit pas tout à fait le même produit...
+Extrafield_product_supplier_shipping_price = Frais d'acheminement fournisseur (saisi)
 ExtrafieldTooltip_product_supplier_shipping_price = Frais d'acheminement par unité de produit
-Extrafield_product_shipping_cost_price = Frais d'acheminement
+Extrafield_product_shipping_cost_price = Frais d'acheminement (produit)
 Extrafield_product_logistic_cost_price = Frais logistiques
 Extrafield_product_misc_cost_price = Frais divers
-Extrafield_commande_fournisseur_shipping_price = Frais d'acheminement
+Extrafield_product_packaging_cost_price = Frais d'emballage
+Extrafield_commande_fournisseur_shipping_price = Frais d'acheminement (commande fournisseur)
 ExtrafieldTooltip_commande_fournisseur_shipping_price = Frais d'acheminement pour l'ensemble de la commande (en considérant d'éventuels frais supplémentaires)
 Extrafield_commande_fournisseur_fk_entrepot = Entrepôt réception
 ExtrafieldTooltip_commande_fournisseur_fk_entrepot = Entrepôt de réception de la marchandise, lorsque tout est reçu dans le même entrepôt de la société
@@ -163,6 +160,8 @@ Extrafield_garantie = Garantie
 # Replenish
 Extrafield_replenish_safety_stock = Stock de sécurité
 Extrafield_replenish_reorder_point = Point de commande (reorder point)
+Extrafield_replenish_manual = Seuils réappro ajustés manuellement
+ExtrafieldToolTip_replenish_manual = Si coché, le recalcul automatique (cron hebdomadaire / régénération) n'écrase jamais le seuil d'alerte ni le stock désiré de ce produit.
 Extrafield_replenish_batch_ddm_delay = Délai moyen (en jours) entre la date de péremption la plus proche et la date de réception
 Extrafield_replenish_service_level = Qualité de service (%) seuil de reappro
 Extrafield_replenish_delay = Délai de réappro souhaité/théorique (entre deux commandes)
@@ -186,6 +185,7 @@ MMIProductPriceMarginConfig = Paramétrer marge et prix de vente
 
 MMIProductStockReplenishPRO = Réappro produits pour les PRO
 MMIProductStockReplenishFournStats = Stats réappro produits fournisseurs
+MMIProductReplenishRefreshCron = Réappro : recalcul automatique des stats et seuils
 
 MMIProductsAddAllProducts = Ajouter toute une famille de produits
 
@@ -193,3 +193,12 @@ MMIProductsAddAllProducts = Ajouter toute une famille de produits
 # Infos
 #
 DiscountPriceQtyMin = Prix quantité min. remisé
+
+MMIProductSwitchSupplier = Basculer les produits
+MMIProductSwitchSupplierTitle = Basculer les produits vers un autre fournisseur
+MMIProductSwitchSupplierTarget = Fournisseur cible
+MMIProductSwitchSupplierDeactivate = Désactiver ce fournisseur s'il n'a plus aucun produit après la bascule
+MMIProductSwitchSupplierConfirm = Les prix d'achat de ce fournisseur (%s ligne(s), %s produit(s), dont %s produit(s) dont il est le fournisseur par défaut) seront transférés au fournisseur choisi, réf fournisseur comprise. L'historique (commandes, factures) reste sur ce tiers, qui n'est pas supprimé.
+MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS = Réappro : plancher (jours) du dénominateur de la demande journalière (défaut 30) — évite d'extrapoler la demande d'un produit en rupture
+MMIPRODUCT_REPLENISH_RESET_NO_SALES = Réappro : remettre à zéro les seuils des produits sans vente sur la fenêtre d'analyse (hors « ajustés manuellement » ; sauté si les stats ont plus de 7 jours)
+

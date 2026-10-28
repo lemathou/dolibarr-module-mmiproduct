@@ -126,6 +126,7 @@ class modMMIProduct extends DolibarrModules
 				'ordersuppliercard',
 				'supplier_proposalcard',
 				'pricesuppliercard',
+				'thirdpartycard', // RM3235 : bouton « Basculer les produits » sur la fiche fournisseur
 			),
 			// Set this to 1 if features of module are opened to external users
 			'moduleforexternal' => 0,
@@ -165,8 +166,11 @@ class modMMIProduct extends DolibarrModules
 		//                             2 => array('MMIPRODUCT_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		// );
 		$this->const = array(
-			1 => array('MMIPRODUCT_PRODUCT_DEFULT_SUPPLIER_UPDATE', 'int', '1', 'Automatically update default supplier price (set or delete if none)', 0),
-			1 => array('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL', 'int', '2', '', 0),
+			1 => array('MMI_PRODUCT_PRODUCT_DEFAULT_SUPPLIER_UPDATE', 'int', '1', 'Automatically update default supplier price (set or delete if none)', 0),
+			2 => array('MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL', 'int', '2', '', 0),
+			// RM3491 — calcul des seuils réappro
+			3 => array('MMIPRODUCT_REPLENISH_MIN_STOCK_DAYS', 'int', '30', 'Replenish: minimum number of stock days used as denominator of the daily demand', 0),
+			4 => array('MMIPRODUCT_REPLENISH_RESET_NO_SALES', 'int', '1', 'Replenish: reset thresholds of products without sales on the analysis window (skipped when stats are stale)', 0),
 			// 2 => array('MMIPRODUCT_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		);
 
@@ -230,20 +234,20 @@ class modMMIProduct extends DolibarrModules
 		// Cronjobs (List of cron jobs entries to add when module is enabled)
 		// unit_frequency must be 60 for minute, 3600 for hour, 86400 for day, 604800 for week
 		$this->cronjobs = array(
-			//  0 => array(
-			//      'label' => 'MyJob label',
-			//      'jobtype' => 'method',
-			//      'class' => '/mmiproduct/class/myobject.class.php',
-			//      'objectname' => 'MyObject',
-			//      'method' => 'doScheduledJob',
-			//      'parameters' => '',
-			//      'comment' => 'Comment',
-			//      'frequency' => 2,
-			//      'unitfrequency' => 3600,
-			//      'status' => 0,
-			//      'test' => '$conf->mmiproduct->enabled',
-			//      'priority' => 50,
-			//  ),
+			0 => array(
+				'label' => 'MMIProductReplenishRefreshCron',
+				'jobtype' => 'method',
+				'class' => '/mmiproduct/class/mmi_product_replenish.class.php',
+				'objectname' => 'MMI_Product_Replenish',
+				'method' => 'cronReplenishRefresh',
+				'parameters' => '',
+				'comment' => 'Rafraîchit les stats produits et recalcule les seuils de réappro (hors override manuel)',
+				'frequency' => 1,
+				'unitfrequency' => 604800,	// hebdomadaire
+				'status' => 0,				// désactivé par défaut : à activer manuellement après validation
+				'test' => '$conf->mmiproduct->enabled',
+				'priority' => 50,
+			),
 		);
 
 		// Permissions provided by this module
@@ -273,7 +277,7 @@ class modMMIProduct extends DolibarrModules
 			'titre'=>'MMIProductStockReplenish',
 			//'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
 			'mainmenu'=>'products',
-			'leftmenu'=>'stock',
+			'leftmenu'=>'mmiproduct_replenish',	// RM3411 : jamais le leftmenu du parent (stock), sinon Menubase rattache les entrées suivantes sous celle-ci
 			'url'=>'/custom/mmiproduct/replenish.php',
 			'langs'=>'mmiproduct@mmiproduct',
 			'position'=>1000+$r,
@@ -281,6 +285,21 @@ class modMMIProduct extends DolibarrModules
 			'perms'=>'$user->rights->stock->mouvement->creer && $user->rights->fournisseur->lire', //'$user->rights->mmiproduct->time->user',
 			'target'=>'',
 			'user'=>2,				                // 0=Menu for internal users, 1=external users, 2=both
+		);
+		// Analyse réappro fournisseur (calcul EOQ : stock de sécurité, point de commande, qté à commander)
+		$this->menu[$r++]=array(
+			'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=stock',
+			'type'=>'left',
+			'titre'=>'MMIProductStockReplenishFournStats',
+			'mainmenu'=>'products',
+			'leftmenu'=>'mmiproduct_replenish_stats',	// RM3411 : jamais le leftmenu du parent (stock), sinon Menubase rattache les entrées suivantes sous celle-ci
+			'url'=>'/custom/mmiproduct/replenish_fourn.php',
+			'langs'=>'mmiproduct@mmiproduct',
+			'position'=>1000+$r,
+			'enabled'=>'$conf->mmiproduct->enabled',
+			'perms'=>'$user->rights->stock->mouvement->creer && $user->rights->fournisseur->lire',
+			'target'=>'',
+			'user'=>2,
 		);
 	}
 
@@ -367,11 +386,11 @@ class modMMIProduct extends DolibarrModules
         $extrafields->addExtraField('garantie', $langs->trans('Extrafield_garantie'), 'varchar', 10, 255, 'product', 0, 0, '', "", 1, '', 3, $langs->trans('ExtrafieldToolTip_garantie'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// REPLENISH
 		// Replenish batch DDM typical delay (calculated)
-		$extrafields->addExtraField('replenish_batch_ddm_delay', $langs->trans('Extrafield_replenish_batch_ddm_delay'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_batch_ddm_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_batch_ddm_delay', $langs->trans('Extrafield_replenish_batch_ddm_delay'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_batch_ddm_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish service level
-		$extrafields->addExtraField('replenish_service_level', $langs->trans('Extrafield_replenish_service_level'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_service_level'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_service_level', $langs->trans('Extrafield_replenish_service_level'), 'select', 100, "", 'product', 0, 0, '', ['options'=>['1.28'=>'90%', '1.65'=>'95%', '1.96'=>'97.5%', '2.33'=>'99%']], 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_service_level'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish analysis days
-		$extrafields->addExtraField('replenish_analysis_days', $langs->trans('Extrafield_replenish_analysis_days'), 'int', 100, "3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_analysis_days'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_analysis_days', $langs->trans('Extrafield_replenish_analysis_days'), 'int', 100, "3", 'product', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_analysis_days'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// @todo Replenish seasonal
 		//$extrafields->addExtraField('replenish_seasonal', $langs->trans('Extrafield_replenish_seasonal'), 'boolean', 100, "", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_seasonal'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Replenish season coeff
@@ -379,6 +398,8 @@ class modMMIProduct extends DolibarrModules
 		// Stats
 		$extrafields->addExtraField('replenish_safety_stock', $langs->trans('Extrafield_replenish_safety_stock'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_safety_stock'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_reorder_point', $langs->trans('Extrafield_replenish_reorder_point'), 'double', 100, "5,3", 'product', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_reorder_point'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		// Override manuel : si coché, les seuils ne sont JAMAIS écrasés par le recalcul auto (cron / régénération page)
+		$extrafields->addExtraField('replenish_manual', $langs->trans('Extrafield_replenish_manual'), 'boolean', 100, "", 'product', 0, 0, '', "", 1, '', 1, $langs->trans('ExtrafieldToolTip_replenish_manual'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
 		// Product Fournisseur Price
 		
@@ -395,11 +416,11 @@ class modMMIProduct extends DolibarrModules
 		// Replenish note
 		$extrafields->addExtraField('replenish_note', $langs->trans('Extrafield_replenish_note'), 'varchar', 1, 255, 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_note'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Réappro délai
-		$extrafields->addExtraField('replenish_delay', $langs->trans('Extrafield_replenish_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('replenish_delay', $langs->trans('Extrafield_replenish_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_replenish_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_delay_moy', $langs->trans('Extrafield_replenish_delay_moy'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay_moy'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('replenish_delay_stddev', $langs->trans('Extrafield_replenish_delay_stddev'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_replenish_delay_stddev'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		// Réception délai
-		$extrafields->addExtraField('reception_delay', $langs->trans('Extrafield_reception_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
+		$extrafields->addExtraField('reception_delay', $langs->trans('Extrafield_reception_delay'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', -3, $langs->trans('ExtrafieldToolTip_reception_delay'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('reception_delay_moy', $langs->trans('Extrafield_reception_delay_moy'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay_moy'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 		$extrafields->addExtraField('reception_delay_stddev', $langs->trans('Extrafield_reception_delay_stddev'), 'double', 100, "4,1", 'societe', 0, 0, '', "", 1, '', 0, $langs->trans('ExtrafieldToolTip_reception_delay_stddev'), '', $conf->entity, 'mmiproduct@mmiproduct', '$conf->mmiproduct->enabled');
 
