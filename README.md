@@ -62,3 +62,23 @@ Module Dolibarr (éditeur **iProspective / Mathieu Moulin**, GPL v3) qui étend 
 
 ## Licence
 Code : GPL v3 (`COPYING`). Documentation : GFDL.
+
+## Prérequis
+
+- Dolibarr 20.0 (branche `20.0`).
+- Modules MMI : `mmicommon`. **`mmicommon` doit être activé en premier.**
+- Modules cœur : `Product`.
+
+## Installation
+
+1. Copier dans `htdocs/custom/mmiproduct`.
+2. Activer `mmicommon` puis le module.
+3. Vérifier les droits.
+
+## Licence
+
+GPLv3+ (voir `COPYING`), documentation GFDL.
+
+## Changelog
+
+Voir [CHANGELOG.md](CHANGELOG.md).
