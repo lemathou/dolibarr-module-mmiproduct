@@ -77,7 +77,7 @@ public static function stock_replenish_batch_delay()
 			.' 	FROM `llx_commande_fournisseur` c'
 			.' 	INNER JOIN `llx_commande_fournisseurdet` cd ON cd.fk_commande=c.rowid'
 			.' 	INNER JOIN `llx_product` p ON p.rowid=cd.fk_product'
-			.' 	INNER JOIN `llx_commande_fournisseur_dispatch` rd ON rd.fk_commandefourndet=cd.rowid'
+			.' 	INNER JOIN `llx_receptiondet_batch` rd ON rd.fk_elementdet=cd.rowid'
 			.' 	INNER JOIN `llx_reception` r ON r.rowid=rd.fk_reception'
 		.' 	WHERE c.fk_statut${c_fk_status}'; // Statut commande recue
 

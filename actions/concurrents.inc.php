@@ -16,8 +16,6 @@ $datenow = date('Y-m-d');
 
 // ID PRODUCT
 //$id = GETPOST('id', 'int');
-//var_dump($id);
-//var_dump($object);
 
 $fk_soc = GETPOST('fk_soc', 'int');
 $url = GETPOST('url');
@@ -49,7 +47,6 @@ if ($action == 'pc_add' && !empty($fk_soc) && !empty($url)) {
 		('.$id.', "'.$fk_soc.'", "'.$url.'")';
 	//echo $sql;
 	$res = $db->query($sql);
-	//var_dump($res);
 }
 
 if ($action == 'pc_edit' && !empty($pc_edit) && !empty($url)) {
@@ -75,7 +72,6 @@ if (($action == 'pcp_add' || $action == 'pc_add') && !empty($fk_soc) && !empty($
 		('.$id.', "'.$fk_soc.'", "'.$date.'", '.$price.', '.$qte.')';
 	//echo $sql;
 	$res = $db->query($sql);
-	//var_dump($res);
 	mmiproduct_price::product_price_update($object);
 }
 
@@ -107,7 +103,6 @@ $sql = 'SELECT pfp.*, s.nom
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$pfp_list[$r['rowid']] = $r;
-//var_dump($pcp_list);
 
 // Concurrent
 $s_list = [];
@@ -120,7 +115,6 @@ $sql = 'SELECT s2.*, s.*
 $q = $db->query($sql);
 while($r=$q->fetch_assoc())
 	$s_list[$r['rowid']] = $r;
-//var_dump($s_list);
 
 // URL Concurrent
 $pc_list = [];
@@ -136,7 +130,6 @@ while($r=$q->fetch_assoc()) {
 	$pc_list[$r['rowid']] = $r;
 	$pc_list_soc_url[$r['fk_soc']][] = $r['url'];
 }
-//var_dump($pc_list);
 
 // Prix concurrent
 $pcp_list = [];
@@ -158,7 +151,6 @@ while($r=$q->fetch_assoc()) {
 	if(!isset($pcp_values_f[$r['fk_soc']]) && $r['date']>=$date_min)
 		$pcp_values_f[$r['fk_soc']] = $r['price'];
 }
-//var_dump($pcp_list);
 
 $pcp_f_nb = count($pcp_values_f);
 $pcp_values_ok = $pcp_values_f;

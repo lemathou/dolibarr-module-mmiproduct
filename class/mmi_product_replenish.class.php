@@ -296,7 +296,7 @@ public static function batch_delay()
 			.' 	FROM `'.MAIN_DB_PREFIX.'commande_fournisseur` c'
 			.' 	INNER JOIN `'.MAIN_DB_PREFIX.'_commande_fournisseurdet` cd ON cd.fk_commande=c.rowid'
 			.' 	INNER JOIN `'.MAIN_DB_PREFIX.'_product` p ON p.rowid=cd.fk_product'
-			.' 	INNER JOIN `'.MAIN_DB_PREFIX.'_commande_fournisseur_dispatch` rd ON rd.fk_commandefourndet=cd.rowid'
+			.' 	INNER JOIN `'.MAIN_DB_PREFIX.'_receptiondet_batch` rd ON rd.fk_elementdet=cd.rowid'
 			.' 	INNER JOIN `'.MAIN_DB_PREFIX.'_reception` r ON r.rowid=rd.fk_reception'
 		.' 	WHERE c.fk_statut${c_fk_status}'; // Statut commande recue
 
@@ -333,7 +333,6 @@ public static function conso_refresh()
 		.'    AND DATEDIFF (c.date_commande, NOW())<-'.(365)
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '=2', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -342,7 +341,6 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 	
 	// Année avant période après (pour projection)
@@ -351,7 +349,6 @@ public static function conso_refresh()
 		.'    AND DATEDIFF (c.date_commande, NOW())<-'.(365-$delai)
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '=2', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -360,14 +357,12 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 	// Année courante période avant (pour comparaison avec avant)
 	$sql = $sql_base
 		.'    AND DATEDIFF (c.date_commande, NOW())>=-'.$delai
 		.' 	GROUP BY p.rowid';
 	$sql = str_replace('${c_fk_status}', '>=1', $sql); // Statut commande expédiée
-	echo $sql.'<br /><br />';
 	$list = [];
 	$resql = $db->query($sql);
 	if ($resql) {
@@ -376,7 +371,6 @@ public static function conso_refresh()
 		}
 		$db->free($resql);
 	}
-	var_dump($list);
 
 }
 
@@ -427,14 +421,14 @@ public static function stats_refresh($options=[])
 			'lines_table' => 'expeditiondet',
 			'lines_field_join' => 'fk_expedition',
 			'orig_lines_table' => 'commandedet',
-			'orig_lines_field_join' => 'fk_origin_line',
+			'orig_lines_field_join' => 'fk_elementdet',
 		],
 		'reception' => [
 			'prefix' => 'r',
 			'object_table' => 'reception',
 			'object_field_date' => 'date_valid',
 			'object_status' => '1,2', // Reçue
-			'lines_table' => 'commande_fournisseur_dispatch',
+			'lines_table' => 'receptiondet_batch',
 			'lines_field_join' => 'fk_reception',
 		],
 		'stockmvt' => [

@@ -97,7 +97,6 @@ if ($action == "supplierproductinfo") {
 	$fp->fetch($id);
 	if (empty($fp->id))
 		die(json_encode(['r'=>false, 'msg'=>'Supplier price not found']));
-	//var_dump($fp); die();
 
 	$p = new Product($db);
 	$p->fetch($fp->fk_product);

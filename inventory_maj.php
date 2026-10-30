@@ -35,7 +35,6 @@ $sql = 'SELECT i.rowid, p.ref, p.label, i.qty_stock, i.qty_view
 	WHERE i.fk_inventory='.$id;
 echo '<p>'.$sql.'</p>';
 $q = $db->query($sql);
-var_dump($q);
 $l = [];
 while($row=$q->fetch_assoc()) {
 	$l[$row['ref']] = $row;
@@ -47,7 +46,6 @@ if(empty($handle))
 	die('Input file error');
 
 $cols = fgetcsv($handle, NULL, ';');
-var_dump($cols);
 
 $max = GETPOST('max', 'int');
 if (empty($max))
@@ -61,12 +59,10 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 	$nb++;
 	if ($nb>$max)
 		break;
-	//var_dump($data);
 	echo '<hr />';
 	$ref = $data[0];
 	$qty = $data[6];
 	if (!empty($l[$ref])) {
-		var_dump($l[$ref]);
 		$l[$ref]['i'] = true;
 		// Update stock
 		$sql = 'UPDATE '.MAIN_DB_PREFIX.'inventorydet
@@ -78,7 +74,6 @@ while ( ($data = fgetcsv($handle, NULL, ';') ) !== FALSE && $data !== NULL ) {
 		}
 	}
 	else {
-		var_dump($data);
 		$no++;
 		echo '<p style="color: ref;">Introuvable dans inventory</p>';
 	}
@@ -92,7 +87,6 @@ foreach($l as $ref=>$row) {
 
 echo '<hr />';
 echo '<p>Manquant : '.count($inok).'</p>';
-var_dump($inok);
 
 echo '<hr />';
 echo '<p>Introuvabkles : '.$no.'</p>';

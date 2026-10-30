@@ -60,7 +60,6 @@ if (!empty($show_customers_detail))
 // Tri
 $sort = GETPOST('sort', 'aZ09');
 $sortorder = (int)GETPOSTINT('sortorder');
-//var_dump($sort, $sortorder);
 /*
 if (!empty($sort))
 	$url_params[] = 'sort='.urlencode($sort);
@@ -153,7 +152,6 @@ if ($resql) {
 	}
 	$db->free($resql);
 }
-//var_dump($list_customer);
 
 // Suppliers
 
@@ -173,7 +171,6 @@ if ($resql) {
 	}
 	$db->free($resql);
 }
-//var_dump($list_supplier);
 
 // Détail Produits commandés par les clients PRO
 
@@ -227,7 +224,6 @@ if (!empty($sort)) {
 	usort($list, $sort_func);
 }
 
-//var_dump($list[235]);
 
 // DISPLAY
 
@@ -317,7 +313,6 @@ foreach($fields as $fieldname=>$field) {
 echo '</tr>';
 echo '</thead>';
 
-//var_dump($list);
 
 // Liste
 

@@ -26,7 +26,6 @@ require_once 'main_load.inc.php';
 $id = GETPOSTINT('id');
 $note = GETPOST('note');
 
-//var_dump($id);
 $societe = new Societe($db);
 $societe->fetch($id);
 

@@ -76,10 +76,8 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 		global $db;
 		$langs->loadLangs(array("mmiproduct@mmiproduct"));
 
-		//var_dump($action); var_dump($object);
 		switch($action) {
 			case 'PRODUCT_MODIFY':
-				//var_dump($object); //die();
 				/** @var Product $object */
 				$price_update = false;
 				$price_min_update = false;
@@ -102,8 +100,6 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 					if ($sell_price != (float)$product->price) {
 						$product->array_options['options_margin_desired_coeff'] = NULL;
 						//echo 'PRICE UPDATE';
-						//var_dump($public_price, (float)$product->price);
-						//var_dump($cost_price, $product->cost_price, $product->array_options['options_margin_desired_coeff'], $product->array_options);
 						//$product->price = $public_price;
 						$price_update = true;
 					}
@@ -120,8 +116,6 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 						$sell_price = round($product->cost_price*$product->array_options['options_margin_desired_coeff'], 5);
 						if ($sell_price != (float)$product->price) {
 							//echo 'PRICE UPDATE';
-							//var_dump($sell_price, (float)$product->price);
-							//var_dump($cost_price, $product->cost_price, $product->array_options['options_margin_desired_coeff'], $product->array_options);
 							//$product->price = $sell_price;
 							$price_update = true;
 						}
@@ -137,18 +131,13 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 					$sell_price = price2num($sell_price, getDolGlobalInt($conf->global->MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL));
 					if (isset($sell_min_price))
 						$sell_min_price = price2num($sell_min_price, getDolGlobalInt($conf->global->MMI_PRODUCT_PRICEMARGIN_CALC_DECIMAL));
-					//var_dump($product);
 					//$ret = $product->update($product->id, $user);
 					$ret = $product->updatePrice($sell_price, 'HT', $user, $product->tva_tx, $price_min_update ?$sell_min_price :NULL);
-					//var_dump($ret);
 				}
-				//var_dump($sell_price, $product->price, $sell_min_price, $product->price_min, $product->array_options); die();
 				break;
 			case 'SUPPLIER_PRODUCT_BUYPRICE_CREATE':
-			case 'SUPPLIER_PRODUCT_BUYPRICE_UPDATE':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_MODIFY':
 			case 'SUPPLIER_PRODUCT_BUYPRICE_DELETE':
-				//var_dump($object); die();
 				/** @var ProductFournisseur $object */
 				$product = new Product($db);
 				// S'il manque l'un des deux il faut tout mettre à jour, sinon on aura des infos inconsistantes
@@ -159,11 +148,9 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 					$product->fetch($object->product_id);
 					mmiproduct_price::product_price_update($product);
 				}
-				//var_dump($product->array_options); die();
 				break;
 			case 'COMPANY_MODIFY':
 				$societe = $object;
-				//var_dump($societe); die();
 				$sql = 'SELECT DISTINCT p.rowid, p2.margin_calc_type, p2.margin_calc_options, p2.fk_categorie_default, p2.fk_soc_fournisseur, p2.margin_desired_coeff, p2.margin_min_coeff
 					FROM '.MAIN_DB_PREFIX.'product p
 					LEFT JOIN '.MAIN_DB_PREFIX.'product_extrafields p2 ON p2.fk_object=p.rowid
@@ -172,20 +159,16 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 				// On aura le même problème avec les fournisseurs
 				//echo $sql; die();
 				$q = $this->db->query($sql);
-				//var_dump($q); die();
 				while($row=$q->fetch_assoc()) {
-					//var_dump($row); die();
 					$l[] = $row;
 					$product = new Product($this->db);
 					$product->fetch($row['rowid']);
 					$update = false;
 					if ($product->array_options['options_margin_desired_coeff'] != $societe->array_options['options_margin_coeff']) {
-						//var_dump($product->array_options['options_margin_desired_coeff'], $societe->array_options['options_margin_coeff']);
 						$product->array_options['options_margin_desired_coeff'] = $societe->array_options['options_margin_coeff'];
 						$update = true;
 					}
 					if ($product->array_options['options_margin_min_coeff'] != $societe->array_options['options_margin_min_coeff']) {
-						//var_dump($product->array_options['options_margin_min_coeff'], $societe->array_options['options_margin_min_coeff']);
 						$product->array_options['options_margin_min_coeff'] = $societe->array_options['options_margin_min_coeff'];
 						$update = true;
 					}
@@ -193,7 +176,6 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 						$product->update($product->id, $user);
 					}
 				}
-				//var_dump($l); die();
 				break;
 			case 'CATEGORY_MODIFY':
 				$category = $object;
@@ -204,7 +186,6 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 				// Filtrer les produits dont la catégorie choisie est la bonne pour recalculer le prix de vente
 				// On aura le même problème avec les fournisseurs
 				//echo $sql; die();
-				//var_dump($category); die();
 				$q = $this->db->query($sql);
 				while($row=$q->fetch_assoc()) {
 					$l[] = $row;
@@ -212,12 +193,10 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 					$product->fetch($row['rowid']);
 					$update = false;
 					if ($product->array_options['options_margin_desired_coeff'] != $category->array_options['options_margin_coeff']) {
-						//var_dump($product->array_options['options_margin_desired_coeff'], $category->array_options['options_margin_min_coeff']);
 						$product->array_options['options_margin_desired_coeff'] = $category->array_options['options_margin_coeff'];
 						$update = true;
 					}
 					if ($product->array_options['options_margin_min_coeff'] != $category->array_options['options_margin_min_coeff']) {
-						//var_dump($product->array_options['options_margin_min_coeff'], $category->array_options['options_margin_min_coeff']);
 						$product->array_options['options_margin_min_coeff'] = $category->array_options['options_margin_min_coeff'];
 						$update = true;
 					}
@@ -225,7 +204,6 @@ class InterfaceProduct_PriceMargin extends DolibarrTriggers
 						$product->update($product->id, $user);
 					}
 				}
-				//var_dump($l); die();
 				break;
 		}
 		

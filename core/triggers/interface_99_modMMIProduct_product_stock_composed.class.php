@@ -77,13 +77,11 @@ class InterfaceProduct_Stock_Composed extends DolibarrTriggers
 		global $db;
 		$langs->loadLangs(array("mmiproduct@mmiproduct"));
 
-		//var_dump($action); var_dump($object);
 		switch($action) {
 			case 'STOCK_MOVEMENT':
 				/**
 				 * @var MouvementStock $object Mouvement de stock
 				 **/
-				//var_dump($object); $db->rollback(); die();
 
 				// Recalculer le stock des produits composés dont on est un élément
 				if ($conf->global->MMIPRODUCT_STOCK_COMPOSED_AUTO) {
@@ -104,11 +102,9 @@ class InterfaceProduct_Stock_Composed extends DolibarrTriggers
 
 					$q = $this->db->query($sql);
 					foreach($q as $row) {
-						//var_dump($row); die();
 						// Ajoute à une liste, et calcule à la fin de la requête, car sur la même page il peut y avoir plusieurs produits d'un même pack donc cela génèrerait plusieurs calculs inutilement...
 						static::$_stock_instance->add($row['fk_product_pere']);
 					}
-					//var_dump(static::$_stock_instance);
 					//echo $sql; //$db->rollback(); die();
 					//die();
 	

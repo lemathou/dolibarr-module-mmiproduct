@@ -40,7 +40,6 @@ class MMIProductApi extends MMI_PrestasyncApi_1_0
 		static::_getsynchrouser();
 		$ret = MMIProduct_Stock::_instance()->stock_empty_alert();
 		//return $ret;
-		//var_dump('hhh');
 		return 1;
 	}
 }

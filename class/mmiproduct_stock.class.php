@@ -45,7 +45,6 @@ public function stock_calculate($fk_product)
 	//echo '<pre>'.$sql.'</pre>'; die();
 	$q = $this->db->query($sql);
 	foreach($q as $row) {
-		//var_dump($row);
 		// @todo choper le premier emplacement de stock qui vient !
 		if (empty($fk_product_stock)) {
 			$fk_product_stock = $row['rowid'];
@@ -64,7 +63,6 @@ public function stock_calculate($fk_product)
 	}
 	if (empty($fk_entrepot))
 		$fk_entrepot = 1;
-	//var_dump($fk_entrepot);
 	//trigger_error($fk_entrepot);
 
 	// sync associated product_stock after update
@@ -88,7 +86,6 @@ public function stock_calculate($fk_product)
 
 	// Le plus petit
 	foreach($q as $row) {
-		//var_dump($row);
 		//trigger_error($row);
 		// Prise en compte du stock réservé (commandes en cours) par produit
 		$row['qty_reserved'] = $this->reserved_qty($row['rowid']);
@@ -162,7 +159,7 @@ public function reserved_qty($fk_product)
 	// e.fk_statut IN (1, 2) => validated et closed
 	$sql = 'SELECT COUNT(DISTINCT e.fk_soc) as nb_customers, COUNT(DISTINCT e.rowid) as nb, COUNT(ed.rowid) as nb_rows, SUM(ed.qty) as qty
 		FROM '.MAIN_DB_PREFIX.'expeditiondet as ed
-		INNER JOIN '.MAIN_DB_PREFIX.'commandedet as cd ON cd.rowid=ed.fk_origin_line
+		INNER JOIN '.MAIN_DB_PREFIX.'commandedet as cd ON cd.rowid=ed.fk_elementdet
 		LEFT JOIN '.MAIN_DB_PREFIX.'commandedet_extrafields as cd2 ON cd2.fk_object = cd.rowid
 		INNER JOIN '.MAIN_DB_PREFIX.'commande as c ON c.rowid = cd.fk_commande
 		INNER JOIN '.MAIN_DB_PREFIX.'expedition as e ON e.rowid = ed.fk_expedition
@@ -176,7 +173,6 @@ public function reserved_qty($fk_product)
 		$qty -= $row['qty'] ?: 0;
 	}
 
-	//var_dump($row);
 
 	return $qty;
 }
